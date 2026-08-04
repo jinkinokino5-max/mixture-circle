@@ -1,0 +1,1132 @@
+<title>ミクスチャー・サークル 制作学習ポータル</title>
+
+<style>
+/* ---- token system ---- */
+:root{
+  --font-body:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic","Meiryo","Segoe UI",sans-serif;
+  --font-mono:"SFMono-Regular",Consolas,"Roboto Mono","DejaVu Sans Mono",ui-monospace,monospace;
+  --paper:#ECEEF1; --panel:#F8F9FB; --panel2:#E4E7EC;
+  --ink:#161B21; --ink2:#3D4650; --muted:#69737F; --line:#D2D8DF; --line2:#BEC6D0;
+  --accent:#93600F; --accent-ink:#FFFFFF; --accent-soft:#EFE3CA;
+  --ok:#37714B; --shadow:0 1px 2px rgba(20,28,38,.07);
+  --c-sound:#2F5D8C; --c-synth:#146F70; --c-code:#5A50A2; --c-circuit:#AE3742;
+  --c-signal:#8E3D77; --c-craft:#7F5A31; --c-design:#37714B; --c-release:#476274;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#11151A; --panel:#181D24; --panel2:#222932;
+    --ink:#E7EAEE; --ink2:#BFC7D0; --muted:#8A94A1; --line:#28303A; --line2:#3A434F;
+    --accent:#D9A44C; --accent-ink:#15191E; --accent-soft:#33291A;
+    --ok:#6FB98A; --shadow:none;
+    --c-sound:#7BAEDE; --c-synth:#4CBDBE; --c-code:#9A91E2; --c-circuit:#EC7F87;
+    --c-signal:#DC85C2; --c-craft:#CBA067; --c-design:#79BF8E; --c-release:#93B4C6;
+  }
+}
+:root[data-theme="light"]{
+  --paper:#ECEEF1; --panel:#F8F9FB; --panel2:#E4E7EC;
+  --ink:#161B21; --ink2:#3D4650; --muted:#69737F; --line:#D2D8DF; --line2:#BEC6D0;
+  --accent:#93600F; --accent-ink:#FFFFFF; --accent-soft:#EFE3CA;
+  --ok:#37714B; --shadow:0 1px 2px rgba(20,28,38,.07);
+  --c-sound:#2F5D8C; --c-synth:#146F70; --c-code:#5A50A2; --c-circuit:#AE3742;
+  --c-signal:#8E3D77; --c-craft:#7F5A31; --c-design:#37714B; --c-release:#476274;
+}
+:root[data-theme="dark"]{
+  --paper:#11151A; --panel:#181D24; --panel2:#222932;
+  --ink:#E7EAEE; --ink2:#BFC7D0; --muted:#8A94A1; --line:#28303A; --line2:#3A434F;
+  --accent:#D9A44C; --accent-ink:#15191E; --accent-soft:#33291A;
+  --ok:#6FB98A; --shadow:none;
+  --c-sound:#7BAEDE; --c-synth:#4CBDBE; --c-code:#9A91E2; --c-circuit:#EC7F87;
+  --c-signal:#DC85C2; --c-craft:#CBA067; --c-design:#79BF8E; --c-release:#93B4C6;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px; line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:var(--font-mono);}
+a{color:var(--accent); text-underline-offset:.22em; text-decoration-thickness:1px;}
+a:hover{text-decoration-thickness:2px;}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+button{font:inherit; color:inherit; cursor:pointer;}
+
+.wrap{max-width:1120px; margin:0 auto; padding:0 22px;}
+
+/* ---------- transport (sticky header) ---------- */
+.transport{
+  position:sticky; top:0; z-index:40;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.transport-in{
+  max-width:1120px; margin:0 auto; padding:9px 22px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.tp-mark{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted); white-space:nowrap;
+}
+.tp-mark b{color:var(--ink); font-weight:700;}
+.tp-meter{flex:1 1 220px; min-width:180px; display:flex; align-items:center; gap:10px;}
+.steps{display:flex; gap:2px; flex:1; height:14px;}
+.steps i{flex:1; background:var(--panel2); border-radius:1px; transition:background .25s;}
+.steps i.on{background:var(--accent);}
+.tp-num{font-family:var(--font-mono); font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink2); white-space:nowrap;}
+.tp-btn{
+  background:none; border:1px solid var(--line2); border-radius:2px;
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.08em;
+  padding:5px 10px; color:var(--muted);
+}
+.tp-btn:hover{border-color:var(--accent); color:var(--accent);}
+
+/* ---------- hero ---------- */
+.hero{padding:62px 0 46px; border-bottom:1px solid var(--line);}
+.eyebrow{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 18px;
+}
+h1{
+  font-size:clamp(30px,5.2vw,52px); line-height:1.22; letter-spacing:-.015em;
+  font-weight:800; margin:0 0 20px; text-wrap:balance; max-width:17em;
+}
+.lede{font-size:clamp(15px,1.7vw,18px); color:var(--ink2); max-width:38em; margin:0 0 30px;}
+.hero-facts{display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:var(--panel);}
+.fact{flex:1 1 150px; padding:14px 16px; border-right:1px solid var(--line);}
+.fact:last-child{border-right:0;}
+.fact dt{font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 0 4px;}
+.fact dd{margin:0; font-size:14px; font-weight:700; line-height:1.5;}
+
+/* ---------- generic section ---------- */
+.sec{padding:52px 0; border-bottom:1px solid var(--line);}
+.sec-head{margin:0 0 26px;}
+.sec-num{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.2em; color:var(--muted);
+  display:block; margin-bottom:8px;
+}
+h2{font-size:clamp(21px,2.8vw,28px); line-height:1.35; font-weight:800; margin:0 0 8px; letter-spacing:-.01em; text-wrap:balance;}
+.sec-note{margin:0; color:var(--muted); font-size:14.5px; max-width:44em;}
+
+/* ---------- phase route ---------- */
+.route{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:12px;}
+.ph{
+  background:var(--panel); border:1px solid var(--line); border-radius:3px;
+  padding:16px 16px 14px; display:flex; flex-direction:column; gap:9px;
+}
+.ph-top{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+.ph-tag{font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; color:var(--accent); font-weight:700;}
+.ph-when{font-family:var(--font-mono); font-size:10.5px; color:var(--muted);}
+.ph h3{margin:0; font-size:16px; font-weight:800; line-height:1.45;}
+.ph p{margin:0; font-size:13px; color:var(--ink2); line-height:1.7;}
+.ph-bar{height:4px; background:var(--panel2); border-radius:2px; overflow:hidden;}
+.ph-bar span{display:block; height:100%; background:var(--accent); transition:width .3s;}
+.ph-count{font-family:var(--font-mono); font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums;}
+
+/* ---------- next step ---------- */
+.next{
+  display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;
+  background:var(--accent-soft); border:1px solid color-mix(in srgb,var(--accent) 32%, transparent);
+  border-radius:3px; padding:18px 20px;
+}
+.next-label{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin:0 0 6px;}
+.next-title{margin:0 0 4px; font-size:17px; font-weight:800;}
+.next-sub{margin:0; font-size:13.5px; color:var(--ink2);}
+.next-go{
+  background:var(--accent); color:var(--accent-ink); border:0; border-radius:2px;
+  padding:9px 16px; font-size:13px; font-weight:700; white-space:nowrap;
+}
+
+/* ---------- filters ---------- */
+.filters{display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin:0 0 26px;}
+.search{
+  flex:1 1 230px; min-width:180px; background:var(--panel); color:var(--ink);
+  border:1px solid var(--line2); border-radius:2px; padding:8px 12px; font:inherit; font-size:14px;
+}
+.search::placeholder{color:var(--muted);}
+.chip{
+  background:var(--panel); border:1px solid var(--line2); border-radius:2px;
+  padding:6px 11px; font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; color:var(--ink2);
+}
+.chip[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+.chip:hover{border-color:var(--accent);}
+
+/* ---------- lanes ---------- */
+.lane{margin:0 0 30px;}
+.lane-head{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding-bottom:9px; border-bottom:2px solid var(--lc);
+}
+.lane-code{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.18em; font-weight:700;
+  color:var(--lc); white-space:nowrap;
+}
+.lane-name{font-size:18px; font-weight:800; margin:0; letter-spacing:-.005em;}
+.lane-sub{font-size:12.5px; color:var(--muted); margin:0;}
+.lane-prog{margin-left:auto; display:flex; align-items:center; gap:8px;}
+.lane-bar{width:74px; height:4px; background:var(--panel2); border-radius:2px; overflow:hidden;}
+.lane-bar span{display:block; height:100%; background:var(--lc); transition:width .3s;}
+.lane-n{font-family:var(--font-mono); font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums;}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:9px; margin-top:12px;}
+
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:2px;
+  display:flex; flex-direction:column; text-align:left; padding:0; overflow:hidden;
+  transition:border-color .18s, background .18s;
+}
+.card:hover{border-color:var(--lc);}
+.card.open{grid-column:1/-1; border-color:var(--lc);}
+.card.done .c-title{color:var(--muted);}
+.c-top{display:flex; gap:11px; padding:12px 13px; align-items:flex-start; width:100%;}
+.c-step{
+  font-family:var(--font-mono); font-size:11px; font-weight:700; font-variant-numeric:tabular-nums;
+  background:var(--lc); color:var(--paper); border-radius:2px;
+  min-width:26px; height:22px; display:grid; place-items:center; flex:none; padding:0 5px;
+}
+.card.done .c-step{background:var(--panel2); color:var(--muted);}
+.c-mid{flex:1; min-width:0;}
+.c-title{margin:0; font-size:14.5px; font-weight:700; line-height:1.55;}
+.c-meta{
+  display:flex; gap:9px; flex-wrap:wrap; align-items:center;
+  font-family:var(--font-mono); font-size:10.5px; color:var(--muted); margin-top:5px;
+}
+.lv{display:inline-flex; gap:2px;}
+.lv i{width:5px; height:5px; border-radius:50%; background:var(--line2);}
+.lv i.f{background:var(--lc);}
+.pbadge{border:1px solid var(--line2); border-radius:2px; padding:0 5px; letter-spacing:.06em;}
+.c-check{
+  flex:none; width:22px; height:22px; border:1px solid var(--line2); border-radius:2px;
+  background:none; display:grid; place-items:center; font-size:12px; color:transparent; line-height:1;
+}
+.card.done .c-check{background:var(--ok); border-color:var(--ok); color:#fff;}
+.c-check:hover{border-color:var(--accent);}
+
+.c-body{
+  display:none; padding:0 13px 15px; border-top:1px dashed var(--line);
+  margin-top:0; font-size:14px;
+}
+.card.open .c-body{display:block; padding-top:13px;}
+.c-body dl{margin:0; display:grid; gap:11px;}
+.c-body dt{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--lc); font-weight:700;
+}
+.c-body dd{margin:2px 0 0; color:var(--ink2); line-height:1.8;}
+.c-do{background:var(--panel2); border-radius:2px; padding:9px 11px; font-size:13.5px;}
+.c-links{display:flex; flex-wrap:wrap; gap:7px; margin-top:13px;}
+.c-links a{
+  font-family:var(--font-mono); font-size:11px; text-decoration:none; color:var(--ink2);
+  border:1px solid var(--line2); border-radius:2px; padding:4px 9px; transition:.15s;
+}
+.c-links a:hover{border-color:var(--accent); color:var(--accent);}
+.empty{color:var(--muted); font-size:14px; padding:30px 0;}
+
+/* ---------- glossary ---------- */
+.gl{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:0 26px;}
+.gl div{padding:11px 0; border-bottom:1px solid var(--line);}
+.gl dt{font-size:14px; font-weight:700; margin:0;}
+.gl dt small{font-family:var(--font-mono); font-weight:400; color:var(--muted); font-size:10.5px; margin-left:7px; letter-spacing:.04em;}
+.gl dd{margin:3px 0 0; font-size:13.5px; color:var(--ink2); line-height:1.75;}
+
+/* ---------- fix list ---------- */
+.fix{display:grid; gap:0; border:1px solid var(--line); border-radius:3px; overflow:hidden;}
+.fix details{border-bottom:1px solid var(--line); background:var(--panel);}
+.fix details:last-child{border-bottom:0;}
+.fix summary{padding:13px 16px; font-weight:700; font-size:14.5px; cursor:pointer; list-style:none; display:flex; gap:10px; align-items:baseline;}
+.fix summary::-webkit-details-marker{display:none;}
+.fix summary::before{content:"▸"; color:var(--accent); font-size:12px; transition:transform .2s; display:inline-block;}
+.fix details[open] summary::before{transform:rotate(90deg);}
+.fix .fix-b{padding:0 16px 15px 38px; font-size:13.5px; color:var(--ink2);}
+.fix .fix-b ol{margin:0; padding-left:1.3em;}
+.fix .fix-b li{margin-bottom:5px;}
+
+/* ---------- toolbox ---------- */
+.tools{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px;}
+.tool{border:1px solid var(--line); border-radius:3px; padding:14px 15px; background:var(--panel);}
+.tool h3{margin:0 0 8px; font-size:13px; font-family:var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--accent);}
+.tool ul{margin:0; padding-left:1.1em; font-size:13.5px; color:var(--ink2);}
+.tool li{margin-bottom:4px;}
+
+footer{padding:40px 0 60px; color:var(--muted); font-size:13px;}
+footer p{margin:0 0 8px; max-width:44em;}
+
+@media (max-width:640px){
+  .hero{padding:40px 0 32px;}
+  .fact{flex:1 1 100%; border-right:0; border-bottom:1px solid var(--line);}
+  .fact:last-child{border-bottom:0;}
+  .lane-prog{margin-left:0; width:100%;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important; animation:none !important;}
+}
+</style>
+
+<header class="transport">
+  <div class="transport-in">
+    <span class="tp-mark"><b>MIXTURE CIRCLE</b> / LEARNING DESK</span>
+    <div class="tp-meter">
+      <div class="steps" id="steps" aria-hidden="true"></div>
+      <span class="tp-num" id="tpnum">0 / 0</span>
+    </div>
+    <button class="tp-btn" id="reset" type="button">RESET</button>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Learning portal — built for one project, useful for every next one</p>
+    <h1>音の出る箱をつくる。<br>そのために必要な全部を、<br>ここから順に。</h1>
+    <p class="lede">
+      「ミクスチャー・サークル」を完成させるための知識と、これから何かを作り続けるために効いてくる知識を、
+      8つのトラックに分けて並べました。上から順にやる必要はありません。
+      <strong>いま作っているものに必要なところから引き抜いて使う</strong>のが正しい使い方です。
+    </p>
+    <dl class="hero-facts">
+      <div class="fact"><dt>Budget</dt><dd>20,000円以内</dd></div>
+      <div class="fact"><dt>Start from</dt><dd>電子工作の知識ゼロ</dd></div>
+      <div class="fact"><dt>Tracks</dt><dd>8領域 / <span id="totalN">–</span>レッスン</dd></div>
+      <div class="fact"><dt>Timeline</dt><dd>8週間（Phase 0→3）</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">01 — ROUTE</span>
+      <h2>4つのフェーズと、その週に効く学び</h2>
+      <p class="sec-note">実装計画の Phase 0〜3 に、各トラックのレッスンが割り当てられています。番号は「順序」であって「難易度」ではありません。</p>
+    </div>
+    <div class="route" id="route"></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">02 — NEXT</span>
+      <h2>今日の一歩</h2>
+    </div>
+    <div class="next">
+      <div style="flex:1 1 300px;">
+        <p class="next-label">Up next</p>
+        <p class="next-title" id="nextTitle">—</p>
+        <p class="next-sub" id="nextSub">—</p>
+      </div>
+      <button class="next-go" id="nextGo" type="button">このレッスンを開く</button>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">03 — TRACKS</span>
+      <h2>知識のトラック</h2>
+      <p class="sec-note">各レッスンは「学ぶこと」「この作品にどう効くか」「手を動かす課題」の3点セット。読むだけで終わらせないための構成です。カードをクリックすると開きます。</p>
+    </div>
+
+    <div class="filters">
+      <input class="search" id="q" type="search" placeholder="キーワードで探す（例：同期、はんだ、著作権）" aria-label="レッスンを検索">
+      <button class="chip" type="button" data-f="phase" data-v="all" aria-pressed="true">ALL PHASE</button>
+      <button class="chip" type="button" data-f="phase" data-v="0" aria-pressed="false">PHASE 0</button>
+      <button class="chip" type="button" data-f="phase" data-v="1" aria-pressed="false">PHASE 1</button>
+      <button class="chip" type="button" data-f="phase" data-v="2" aria-pressed="false">PHASE 2</button>
+      <button class="chip" type="button" data-f="phase" data-v="3" aria-pressed="false">PHASE 3</button>
+      <button class="chip" type="button" data-f="undone" data-v="1" aria-pressed="false">未完了のみ</button>
+    </div>
+
+    <div id="lanes"></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">04 — FIRST AID</span>
+      <h2>詰まったときの処方箋</h2>
+      <p class="sec-note">初心者が高確率で踏む地雷と、その場での切り分け手順。詰まってから読むのではなく、詰まる前に一度目を通しておくと復帰が速くなります。</p>
+    </div>
+    <div class="fix">
+      <details><summary>ブラウザから音が出ない</summary><div class="fix-b"><ol>
+        <li>ブラウザは「ユーザーが操作するまで音を鳴らせない」仕様。<strong>画面上のボタンを押してから音を出す</strong>設計になっているか確認する。</li>
+        <li>OS側の音量・出力デバイスを確認（イヤホンに出ていないか）。</li>
+        <li>開発者ツール（F12）の Console にエラーが出ていないか見る。</li>
+        <li>AudioContext の状態を確認。<code>suspended</code> なら <code>resume()</code> を呼ぶ。</li>
+      </ol></div></details>
+      <details><summary>RFIDリーダーがカードを読まない</summary><div class="fix-b"><ol>
+        <li>まずメモ帳を開いてかざす。<strong>ここで文字が出なければアプリの問題ではない</strong>。</li>
+        <li>カードとリーダーの距離（2〜4cm推奨）と、シールの貼り位置を確認。</li>
+        <li>リーダーの近くに金属がないか。段ボールの中に金属クリップなどが混ざっていないか。</li>
+        <li>周波数帯が合っているか（13.56MHz のリーダーで 125kHz のタグは読めない）。</li>
+        <li>USBハブ経由なら、PC本体のポートに直挿しして試す。</li>
+      </ol></div></details>
+      <details><summary>音がリズムからズレる / もたつく</summary><div class="fix-b"><ol>
+        <li><code>setTimeout</code> や <code>setInterval</code> で発音していないか確認する。これは音楽用途では必ずズレる。</li>
+        <li>オーディオの時計（<code>AudioContext.currentTime</code>／Tone.js の Transport）で<strong>未来の時刻を予約</strong>する方式に直す。</li>
+        <li>重い描画処理（DOM更新・アニメーション）が同じフレームで走っていないか。</li>
+        <li>同時発音数を減らして改善するなら、負荷が原因。</li>
+      </ol></div></details>
+      <details><summary>同じカードで音が二重に鳴る</summary><div class="fix-b"><ol>
+        <li>リーダーが1回の通過で複数回読んでいる。同一UIDを一定時間（500ms程度）無視するガードを入れる。</li>
+        <li>すでに鳴っているパートを再投入したときの挙動を決める（無視／リスタート／音量アップ）。仕様として決めていないとバグに見える。</li>
+      </ol></div></details>
+      <details><summary>LEDが光らない</summary><div class="fix-b"><ol>
+        <li>電源が来ているか（テスターで電圧を測る）。</li>
+        <li>LEDの向き（極性）。長い足がプラス側。</li>
+        <li>抵抗を入れ忘れていないか。入れずに繋ぐとLEDが壊れる。</li>
+        <li>NeoPixelは信号線の向きがある。テープの矢印の向きを確認。</li>
+        <li>USBの電流で足りているか。多数のLEDを全点灯すると不足する。</li>
+      </ol></div></details>
+      <details><summary>マイコンにプログラムが書き込めない</summary><div class="fix-b"><ol>
+        <li>USBケーブルが<strong>充電専用</strong>でないか。データ通信対応品に替える。</li>
+        <li>ドライバ（CP210x / CH340 など）が入っているか。</li>
+        <li>シリアルモニタを開いたままだとポートが掴まれて書き込めないことがある。閉じる。</li>
+        <li>ボード種別・ポートの選択が合っているか。</li>
+        <li>書き込み時にBOOTボタンを押し続ける必要があるボードもある。</li>
+      </ol></div></details>
+      <details><summary>コードを壊した / 前の状態に戻したい</summary><div class="fix-b"><ol>
+        <li>Gitでコミットしてあるなら戻せる。まず <code>git status</code> と <code>git log</code> で現在地を確認。</li>
+        <li>コミットしていない変更を捨てるなら <code>git restore &lt;file&gt;</code>。</li>
+        <li><strong>まだGitを使っていないなら、今すぐ始める。</strong>これは学習コストではなく保険料。</li>
+      </ol></div></details>
+      <details><summary>何を作っていたか分からなくなった / やる気が切れた</summary><div class="fix-b"><ol>
+        <li>実装計画の「完了条件（DoD）」を見る。次に満たすべき1行だけを見る。</li>
+        <li>15分でできる最小の作業に切り分ける。カードを1枚作る、UIDを1個登録する、でよい。</li>
+        <li>人に見せる。反応が返ってくると再点火しやすい。</li>
+        <li>制作過程の写真を見返す。進んだ量が可視化される。</li>
+      </ol></div></details>
+      <details><summary>予算が足りなくなった</summary><div class="fix-b"><ol>
+        <li>Phase 1（リーダー＋シール）だけで作品は成立する。Phase 2以降は「質の向上」であって必須ではない。</li>
+        <li>スピーカー・PCは手持ちで代用。箱は段ボール。ここに金をかけるのは最後。</li>
+        <li>近所のファブ施設・大学の工房を調べる。設備を買わずに使える場合がある。</li>
+      </ol></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">05 — GLOSSARY</span>
+      <h2>用語辞典</h2>
+      <p class="sec-note">解説記事を読んでいて手が止まる原因のほとんどは、知らない単語です。ここで先回りしておきます。</p>
+    </div>
+    <input class="search" id="gq" type="search" placeholder="用語を検索" aria-label="用語を検索" style="margin-bottom:18px; max-width:340px;">
+    <dl class="gl" id="glossary"></dl>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">06 — TOOLBOX</span>
+      <h2>道具箱</h2>
+      <p class="sec-note">迷ったときに開く場所のリスト。ブックマークしておくと調べ物が速くなります。</p>
+    </div>
+    <div class="tools">
+      <div class="tool">
+        <h3>Buy / パーツを買う</h3>
+        <ul>
+          <li><a href="https://akizukidenshi.com/" target="_blank" rel="noopener">秋月電子通商</a> — 安い・種類が多い</li>
+          <li><a href="https://www.switch-science.com/" target="_blank" rel="noopener">スイッチサイエンス</a> — 解説が丁寧</li>
+          <li><a href="https://www.marutsu.co.jp/" target="_blank" rel="noopener">マルツ</a> — 実店舗もある</li>
+          <li><a href="https://www.monotaro.com/" target="_blank" rel="noopener">モノタロウ</a> — 工具・資材</li>
+        </ul>
+      </div>
+      <div class="tool">
+        <h3>Learn / 学ぶ</h3>
+        <ul>
+          <li><a href="https://developer.mozilla.org/ja/docs/Web" target="_blank" rel="noopener">MDN Web Docs</a> — Web技術の一次資料</li>
+          <li><a href="https://learn.adafruit.com/" target="_blank" rel="noopener">Adafruit Learn</a> — 電子工作の教科書（英語）</li>
+          <li><a href="https://learn.sparkfun.com/tutorials" target="_blank" rel="noopener">SparkFun Tutorials</a> — 基礎から丁寧（英語）</li>
+          <li><a href="https://learningmusic.ableton.com/ja/" target="_blank" rel="noopener">Ableton Learning Music</a> — 音楽理論を触って学ぶ</li>
+        </ul>
+      </div>
+      <div class="tool">
+        <h3>Try / 試す（無料・実物不要）</h3>
+        <ul>
+          <li><a href="https://wokwi.com/" target="_blank" rel="noopener">Wokwi</a> — ESP32/Arduinoをブラウザで動かす</li>
+          <li><a href="https://www.tinkercad.com/circuits" target="_blank" rel="noopener">Tinkercad Circuits</a> — 回路シミュレータ</li>
+          <li><a href="https://tonejs.github.io/" target="_blank" rel="noopener">Tone.js</a> — Web上の音楽フレームワーク</li>
+          <li><a href="https://p5js.org/" target="_blank" rel="noopener">p5.js</a> — 絵と音のスケッチ</li>
+        </ul>
+      </div>
+      <div class="tool">
+        <h3>Make / つくる</h3>
+        <ul>
+          <li><a href="https://inkscape.org/ja/" target="_blank" rel="noopener">Inkscape</a> — 無料のベクター作図（カード印刷）</li>
+          <li><a href="https://www.blender.org/" target="_blank" rel="noopener">Blender</a> — 3D／レンダリング</li>
+          <li><a href="https://www.autodesk.co.jp/products/fusion-360/" target="_blank" rel="noopener">Fusion 360</a> — 機構設計CAD（個人利用枠あり）</li>
+          <li><a href="https://fablabjapan.org/" target="_blank" rel="noopener">FabLab Japan</a> — 近所の工房を探す</li>
+        </ul>
+      </div>
+      <div class="tool">
+        <h3>Rules / 権利とルール</h3>
+        <ul>
+          <li><a href="https://www.bunka.go.jp/seisaku/chosakuken/" target="_blank" rel="noopener">文化庁 著作権</a></li>
+          <li><a href="https://creativecommons.jp/licenses/" target="_blank" rel="noopener">クリエイティブ・コモンズ</a></li>
+          <li><a href="https://www.tele.soumu.go.jp/j/sys/equ/tech/" target="_blank" rel="noopener">総務省 技適マーク</a></li>
+          <li><a href="https://choosealicense.com/" target="_blank" rel="noopener">Choose a License</a></li>
+        </ul>
+      </div>
+      <div class="tool">
+        <h3>Show / 発表する</h3>
+        <ul>
+          <li><a href="https://protopedia.net/" target="_blank" rel="noopener">ProtoPedia</a> — 作品を記録・公開する</li>
+          <li><a href="https://elchika.com/" target="_blank" rel="noopener">elchika</a> — 電子工作作品の投稿</li>
+          <li><a href="https://makezine.jp/" target="_blank" rel="noopener">Make: Japan</a> — Maker Faire 情報</li>
+          <li><a href="https://gamemarket.jp/" target="_blank" rel="noopener">ゲームマーケット</a> — アナログゲームの祭典</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>進捗はこのブラウザの中だけに保存されます</strong>（localStorage）。別のPCやシークレットウィンドウでは引き継がれません。</p>
+    <p>外部リンクは執筆時点で存在を確認した公式・定番サイトを中心に選んでいますが、各ページの内容と最新の可用性は個別に未検証です。リンク切れがあれば同名で検索してください。</p>
+    <p class="mono" style="margin-top:18px; font-size:11px; letter-spacing:.1em;">MIXTURE CIRCLE / LEARNING DESK — 2026</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+var TRACKS=[
+ {k:"sound",  code:"SOUND",  name:"音のしくみ",       sub:"音響と音楽の原理",       v:"--c-sound"},
+ {k:"synth",  code:"SYNTH",  name:"コードで音を鳴らす", sub:"Web Audio / Tone.js",  v:"--c-synth"},
+ {k:"code",   code:"CODE",   name:"プログラミング",     sub:"JavaScript と開発の道具", v:"--c-code"},
+ {k:"circuit",code:"CIRCUIT",name:"電子工作",          sub:"電気・部品・マイコン",    v:"--c-circuit"},
+ {k:"signal", code:"SIGNAL", name:"通信とRFID",        sub:"カードを読む技術",       v:"--c-signal"},
+ {k:"craft",  code:"CRAFT",  name:"工作と筐体",         sub:"手を動かして形にする",    v:"--c-craft"},
+ {k:"design", code:"DESIGN", name:"デザインと体験",     sub:"伝わる形をつくる",       v:"--c-design"},
+ {k:"release",code:"RELEASE",name:"世に出す",          sub:"権利・記録・発表",       v:"--c-release"}
+];
+
+var PHASES=[
+ {n:0,tag:"PHASE 0",when:"第1週 / 0円",   t:"紙とキーボードで面白さを確かめる", d:"ハードは後回し。音とゲーム進行だけを先に作り、友人に遊んでもらって手応えを見る。"},
+ {n:1,tag:"PHASE 1",when:"第2〜3週",      t:"RFID化して「箱」にする",        d:"リーダーが届いたらUIDを登録し、段ボールで箱を作る。企画書のコア体験がそのまま動く状態へ。"},
+ {n:2,tag:"PHASE 2",when:"第4〜6週",      t:"演出と音質を上げる",            d:"スピーカーを組み込み、ここで初めて電子工作へ。LEDは壊れても作品が止まらない安全な入口。"},
+ {n:3,tag:"PHASE 3",when:"第7〜8週 / 0円", t:"磨いて、世に出す",              d:"10人でプレイテスト、ルールを1枚に圧縮、撮影と記録、そして公開。"}
+];
+
+// t:track  s:step  p:phase(0-3)  m:分  lv:難易度1-3  w:学ぶこと  y:この作品への効き方  d:ミニ課題  l:[[label,url]]
+var L=[
+/* ===== SOUND ===== */
+{t:"sound",p:0,m:20,lv:1,ti:"音は空気の振動である",
+ w:"音の正体は空気の圧力の波。1秒間の振動回数＝周波数（Hz）が音の高さに、波の大きさ＝振幅が音量になる。波の形（波形）が音色を決める。",
+ y:"「音を作る」とは波を作ること。この一点が分かると、シンセサイザーの設定画面が意味のあるものに見え始める。",
+ d:"身近な音を3つ選び、高い/低い、大きい/小さい、鋭い/丸いで分類してみる。何が違うのか言葉にする。",
+ l:[["MDN Web Audio 概念","https://developer.mozilla.org/ja/docs/Web/API/Web_Audio_API/Basic_concepts_behind_Web_Audio_API"]]},
+{t:"sound",p:0,m:25,lv:1,ti:"音の高さと音程 — オクターブの正体",
+ w:"周波数が2倍になると1オクターブ上がる。1オクターブは12の半音に等分され、隣どうしの比率は一定（12平均律）。",
+ y:"プログラムで音程を扱うとき、音名（C4, A4）と周波数（440Hz）を行き来する必要が出る。ここを知らないと数字が意味不明な呪文になる。",
+ d:"A4=440Hz として、A5・A3 の周波数を計算する。次に C4 が何Hzか調べて、なぜその値なのか説明してみる。",
+ l:[["musictheory.net","https://www.musictheory.net/"]]},
+{t:"sound",p:0,m:30,lv:2,ti:"スケールとキー — 「濁らない」を仕組みで作る",
+ w:"12個の音から数個を選んだ集合がスケール（音階）。ペンタトニック（5音）は特に「どう重ねても不協和になりにくい」性質を持つ。",
+ y:"この作品の最大のリスクは「何を入れても不快な音になる」こと。全カードの音を同じキー・同じスケールに揃えるだけで、破綻の大半が消える。設計上いちばん費用対効果の高い知識。",
+ d:"Cマイナー・ペンタトニック（C, E♭, F, G, B♭）の5音だけを鳴らすプログラムを書き、ランダムに同時に鳴らしても不快にならないことを耳で確認する。",
+ l:[["Ableton Learning Music","https://learningmusic.ableton.com/ja/"]]},
+{t:"sound",p:0,m:25,lv:1,ti:"リズム・BPM・拍子",
+ w:"BPM＝1分間の拍数。4拍子は4拍で1小節。1拍をさらに分割すると8分音符・16分音符になり、16分割のマス目が「ステップ」になる。",
+ y:"企画書の「基礎ビート」「拍頭から音が追加」を実装するための座標系そのもの。BPM120なら1拍=0.5秒、1小節=2秒と即答できる状態を作る。",
+ d:"BPM 80・100・140 それぞれで、1拍・1小節・16分音符1個の長さを秒で計算する。手を叩いて体感と合わせる。"},
+{t:"sound",p:1,m:30,lv:2,ti:"音色の正体 — 倍音とエンベロープ",
+ w:"同じ高さでもピアノとギターが違って聞こえるのは、倍音の構成と、音量の時間変化（ADSR：立ち上がり・減衰・持続・余韻）が違うから。",
+ y:"カードの「楽器」を音で表現する作業は、実質この2つを設計すること。ピアノらしさ＝速い立ち上がりと長い減衰、といった具合に翻訳できるようになる。",
+ d:"シンセで同じ音程・同じ波形のまま、ADSRだけを変えて「打楽器っぽい音」と「弦楽器っぽい音」を作り分ける。",
+ l:[["Ableton Learning Synths","https://learningsynths.ableton.com/ja/"]]},
+{t:"sound",p:1,m:40,lv:2,ti:"コードとハーモニー",
+ w:"3つ以上の音の重なりがコード。明るい（メジャー）／暗い（マイナー）の違いは音の間隔で決まる。コードの並び（進行）が曲の空気を作る。",
+ y:"複数プレイヤーの音が同時に鳴るこの作品は、常に「偶然のコード」が生まれ続ける装置。どんな重なりが起きうるかを予測できると、素材の設計が変わる。",
+ d:"Cマイナーのコード（C, E♭, G）を鳴らし、1音だけ変えて響きがどう変わるか10パターン試す。"},
+{t:"sound",p:1,m:30,lv:2,ti:"ジャンルの正体を分解する",
+ w:"ジャンルは音色だけでなく、リズムの型・強拍の置き方・音の詰め方・微妙なタイミングのズレ（グルーヴ）の総体。",
+ y:"企画書の「ジャンル性格」をプログラムに落とすには、雰囲気を具体的なパラメータに翻訳する必要がある。ジャズ＝裏拍とスウィング、ロック＝8分の刻みと強い頭、といった変換表を自分で作る作業。",
+ d:"4ジャンル（ジャズ／ロック／クラシック／エレクトロ）について、①リズムの分割 ②強拍の位置 ③音色の特徴 を1行ずつ書き出し、変換表を作る。"},
+{t:"sound",p:2,m:35,lv:3,ti:"ミキシングの基礎 — 6つ同時に鳴っても聞こえる作り",
+ w:"音量バランス、周波数帯の住み分け（低域はベース、中域はコード、高域は装飾）、定位（左右）、そして「引き算」の発想。",
+ y:"最大6パートが同時に鳴る作品。全部を大きくすると全部が聞こえなくなる。パートごとの帯域と音量に役割分担を与えることが、体験の質を直接決める。",
+ d:"3パート同時再生の状態で、各パートに帯域フィルターをかけて住み分けを作り、かける前と後を聴き比べる。"},
+
+/* ===== SYNTH ===== */
+{t:"synth",p:0,m:20,lv:1,ti:"ブラウザで音を出す、最小のコード",
+ w:"AudioContext を作り、オシレーターを繋いで start する。20行ほどで音は出る。ブラウザは「ユーザー操作の後」でないと音を鳴らせないルールがある。",
+ y:"この作品の音は全部ここから始まる。最初の一音が出た瞬間から開発が始まる。",
+ d:"HTMLファイルを1つ作り、ボタンを押すと440Hzのサイン波が1秒鳴るページを作る。",
+ l:[["MDN Web Audio API","https://developer.mozilla.org/ja/docs/Web/API/Web_Audio_API"],["MDN OscillatorNode","https://developer.mozilla.org/ja/docs/Web/API/OscillatorNode"]]},
+{t:"synth",p:0,m:40,lv:2,ti:"Web Audio の考え方 — ノードを繋ぐ",
+ w:"音源ノード → エフェクトノード → 音量ノード → 出力、という「配線図」でオーディオを組み立てる。エフェクターを繋ぐのと同じ発想。",
+ y:"楽器ごとに独立した音量つまみが必要になる。ノードグラフの考え方があれば「パートごとのフェーダー」を素直に実装できる。",
+ d:"オシレーター → GainNode → destination を繋ぎ、スライダーで音量を変えられるページを作る。",
+ l:[["MDN AudioNode","https://developer.mozilla.org/ja/docs/Web/API/AudioNode"]]},
+{t:"synth",p:0,m:35,lv:3,ti:"★ なぜ setInterval では音楽が作れないのか",
+ w:"JavaScript のタイマーは数ミリ秒〜数十ミリ秒ずれる。音楽ではこのズレが致命傷になる。正解は「オーディオ専用の時計を使い、少し先の時刻に発音を予約する」方式。",
+ y:"この作品の技術的な心臓部。企画書の「テンポ同期の精度は必須」が実装レベルで何を意味するかが、この1レッスンに凝縮されている。ここを飛ばすと、作った後で全部書き直すことになる。",
+ d:"setInterval でメトロノームを作り、数分放置してズレを体感する。次に AudioContext.currentTime を使った予約方式で作り直し、ズレないことを確認する。",
+ l:[["MDN currentTime","https://developer.mozilla.org/ja/docs/Web/API/BaseAudioContext/currentTime"]]},
+{t:"synth",p:0,m:45,lv:2,ti:"Tone.js 入門 — Transport という時計",
+ w:"Web Audio の上に乗る音楽用ライブラリ。Transport（全体の時計）、Synth（音源）、Loop / Sequence（繰り返し）という3つを覚えれば基礎ビートは作れる。",
+ y:"予約スケジューリング・BPM管理・拍への吸着を、自前実装せずに任せられる。プロトタイプの開発速度が数倍変わる。",
+ d:"Tone.js で BPM を変えられる4拍子のドラムループを作り、再生中にBPMを変えても崩れないことを確認する。",
+ l:[["Tone.js","https://tonejs.github.io/"],["Tone.js Docs","https://tonejs.github.io/docs/"]]},
+{t:"synth",p:1,m:50,lv:3,ti:"シーケンサーを作る — 拍頭への吸着",
+ w:"Tone.Sequence / Tone.Part でパターンを組み、@1m（次の小節頭）のような指定で発音開始を量子化（クオンタイズ）する。",
+ y:"企画書⑤「投入の次の拍頭から音が追加される」の直接の実装。押した瞬間に鳴らすのは簡単だが、それでは音楽にならない。",
+ d:"キーを押すと「次の小節の頭」からループが始まるプログラムを書く。押すタイミングを変えても、開始位置が揃うことを確認する。"},
+{t:"synth",p:1,m:35,lv:2,ti:"音を重ねる — トラック管理とゲイン制御",
+ w:"パートごとに独立したチェーン（音源＋音量）を持ち、配列やMapで管理する。合計音量が上がりすぎないよう、パート数に応じて自動で下げる。",
+ y:"6人が同時に投入する作品。音が増えるたびに歪む・うるさくなるのを防ぐには、この設計が要る。",
+ d:"1〜6パートを順に追加していき、合計の音量が一定に保たれるロジックを実装する。"},
+{t:"synth",p:2,m:30,lv:2,ti:"エフェクト — 空間と質感",
+ w:"リバーブ（残響）、ディレイ（やまびこ）、フィルター（帯域の削り）、ディストーション（歪み）。かけすぎないことが最大のコツ。",
+ y:"「同じ部屋で鳴っている感」はリバーブが作る。バラバラの楽器を1つの空間にまとめる接着剤になる。",
+ d:"全パートを1つのリバーブに通し、かけた場合とかけない場合を聴き比べる。"},
+{t:"synth",p:2,m:30,lv:2,ti:"音源ファイルを使う（サンプル方式）",
+ w:"Tone.Player / Tone.Sampler で音声ファイルを読み込んで鳴らす。読み込み完了を待つ処理、ファイル形式、容量の考え方。",
+ y:"合成音では出せないリアルさが必要になったパートを差し替えるとき使う。ただしBPM変更への追従（タイムストレッチ）という難題が付いてくることを理解した上で採用する。",
+ d:"1つのドラム音源を読み込んでループ再生し、BPMを変えたときに何が起きるか観察する。",
+ l:[["Freesound","https://freesound.org/"]]},
+{t:"synth",p:0,m:15,lv:1,ti:"音が出ないときのチェックリストを自分で作る",
+ w:"よくある原因：ユーザー操作前の再生ブロック、AudioContext が suspended、出力先の間違い、パスのtypo、音量ゼロ。",
+ y:"制作中に何十回も遭遇する。毎回ゼロから調べていると時間が溶ける。自分用のチェックリストが最強の時短ツールになる。",
+ d:"実際に自分が詰まった原因をメモに追記していく。5個たまったら立派なチェックリスト。"},
+
+/* ===== CODE ===== */
+{t:"code",p:0,m:30,lv:1,ti:"HTML / CSS / JavaScript の役割分担",
+ w:"HTMLが構造、CSSが見た目、JavaScriptが動き。1つのファイルに全部書くこともできるし、分けることもできる。",
+ y:"この作品の操作画面（BPM選択・残り時間・鳴っているパートの表示）は全部この3つで作る。",
+ d:"1つのHTMLファイルに、ボタンを押すと画面の文字が変わるページを作る。",
+ l:[["MDN Web 技術","https://developer.mozilla.org/ja/docs/Web"]]},
+{t:"code",p:0,m:60,lv:1,ti:"JavaScript の基本文法",
+ w:"変数、条件分岐、繰り返し、関数、配列、オブジェクト。この6つで書けることが9割。",
+ y:"すべての実装の土台。ここが曖昧なままだとAIに書かせたコードも読めない。",
+ d:"「1〜100のうち3の倍数だけを配列に集めて表示する」を、何も見ずに書けるようにする。",
+ l:[["MDN JavaScript ガイド","https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide"]]},
+{t:"code",p:0,m:40,lv:2,ti:"データ設計 — cards.json をどう作るか",
+ w:"配列とオブジェクトで現実のものを表現する方法。IDをキーにした検索（Map）。JSONという形式。",
+ y:"24枚のカードそれぞれに「UID・楽器・ジャンル・音の設定」を持たせる。この設計を最初に間違えると、カードを増やすたびに苦しむことになる。",
+ d:"カード1枚を表すオブジェクトを設計し、24枚ぶんの配列を作る。UIDから1件を引く関数も書く。"},
+{t:"code",p:0,m:30,lv:1,ti:"イベント駆動 — キー入力を受け取る",
+ w:"「〜されたら〜する」という書き方。addEventListener、keydown、イベントオブジェクト。",
+ y:"HIDタイプのRFIDリーダーは、OSからキーボードに見える。つまり<strong>カード投入の検知＝キー入力の受信</strong>。ここを理解すれば、リーダーが届く前から本番と同じコードが書ける。",
+ d:"押されたキーを画面に表示し続けるページを作る。連続入力をEnterで区切って1件として扱う処理も書く。",
+ l:[["MDN keydown","https://developer.mozilla.org/ja/docs/Web/API/Element/keydown_event"]]},
+{t:"code",p:0,m:30,lv:1,ti:"開発者ツールを使い倒す",
+ w:"F12で開くパネル。Console でエラーとログを見る、Sources でブレークポイントを置いて止める、Elements で表示を確認する。",
+ y:"「動かない」と言い続ける時間と、原因を特定する時間の差は、ほぼこのツールを使えるかどうかで決まる。",
+ d:"わざとエラーを起こし、Console のエラーメッセージから該当行にジャンプする流れを一度やる。"},
+{t:"code",p:0,m:50,lv:2,ti:"Git と GitHub — 壊しても戻れる安心",
+ w:"変更履歴を記録し、いつでも過去に戻れるようにする仕組み。add / commit / log / restore の4つでまず十分。",
+ y:"試行錯誤の量がそのまま作品の質になる。「壊したら戻せない」状態だと、怖くて大胆な実験ができなくなる。<strong>これは学習コストではなく保険料</strong>。",
+ d:"このプロジェクトのフォルダで git init し、今日の作業をコミットする。明日また1コミット。それを続ける。",
+ l:[["Pro Git（日本語）","https://git-scm.com/book/ja/v2"],["GitHub","https://github.com/"]]},
+{t:"code",p:1,m:35,lv:2,ti:"状態管理 — 「いま何が鳴っているか」を1か所に持つ",
+ w:"アプリの現在の状況（BPM、残り時間、鳴っているパートの一覧）を1つのオブジェクトにまとめ、変更はそこ経由でのみ行う設計。",
+ y:"複数の場所から音を足したり止めたりする作品では、状態が散らばると必ずバグる。「誰も止めていないのに音が止まる」の原因はほぼこれ。",
+ d:"state オブジェクトを作り、パートの追加・削除を必ずその中を書き換える関数経由にする。"},
+{t:"code",p:0,m:20,lv:1,ti:"AIにコードを書かせるときのコツ",
+ w:"曖昧な依頼は曖昧な結果になる。①何を作るか ②入力と出力 ③制約 ④動作確認の方法、を書く。エラーは全文を貼る。",
+ y:"知識ゼロから作る以上、AIは強力な相棒になる。ただし<strong>出てきたコードを読めないと、動かないときに詰む</strong>。書かせるのと理解するのは両輪。",
+ d:"同じ機能を、雑な指示と丁寧な指示で書かせて比べる。差がどこから来たか言葉にする。"},
+{t:"code",p:2,m:25,lv:2,ti:"読みやすいコードを保つ",
+ w:"意味の分かる名前をつける、関数は1つのことだけをする、マジックナンバーを定数にする、コメントは「なぜ」を書く。",
+ y:"3週間後の自分は他人。Phase 2でLED連携を足すとき、読めるコードかどうかで作業時間が倍変わる。",
+ d:"自分が2週間前に書いたコードを開き、名前が分かりにくい変数を3つ直す。"},
+
+/* ===== CIRCUIT ===== */
+{t:"circuit",p:2,m:30,lv:1,ti:"電気とは何か — 電圧・電流・抵抗",
+ w:"電圧(V)は押す力、電流(A)は流れる量、抵抗(Ω)は流れにくさ。水と水路のたとえで直感を作る。",
+ y:"Phase 2 で電子工作に入る前の、最初の一歩。この3つの関係が分かっていないと、なぜ部品が壊れたのかが永遠に分からない。",
+ d:"手元のUSB充電器やモバイルバッテリーの表示を見て、V と A の数字を読む。何が書いてあるか説明する。",
+ l:[["SparkFun: Voltage, Current, Resistance","https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law"]]},
+{t:"circuit",p:2,m:30,lv:1,ti:"オームの法則と、LEDに抵抗が必要な理由",
+ w:"V = I × R。LEDは電流を制限する仕組みを持たないため、そのまま繋ぐと過大な電流が流れて焼き切れる。適切な抵抗値の計算方法。",
+ y:"初心者が部品を壊す原因の第1位。1回計算を通しておけば、その後ずっと壊さずに済む。",
+ d:"5V電源・順方向電圧2V・電流20mAのLEDに必要な抵抗値を計算する。答えの根拠を説明できるようにする。"},
+{t:"circuit",p:2,m:40,lv:1,ti:"部品カタログ — 何が何をするのか",
+ w:"抵抗（流れを制限）、コンデンサ（電気をためる・ノイズを吸う）、ダイオード（一方通行）、LED、スイッチ、トランジスタ（小さい信号で大きい電流を制御）、レギュレータ（電圧を作る）。",
+ y:"回路図や作例を読むとき、記号が何の部品か分かるだけで理解速度が変わる。買い物のときも迷わない。",
+ d:"秋月電子のサイトで各部品のカテゴリを開き、値段と見た目を確認する。「これは何をする部品か」を1行で書く。",
+ l:[["秋月電子","https://akizukidenshi.com/"]]},
+{t:"circuit",p:2,m:25,lv:1,ti:"ブレッドボードの使い方",
+ w:"はんだ付けなしで回路を組める板。穴が内部でどう繋がっているか（縦の列、電源レール）を理解するのが全て。",
+ y:"試作の速度が段違いになる。失敗しても差し替えるだけ。Phase 2 の実験はここで全部やる。",
+ d:"LEDと抵抗をブレッドボードで点灯させる。次に配置を変えて、同じ回路を別の場所で組む。"},
+{t:"circuit",p:2,m:30,lv:2,ti:"マイコンとは何か — ESP32 / Arduino",
+ w:"手のひらサイズのコンピュータ。プログラムを書き込むと、電源を入れるだけで動き続ける。ピン（端子）を通じて外の世界と繋がる。",
+ y:"LED演出の頭脳。ESP32はWi-Fi・Bluetooth内蔵で価格も手頃、PCとの連携もしやすい。",
+ d:"ESP32のピン配置図を見て、電源ピン・GNDピン・信号ピンを見分けられるようにする。",
+ l:[["Arduino Docs","https://docs.arduino.cc/"],["Wokwi（シミュレータ）","https://wokwi.com/"]]},
+{t:"circuit",p:2,m:40,lv:1,ti:"Lチカ — 最初のプログラムを書き込む",
+ w:"開発環境の導入、ボード選択、ポート選択、書き込み。LEDを1秒ごとに点滅させる。",
+ y:"電子工作の「Hello World」。ここを通ると、あとは応用が続くだけになる。実物がなくても Wokwi で先に体験できる。",
+ d:"Lチカを動かす。次に点滅間隔を0.2秒に変え、書き込み直す。この往復ができれば入門は完了。"},
+{t:"circuit",p:2,m:35,lv:2,ti:"デジタルとアナログ、そしてPWM",
+ w:"デジタル出力はON/OFFの2択。明るさを変えるには、高速でON/OFFを切り替えて平均を作る（PWM）。デューティ比という考え方。",
+ y:"LEDをじわっと明るくする・拍に合わせて脈打たせる、という演出はすべてPWMで作る。",
+ d:"LEDの明るさを0→最大→0とゆっくり変化させる（フェード）プログラムを書く。"},
+{t:"circuit",p:2,m:40,lv:2,ti:"NeoPixel を光らせる",
+ w:"1本の信号線で数十〜数百個のフルカラーLEDを個別制御できるテープ。データの向き、電源容量、最初の1個目の扱い方。",
+ y:"円形に座るプレイヤーを囲む光の演出。ジャンルの色をそのまま光にできる。作品の見栄えが一段変わるパーツ。",
+ d:"10個のLEDを順番に点灯させる「流れる光」を作る。次に色をジャンル色4種で切り替える。",
+ l:[["Adafruit NeoPixel Überguide","https://learn.adafruit.com/adafruit-neopixel-uberguide"],["FastLED","https://fastled.io/"]]},
+{t:"circuit",p:2,m:35,lv:2,ti:"はんだ付け入門",
+ w:"こてを部品と基板の両方に当てて温め、はんだを流す。温度、時間、こて先の手入れ、換気。イモはんだの見分け方。",
+ y:"ブレッドボードは持ち運びで抜ける。展示に出すなら、いずれ必要になる技術。ただし<strong>Phase 1 では不要</strong>なので、焦って道具を買わないこと。",
+ d:"練習用基板でまず10箇所。きれいな富士山型になるまで繰り返す。",
+ l:[["SparkFun: How to Solder","https://learn.sparkfun.com/tutorials/how-to-solder-through-hole-soldering"]]},
+{t:"circuit",p:2,m:25,lv:2,ti:"テスターの使い方",
+ w:"電圧を測る、導通を確認する（ピーッと鳴る）、抵抗値を読む。この3つでほとんどの故障は切り分けられる。",
+ y:"「光らない」の原因が、電源が来ていないのか・断線なのか・部品の向きなのかを、推測ではなく測定で判断できるようになる。",
+ d:"電池の電圧を測る。次にジャンパワイヤの導通を確認し、わざと切れた線と比べる。"},
+{t:"circuit",p:2,m:30,lv:2,ti:"電源の話 — 5V / 3.3V と電流容量",
+ w:"USBは5V。ESP32の信号は3.3V。電圧が違う機器を繋ぐときの注意。USBポートから取れる電流には上限がある。",
+ y:"LEDを増やしたときに「急に暗くなる・リセットがかかる」の原因はほぼ電流不足。設計段階で見積もれると事故が減る。",
+ d:"使う予定のLEDの個数×1個あたりの最大電流を計算し、USBの供給能力と比べる。"},
+{t:"circuit",p:2,m:20,lv:1,ti:"壊さないための安全",
+ w:"電源の逆挿し、ショート（短絡）、静電気、極性の間違い。通電前に必ず配線を目視確認する習慣。",
+ y:"部品は安いが、壊すたびに数日待つことになる。待ち時間が制作のいちばんの敵。",
+ d:"「通電前チェックリスト」を5項目で作り、机に貼る。"},
+
+/* ===== SIGNAL ===== */
+{t:"signal",p:1,m:30,lv:2,ti:"RFID / NFC のしくみ",
+ w:"リーダーが電磁波を出し、その電力でカード側のICが起動して情報を返す。カードに電池が入っていない理由がこれ（パッシブタグ）。",
+ y:"この作品の入力装置そのもの。仕組みが分かると、読めない原因（距離・向き・金属）を自分で推理できるようになる。",
+ d:"スマホのNFC機能でNFCシールを読み、何が返ってくるか見る。カードを金属の上に置くと読めなくなることも確認する。"},
+{t:"signal",p:1,m:20,lv:1,ti:"周波数帯の違い — 125kHz と 13.56MHz",
+ w:"低周波（125kHz / EM4100系）と高周波（13.56MHz / MIFARE・NTAG・FeliCa系）は、まったく互換性がない別規格。",
+ y:"<strong>買い物で最も間違えやすい点</strong>。安いリーダーを買ったらシールが読めない、という事故がここで起きる。発注前に必ず確認する。",
+ d:"購入候補のリーダー商品ページで、対応周波数と対応カード種別を探して書き出す。"},
+{t:"signal",p:1,m:20,lv:1,ti:"UIDとは何か",
+ w:"タグ1枚ごとに固有の識別番号。書き換え不可（多くの場合）。データ領域に何か書き込まなくても、UIDだけで「どのカードか」は判別できる。",
+ y:"この作品はUIDだけで足りる。タグへの書き込みを覚える必要がない＝実装が大幅に簡単になる、という判断ができる。",
+ d:"NFCシール3枚のUIDを読み取り、すべて違うことを確認する。表計算に記録する。"},
+{t:"signal",p:1,m:25,lv:1,ti:"HIDって何？ — キーボードのふりをするデバイス",
+ w:"USB機器の分類の1つ。キーボードやマウスがこれ。HIDタイプのRFIDリーダーは、読み取ったUIDを「打ち込まれた文字」としてPCに送る。",
+ y:"<strong>この作品でRaspberry Piも配線もはんだ付けも不要にしている核心</strong>。ドライバ不要で、どのOSでも動き、プログラムからは keydown を拾うだけで済む。",
+ d:"リーダーが届いたらメモ帳を開いてかざす。文字が出れば動作確認は完了。この時点でアプリ側は何も変えなくていい。"},
+{t:"signal",p:1,m:25,lv:2,ti:"読み取り距離・アンテナ・金属の影響",
+ w:"読み取り距離はアンテナのサイズと出力で決まる。金属が近くにあると磁界が乱れて読めなくなる。カードの向きや貼り位置も影響する。",
+ y:"箱の設計を左右する。リーダーの周りに金属を置かない、シールの貼り位置を全カードで揃える、スロープの角度でカードの通過速度を調整する——すべてこの知識から出てくる。",
+ d:"リーダーの上でシールを動かし、読める範囲を実測して図に描く。その図を箱の設計図に反映する。"},
+{t:"signal",p:2,m:40,lv:3,ti:"シリアル通信と Web Serial",
+ w:"USB経由で文字列をやり取りする、いちばん基本的な通信。ブラウザから直接シリアルポートを開ける Web Serial API がある（Chrome系）。",
+ y:"Phase 2 で PC のアプリから ESP32 に「今、拍が来た」「ジャンル色は赤」と伝えるための道筋。Wi-Fiより設定が単純で、まずはこちらが堅い。",
+ d:"ESP32から1秒ごとに文字を送り、PC側のシリアルモニタで受け取る。次に逆方向（PC→ESP32）も試す。",
+ l:[["MDN Web Serial API","https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"]]},
+{t:"signal",p:3,m:40,lv:3,ti:"Wi-Fi・BLE・WebSocket",
+ w:"ESP32はWi-FiとBluetooth Low Energyを内蔵。WebSocketを使えば、ブラウザとマイコンが双方向にリアルタイム通信できる。",
+ y:"ケーブルをなくすと展示の見栄えが変わる。将来「2つの箱を繋ぐ」「スマホから操作する」といった拡張の土台にもなる。",
+ d:"ESP32をWi-Fiに繋ぎ、ブラウザからLEDのON/OFFを操作する。"},
+{t:"signal",p:2,m:25,lv:2,ti:"通信が動かないときの切り分け方",
+ w:"送る側・受ける側・経路のどこが悪いかを分けて考える。ループバック（送ったものを自分で受ける）で片側を潰す。ボーレート・文字コード・改行コードの不一致。",
+ y:"通信のバグは「どっちが悪いか分からない」から時間を食う。切り分けの型を持っていると、原因到達までの時間が半分以下になる。",
+ d:"わざとボーレートを片側だけ変えて、文字化けを再現する。原因と症状の対応を体で覚える。"},
+
+/* ===== CRAFT ===== */
+{t:"craft",p:1,m:30,lv:1,ti:"段ボールを「構造」として使う",
+ w:"段ボールには目（波の向き）がある。目に沿って折ると曲がり、直交方向には強い。三角形とリブで強度を出す考え方。",
+ y:"箱は何十回もカードを投入され、持ち運ばれる。「とりあえず貼った箱」と「構造を考えた箱」では寿命が桁違い。しかも材料費は同じ0円。",
+ d:"同じ大きさの箱を2つ作る。片方は補強なし、片方は内側に三角のリブを入れる。上から押して差を体感する。"},
+{t:"craft",p:1,m:25,lv:1,ti:"正確に測って、正確に切る",
+ w:"けがき（線を引く）、直角の出し方、カッターは刃を新しく・軽く何度も引く、定規は金属を使う。",
+ y:"1mmの誤差が積み重なると、カードが引っかかる箱になる。投入口はミリ単位の世界。",
+ d:"10cm角の正方形を5枚切り出し、重ねてズレを測る。ズレが1mm以内になるまで練習する。"},
+{t:"craft",p:1,m:25,lv:1,ti:"接着の選び方",
+ w:"でんぷんのり（紙、乾くと弱い）、両面テープ（速い、剥がれる）、木工用ボンド（強い、乾燥待ち）、グルーガン（速くて強い、熱に弱い）、瞬間接着剤（点で強い、脆い）。",
+ y:"「あとで直したい部分」と「絶対に外れてほしくない部分」で接着剤を使い分けると、修理可能な作品になる。",
+ d:"同じ材料を3種類の接着剤で貼り、引っ張って強度を比べる。"},
+{t:"craft",p:1,m:40,lv:2,ti:"展開図を描く — 箱を設計する",
+ w:"立体を平面に開く。のりしろ、板厚の逃がし、内寸と外寸の違い。紙で1/1の型紙を作ってから本番材料を切る。",
+ y:"実装計画の箱（傾斜スロープ＋リーダー固定＋カード受け）を、行き当たりばったりでなく設計してから作れるようになる。",
+ d:"リーダーの実寸を測り、スロープ角度を決めて、箱の展開図を方眼紙に描く。まず紙で1つ試作する。"},
+{t:"craft",p:2,m:30,lv:2,ti:"仕上げ — 段ボールに見えなくする",
+ w:"紙貼り、下地処理（ジェッソ等）、塗装、マスキング、エッジの処理。安い素材でも仕上げで印象は激変する。",
+ y:"「学生の工作」と「作品」を分けるのは、ほぼ仕上げ。展示や発表に出すなら投資対効果が最も高い工程。",
+ d:"端材に3種類の仕上げ（無処理／紙貼り／塗装）を施し、並べて比べる。"},
+{t:"craft",p:2,m:35,lv:2,ti:"音のための箱づくり",
+ w:"箱は共鳴する。低音は箱鳴りを利用でき、ビビリ音は詰め物で殺す。スピーカーの向きと開口部の位置で聞こえ方が変わる。",
+ y:"企画書の「箱の音響性能は最低限確保する」の中身。円になった全員に均等に届くことが、この作品では体験の質そのもの。",
+ d:"スピーカーを箱の内側／外側／下向きに置き替えて、円の各位置での聞こえ方を比べる。"},
+{t:"craft",p:3,m:40,lv:2,ti:"3Dプリンタ・レーザーカッターに触れる",
+ w:"データから物を作る機械。それぞれの得意・不得意、材料、費用感。ファブ施設や大学の工房で、買わずに使える場合が多い。",
+ y:"いまの作品には必須ではないが、次の作品で「段ボールでは無理」に当たったときの選択肢になる。存在を知っているかどうかで、作れるものの範囲が変わる。",
+ d:"近所で使える施設を調べ、利用料金と予約方法をメモする。",
+ l:[["FabLab Japan","https://fablabjapan.org/"],["Printables","https://www.printables.com/"]]},
+{t:"craft",p:3,m:60,lv:3,ti:"CAD入門 — 寸法で考える",
+ w:"スケッチ→押し出し→組み立て、という基本の流れ。パラメトリック（数値を変えると形が変わる）の考え方。",
+ y:"「だいたいこのくらい」で作るのをやめ、「この部品は幅48mmだからこう」と設計できるようになる。作り直しの回数が激減する。",
+ d:"RFIDリーダーを収める固定具を、寸法を測ってCADで描く（作らなくてよい。描くだけで設計の解像度が上がる）。",
+ l:[["Fusion 360","https://www.autodesk.co.jp/products/fusion-360/"]]},
+{t:"craft",p:2,m:25,lv:2,ti:"壊れにくくする設計",
+ w:"ケーブルの引っ張りを本体で受ける（ストレインリリーフ）、力が集中する角を丸める、消耗する部分を交換可能にする。",
+ y:"展示中に壊れるのは、たいてい「人が触る部分」と「ケーブルの根元」。設計時に手を打てば当日の事故が減る。",
+ d:"自分の箱で「引っ張られたら壊れる場所」を3つ挙げ、対策を1つずつ入れる。"},
+
+/* ===== DESIGN ===== */
+{t:"design",p:1,m:35,lv:1,ti:"色のきほん — 色相・明度・彩度",
+ w:"色は3つの軸で表せる。配色は「揃える軸」と「変える軸」を決めることで作れる。コントラスト比という考え方。",
+ y:"企画書は5ジャンルに色を割り当てている。「深い青」「赤黒」を実際の色として決める作業に、根拠を持てるようになる。",
+ d:"4ジャンルの色を実際に決め、明度と彩度を揃えて並べる。1色だけ浮いていないか確認する。",
+ l:[["Adobe Color","https://color.adobe.com/ja/create/color-wheel"]]},
+{t:"design",p:1,m:25,lv:2,ti:"色で意味を伝える",
+ w:"色は情報を運べる。ただし色だけに頼ると、色覚の違いや暗い場所で伝わらなくなる。形・模様・文字を併用する。",
+ y:"円の対面から見ても、暗い部屋でも、ジャンルが分かる必要がある。色＋模様＋線の質、という多重の手がかりを設計する。",
+ d:"4ジャンルのカードをグレースケールに変換して、それでも区別がつくか確認する。つかなければ模様を足す。"},
+{t:"design",p:1,m:35,lv:1,ti:"文字のきほん",
+ w:"書体の性格（明朝・ゴシック・装飾）、大きさの差（ジャンプ率）、字間と行間、和欧混植。",
+ y:"カード上の楽器名、箱の表示、説明書。全部この知識が効く。文字が読みにくいだけで作品の完成度は下がって見える。",
+ d:"同じ内容のカードを3種類の書体で作り、1m離れて読み比べる。"},
+{t:"design",p:1,m:30,lv:1,ti:"レイアウトの4原則",
+ w:"整列・近接・反復・対比。関係あるものは近づけ、無関係なものは離す。同じ役割のものは同じ扱いにする。",
+ y:"24枚のカードに一貫性を持たせるための原則。1枚ずつ気分で作ると、並べたときにバラバラに見える。",
+ d:"カード1枚のレイアウトを1つ決め、テンプレートにする。残り23枚は中身だけ差し替えて作る。"},
+{t:"design",p:1,m:35,lv:2,ti:"カードデザインの実際",
+ w:"企画書の原則「楽器が主役、背景が性格」を守る。視認距離から逆算した文字サイズ。裏面の統一。手に持ったときの情報量。",
+ y:"プレイヤーは数枚を手札に持ち、瞬時に選ぶ。迷う時間が長いとリズムに乗れず、体験が壊れる。",
+ d:"カードを4枚手に持って、0.5秒で「どれがピアノか」判断できるか自分でテストする。"},
+{t:"design",p:2,m:40,lv:2,ti:"アイコンと図像を描く",
+ w:"実物の特徴を削って、輪郭で伝える。線の太さを揃える。ベクター形式で描くと拡大しても劣化しない。",
+ y:"10種類の楽器を、統一感のある絵で表現する必要がある。写真では色数が多すぎてジャンル色が伝わらない。",
+ d:"Inkscapeでピアノとギターのアイコンを、同じ線の太さ・同じ余白で描く。",
+ l:[["Inkscape","https://inkscape.org/ja/"]]},
+{t:"design",p:0,m:40,lv:2,ti:"ゲームデザイン入門",
+ w:"ルール／目標／意思決定／フィードバックの4要素。勝敗のないゲームで「面白さ」を成立させるものは何か。",
+ y:"この作品は勝敗がない。だからこそ「次に何をすればいいか分かる」「自分の行動が効いたと感じる」の設計が生命線になる。",
+ d:"自分の企画で、プレイヤーが行う「意思決定」を全部書き出す。意外に少ないなら、増やす方法を考える。"},
+{t:"design",p:3,m:30,lv:2,ti:"プレイテスト — 観察する、説明しない",
+ w:"遊んでもらい、黙って見る。助け舟を出さない。詰まった箇所こそが設計の欠陥。感想より行動を記録する。",
+ y:"作者は自分の作品を客観視できない。10人に遊んでもらうと、自分では絶対に気づかない問題が3つは見つかる。",
+ d:"1人にルール説明なしで遊んでもらい、迷った瞬間をすべてメモする。口を出したくなるのを我慢する。"},
+{t:"design",p:1,m:30,lv:2,ti:"フィードバック設計 — 「効いた」と分かること",
+ w:"操作には必ず即座の反応を返す。音・光・振動・表示。0.1秒以内の反応は「自分がやった」と感じられる。",
+ y:"カードを入れてから次の小節頭まで最大2秒の空白がある。この間に何の反応もないと「壊れた？」と思われる。<strong>投入の瞬間に音か光で受領を返す設計が必須</strong>。",
+ d:"投入検知の瞬間に短いクリック音を鳴らす実装を入れ、ある場合とない場合で体験を比べる。"},
+{t:"design",p:3,m:30,lv:2,ti:"説明書を1枚に圧縮する",
+ w:"言葉を減らし、図で示す。手順は番号で。例外は書かない。30秒で読めるまで削る。",
+ y:"展示では説明する時間がない。初対面同士が遊ぶ作品なら、紙1枚で伝わることが体験の入口になる。",
+ d:"いまのルール説明を書き出し、文字数を半分にする。それをもう一度半分にする。"},
+
+/* ===== RELEASE ===== */
+{t:"release",p:0,m:35,lv:2,ti:"著作権の基本",
+ w:"創作物には自動的に権利が発生する。「フリー素材」にも条件がある。引用と転載の違い。個人利用と公開・展示の違い。",
+ y:"音素材・画像・フォントを外から持ってくる作品では避けて通れない。<strong>公開してから気づくと取り返しがつかない</strong>。",
+ d:"使う予定の素材を全部リストにし、それぞれの出典とライセンスを1行ずつ書く。書けないものは使わない。",
+ l:[["文化庁 著作権","https://www.bunka.go.jp/seisaku/chosakuken/"]]},
+{t:"release",p:0,m:30,lv:2,ti:"ライセンスを読めるようになる",
+ w:"CC BY / CC BY-SA / CC0 の違い、MITやApacheといったソフトウェアライセンス、「商用利用可」の意味、クレジット表記の書き方。",
+ y:"Tone.js のようなライブラリを使う時点で関係してくる。読めるようになると、使える素材の幅が一気に広がる。",
+ d:"Tone.js のライセンスを確認し、自分の作品で使う際に必要な対応を書き出す。",
+ l:[["クリエイティブ・コモンズ","https://creativecommons.jp/licenses/"],["Choose a License","https://choosealicense.com/"]]},
+{t:"release",p:1,m:30,lv:2,ti:"音楽と権利",
+ w:"既存曲のカバー、サンプリング、BGM利用。JASRAC等の管理団体の役割。自分で合成した音には権利問題がないこと。",
+ y:"実装計画で「合成音から始める」を選んだ理由の1つがこれ。<strong>自作の音は権利がクリア</strong>という利点は、公開・展示の段階で効いてくる。",
+ d:"自分の作品の音素材が、どこまで自作でどこから借り物かを線引きする。",
+ l:[["JASRAC","https://www.jasrac.or.jp/"]]},
+{t:"release",p:2,m:25,lv:2,ti:"技適と電波法",
+ w:"日本国内で電波を出す機器には技術基準適合証明（技適）が必要。マークのない海外製Wi-Fi/BLEモジュールを使うと違法になりうる。",
+ y:"ESP32を買うときに関係する。国内の正規流通品なら基本的に問題ないが、<strong>知らずに海外通販で買うと危ない</strong>。知っているかどうかの差。",
+ d:"購入候補のESP32ボードに技適マークがあるか、商品ページで確認する。",
+ l:[["総務省 技適マーク","https://www.tele.soumu.go.jp/j/sys/equ/tech/"]]},
+{t:"release",p:2,m:20,lv:2,ti:"電源とPSE",
+ w:"コンセントに挿すACアダプタ等は電気用品安全法（PSE）の対象。PSEマークのない安価なアダプタは避ける。",
+ y:"人が集まる場所で展示するなら、火災リスクは自分だけの問題ではなくなる。",
+ d:"手元のACアダプタにPSEマークがあるか確認する。",
+ l:[["経産省 電気用品安全法","https://www.meti.go.jp/policy/consumer/seian/denan/"]]},
+{t:"release",p:3,m:40,lv:2,ti:"作品を記録する — 写真と動画",
+ w:"光の当て方、背景の整理、水平を出す、動画は音を最優先。制作過程のスナップは<strong>その場でしか撮れない</strong>。",
+ y:"完成後に「制作過程の写真がない」と気づくのが定番の後悔。音の作品は、動画がないと何も伝わらない。今日から撮る。",
+ d:"今日の作業を3枚撮る。明日も3枚。これを毎日続ける。"},
+{t:"release",p:3,m:30,lv:2,ti:"ドキュメントを書く",
+ w:"READMEに書くこと（何か・どう動かすか・必要なもの）、制作記に書くこと（なぜそうしたか・何に失敗したか）。",
+ y:"失敗の記録は、次の作品でいちばん役に立つ資産になる。他人にとっても、成功譚より失敗譚のほうが価値がある。",
+ d:"実装計画の判断（なぜRaspberry Piを選ばなかったか）を、自分の言葉で200字にまとめる。"},
+{t:"release",p:3,m:25,lv:1,ti:"発表の場を知る",
+ w:"Maker Faire、大学祭、ゲームマーケット、ProtoPedia、SNS、コンテスト。それぞれ集まる人も反応も違う。",
+ y:"作って終わりにすると、次の作品の動機が生まれにくい。反応が返ってくる場所を1つ持っておくと、制作が続く。",
+ d:"応募・出展できそうな場を3つ調べ、締切をカレンダーに入れる。",
+ l:[["ProtoPedia","https://protopedia.net/"],["Make: Japan","https://makezine.jp/"],["ゲームマーケット","https://gamemarket.jp/"]]},
+{t:"release",p:3,m:30,lv:2,ti:"展示の実務",
+ w:"当日キット（予備カード、テープ、予備ケーブル、テスター）、設営時間、電源の確保、騒音環境での音量、来場者への声のかけ方。",
+ y:"作品が良くても、当日動かなければゼロ。特に音の作品は、会場の騒音で全く聞こえないという事故が起きる。",
+ d:"「当日持っていくもの」リストを作る。壊れたときの代替案も1行書く。"},
+{t:"release",p:3,m:25,lv:1,ti:"続ける仕組みをつくる",
+ w:"振り返り（何がうまくいき、何が失敗したか）、次に作りたいものリスト、道具と知識の棚卸し。",
+ y:"1つの作品で得た知識のうち、次に持ち越せるのは記録した分だけ。ここまでのトラックは全部、次の作品でも使える。",
+ d:"完成後に「次に作りたいもの」を3つ書く。今回学んだどの知識が使えるか、トラック名で紐づける。"}
+];
+
+var GLOSSARY=[
+ ["BPM","Beats Per Minute","1分間の拍数。テンポの単位。120なら1拍0.5秒。"],
+ ["小節","measure / bar","拍のまとまり。4拍子なら4拍で1小節。"],
+ ["クオンタイズ","quantize","発音のタイミングを拍のマス目に吸着させること。この作品の核。"],
+ ["スケール","scale","音階。使う音を限定することで、重ねても濁りにくくなる。"],
+ ["ペンタトニック","pentatonic","5音で構成される音階。どう重ねても破綻しにくい。"],
+ ["倍音","overtone","基本の音の整数倍の周波数成分。音色の正体。"],
+ ["ADSR","envelope","音量の時間変化。立ち上がり・減衰・持続・余韻の4段階。"],
+ ["オシレーター","oscillator","波を作る発振器。シンセの音源部分。"],
+ ["ゲイン","gain","音量。GainNodeで制御する。"],
+ ["リバーブ","reverb","残響。空間の広さを表現するエフェクト。"],
+ ["レイテンシ","latency","操作から音が出るまでの遅れ。"],
+ ["AudioContext","—","Web Audioの土台となるオブジェクト。専用の時計を持つ。"],
+ ["Tone.js","—","Web Audioの上に載る音楽用JavaScriptライブラリ。"],
+ ["Transport","—","Tone.jsの全体時計。BPMと再生位置を管理する。"],
+ ["サンプル","sample","録音された音声データ。合成音の対義語として使う。"],
+ ["タイムストレッチ","time-stretch","音の高さを変えずに長さだけ変える処理。難易度が高い。"],
+ ["RFID","—","電波でタグを読み取る技術の総称。"],
+ ["NFC","Near Field Communication","13.56MHz帯の近距離通信規格。スマホにも搭載。"],
+ ["UID","Unique ID","タグ固有の識別番号。この作品はこれだけで足りる。"],
+ ["パッシブタグ","—","電池を持たず、リーダーの電波から電力を得るタグ。"],
+ ["MIFARE / NTAG","—","13.56MHz帯のICチップの代表的な種類。"],
+ ["HID","Human Interface Device","キーボード等のUSB機器分類。HID対応リーダーは文字を打つ。"],
+ ["ドライバ","driver","OSが機器を扱うためのソフト。HID機器は不要な場合が多い。"],
+ ["シリアル通信","UART","1本の線で順番にデータを送る通信。マイコンの基本。"],
+ ["ボーレート","baud rate","シリアル通信の速度。送受で一致しないと文字化けする。"],
+ ["WebSocket","—","ブラウザとサーバが双方向にリアルタイム通信する仕組み。"],
+ ["電圧 / 電流 / 抵抗","V / A / Ω","電気の3要素。押す力／流れる量／流れにくさ。"],
+ ["オームの法則","V=IR","電圧・電流・抵抗の関係式。電子工作の基本公式。"],
+ ["GND","ground","電気の基準点。すべての回路の共通のゼロ。"],
+ ["PWM","Pulse Width Modulation","高速なON/OFFで平均的な出力を作る手法。LEDの明るさ制御など。"],
+ ["プルアップ / プルダウン","—","入力ピンの電位を安定させるための抵抗の入れ方。"],
+ ["ブレッドボード","breadboard","はんだ付けなしで回路を組める試作用の板。"],
+ ["マイコン","microcontroller","小型のコンピュータ。ESP32やArduinoなど。"],
+ ["ESP32","—","Wi-Fi/BLE内蔵の安価なマイコン。この作品のLED制御候補。"],
+ ["NeoPixel","WS2812B","1本の信号線で多数を個別制御できるフルカラーLED。"],
+ ["デューティ比","duty cycle","PWMでONになっている時間の割合。"],
+ ["技適","—","日本国内で電波を出す機器に必要な認証。マークで確認する。"],
+ ["PSE","—","電気用品安全法。ACアダプタ等に必要な認証。"],
+ ["ライセンス","license","素材やコードの利用条件。公開前に必ず確認する。"],
+ ["CC ライセンス","Creative Commons","作者が利用条件を明示するための標準的な仕組み。"],
+ ["リポジトリ","repository","Gitで履歴を管理する単位。プロジェクトのフォルダ。"],
+ ["コミット","commit","変更を履歴として記録する操作。戻れる地点を作る。"],
+ ["localStorage","—","ブラウザにデータを保存する仕組み。このページの進捗もこれ。"],
+ ["DoD","Definition of Done","完了条件。「どうなったら終わりか」を先に決めること。"],
+ ["プレイテスト","playtest","他人に遊んでもらい、黙って観察する検証。"],
+ ["ストレインリリーフ","strain relief","ケーブルの引っ張りを筐体で受け、根元の断線を防ぐ工夫。"]
+];
+
+/* ---------- state ---------- */
+var KEY="mixture-portal-v1";
+var done={};
+try{ done=JSON.parse(localStorage.getItem(KEY)||"{}")||{}; }catch(e){ done={}; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(done)); }catch(e){} }
+
+var tMap={}; TRACKS.forEach(function(t){ tMap[t.k]=t; });
+var counters={};
+L.forEach(function(x){ counters[x.t]=(counters[x.t]||0)+1; x.s=counters[x.t]; x.id=x.t+"-"+x.s; });
+
+var filter={q:"",phase:"all",undone:false};
+var openId=null;
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function pad(n){ return n<10?"0"+n:""+n; }
+function phaseLabel(p){ return "PHASE "+p; }
+
+/* ---------- render: route ---------- */
+function renderRoute(){
+  var host=document.getElementById("route"); host.innerHTML="";
+  PHASES.forEach(function(ph){
+    var list=L.filter(function(x){ return x.p===ph.n; });
+    var d=list.filter(function(x){ return done[x.id]; }).length;
+    var pct=list.length?Math.round(d/list.length*100):0;
+    var card=el("div","ph");
+    card.innerHTML=
+      '<div class="ph-top"><span class="ph-tag">'+ph.tag+'</span><span class="ph-when">'+esc(ph.when)+'</span></div>'+
+      '<h3>'+esc(ph.t)+'</h3><p>'+esc(ph.d)+'</p>'+
+      '<div class="ph-bar"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="ph-count">'+d+' / '+list.length+' レッスン完了 &nbsp;·&nbsp; '+pct+'%</div>';
+    host.appendChild(card);
+  });
+}
+
+/* ---------- render: lanes ---------- */
+function match(x){
+  if(filter.phase!=="all" && x.p!==parseInt(filter.phase,10)) return false;
+  if(filter.undone && done[x.id]) return false;
+  if(filter.q){
+    var hay=(x.ti+" "+x.w+" "+x.y+" "+x.d+" "+tMap[x.t].name+" "+tMap[x.t].code).toLowerCase();
+    if(hay.indexOf(filter.q.toLowerCase())<0) return false;
+  }
+  return true;
+}
+
+function renderLanes(){
+  var host=document.getElementById("lanes"); host.innerHTML="";
+  var any=false;
+  TRACKS.forEach(function(tr){
+    var all=L.filter(function(x){ return x.t===tr.k; });
+    var vis=all.filter(match);
+    if(!vis.length) return;
+    any=true;
+    var d=all.filter(function(x){ return done[x.id]; }).length;
+    var pct=all.length?Math.round(d/all.length*100):0;
+
+    var lane=el("section","lane");
+    lane.style.setProperty("--lc","var("+tr.v+")");
+    var head=el("div","lane-head");
+    head.innerHTML=
+      '<span class="lane-code">'+tr.code+'</span>'+
+      '<div><h3 class="lane-name">'+esc(tr.name)+'</h3><p class="lane-sub">'+esc(tr.sub)+'</p></div>'+
+      '<div class="lane-prog"><div class="lane-bar"><span style="width:'+pct+'%"></span></div>'+
+      '<span class="lane-n">'+d+'/'+all.length+'</span></div>';
+    lane.appendChild(head);
+
+    var grid=el("div","grid");
+    vis.forEach(function(x){
+      var card=el("article","card"+(done[x.id]?" done":"")+(openId===x.id?" open":""));
+      var lv=""; for(var i=1;i<=3;i++){ lv+='<i class="'+(i<=x.lv?"f":"")+'"></i>'; }
+
+      var top=el("div","c-top");
+      top.innerHTML=
+        '<span class="c-step">'+pad(x.s)+'</span>'+
+        '<div class="c-mid"><h4 class="c-title">'+esc(x.ti)+'</h4>'+
+        '<div class="c-meta"><span class="pbadge">'+phaseLabel(x.p)+'</span>'+
+        '<span>'+x.m+'分</span><span class="lv" title="難易度">'+lv+'</span></div></div>';
+
+      var chk=el("button","c-check","✓");
+      chk.type="button";
+      chk.setAttribute("aria-label",(done[x.id]?"未完了に戻す：":"完了にする：")+x.ti);
+      chk.setAttribute("aria-pressed",done[x.id]?"true":"false");
+      chk.addEventListener("click",function(ev){
+        ev.stopPropagation();
+        if(done[x.id]){ delete done[x.id]; } else { done[x.id]=1; }
+        save(); renderAll();
+      });
+      top.appendChild(chk);
+
+      var toggle=el("div");
+      toggle.style.cursor="pointer";
+      toggle.appendChild(top);
+      toggle.addEventListener("click",function(){
+        openId = (openId===x.id) ? null : x.id;
+        renderLanes();
+        if(openId){
+          var n=document.getElementById("card-"+openId);
+          if(n) n.scrollIntoView({block:"nearest",behavior:"smooth"});
+        }
+      });
+      card.id="card-"+x.id;
+      card.appendChild(toggle);
+
+      var links="";
+      if(x.l && x.l.length){
+        links='<div class="c-links">'+x.l.map(function(p){
+          return '<a href="'+p[1]+'" target="_blank" rel="noopener">'+esc(p[0])+' ↗</a>';
+        }).join("")+'</div>';
+      }
+      var body=el("div","c-body",
+        '<dl>'+
+        '<div><dt>学ぶこと</dt><dd>'+x.w+'</dd></div>'+
+        '<div><dt>この作品にどう効くか</dt><dd>'+x.y+'</dd></div>'+
+        '<div><dt>手を動かす</dt><dd class="c-do">'+x.d+'</dd></div>'+
+        '</dl>'+links);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+    lane.appendChild(grid);
+    host.appendChild(lane);
+  });
+  if(!any) host.appendChild(el("p","empty","条件に合うレッスンがありません。検索語か絞り込みを変えてみてください。"));
+}
+
+/* ---------- render: transport ---------- */
+function renderTransport(){
+  var total=L.length;
+  var d=L.filter(function(x){ return done[x.id]; }).length;
+  document.getElementById("tpnum").textContent=d+" / "+total;
+  var SEG=32, on=Math.round(d/total*SEG);
+  var box=document.getElementById("steps");
+  if(box.children.length!==SEG){
+    box.innerHTML="";
+    for(var i=0;i<SEG;i++) box.appendChild(document.createElement("i"));
+  }
+  for(var j=0;j<SEG;j++) box.children[j].className = j<on ? "on" : "";
+  document.getElementById("totalN").textContent=total;
+}
+
+/* ---------- render: next ---------- */
+function renderNext(){
+  var order={0:0,1:1,2:2,3:3};
+  var pend=L.filter(function(x){ return !done[x.id]; })
+            .sort(function(a,b){ return (order[a.p]-order[b.p]) || (a.lv-b.lv) || (a.m-b.m); });
+  var t=document.getElementById("nextTitle"), s=document.getElementById("nextSub"), g=document.getElementById("nextGo");
+  if(!pend.length){
+    t.textContent="全レッスン完了。";
+    s.textContent="あとは作るだけです。実装計画の Phase 3「磨いて、世に出す」へ。";
+    g.style.display="none";
+    return;
+  }
+  var x=pend[0];
+  g.style.display="";
+  t.textContent=x.ti;
+  s.textContent=tMap[x.t].name+" / "+phaseLabel(x.p)+" / 目安 "+x.m+"分 — "+x.d;
+  g.onclick=function(){
+    filter.q=""; filter.phase="all"; filter.undone=false;
+    document.getElementById("q").value="";
+    document.querySelectorAll('.chip').forEach(function(c){
+      c.setAttribute("aria-pressed", (c.dataset.f==="phase"&&c.dataset.v==="all")?"true":"false");
+    });
+    openId=x.id;
+    renderLanes();
+    var n=document.getElementById("card-"+x.id);
+    if(n) n.scrollIntoView({block:"center",behavior:"smooth"});
+  };
+}
+
+/* ---------- glossary ---------- */
+function renderGlossary(){
+  var q=(document.getElementById("gq").value||"").toLowerCase();
+  var host=document.getElementById("glossary"); host.innerHTML="";
+  var hit=0;
+  GLOSSARY.forEach(function(g){
+    if(q && (g[0]+" "+g[1]+" "+g[2]).toLowerCase().indexOf(q)<0) return;
+    hit++;
+    var d=el("div");
+    d.innerHTML='<dt>'+esc(g[0])+(g[1]&&g[1]!=="—"?'<small>'+esc(g[1])+'</small>':'')+'</dt><dd>'+esc(g[2])+'</dd>';
+    host.appendChild(d);
+  });
+  if(!hit) host.appendChild(el("div",null,'<dd style="color:var(--muted)">該当する用語がありません。</dd>'));
+}
+
+function renderAll(){ renderTransport(); renderRoute(); renderLanes(); renderNext(); }
+
+/* ---------- events ---------- */
+document.getElementById("q").addEventListener("input",function(e){
+  filter.q=e.target.value.trim(); openId=null; renderLanes();
+});
+document.getElementById("gq").addEventListener("input",renderGlossary);
+document.querySelectorAll(".chip").forEach(function(c){
+  c.addEventListener("click",function(){
+    if(c.dataset.f==="phase"){
+      filter.phase=c.dataset.v;
+      document.querySelectorAll('.chip[data-f="phase"]').forEach(function(o){
+        o.setAttribute("aria-pressed", o===c ? "true":"false");
+      });
+    }else{
+      filter.undone=!filter.undone;
+      c.setAttribute("aria-pressed", filter.undone?"true":"false");
+    }
+    openId=null; renderLanes();
+  });
+});
+document.getElementById("reset").addEventListener("click",function(){
+  if(!Object.keys(done).length) return;
+  done={}; save(); renderAll();
+});
+
+renderAll(); renderGlossary();
+})();
+</script>
