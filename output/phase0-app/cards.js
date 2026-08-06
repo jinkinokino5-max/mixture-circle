@@ -9,7 +9,7 @@
    -------------------------------------------------------------------
    カードIDの書式： '<ジャンル>-<楽器>'
      ジャンル : jazz / rock / classic / electro
-     楽器     : piano / guitar / bass / drums / strings / synth
+     楽器     : piano / guitar / bass / drums / brass / synth
    例： 'jazz-piano', 'electro-drums'
    ===================================================================== */
 

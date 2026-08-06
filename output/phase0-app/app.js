@@ -21,18 +21,22 @@ function noteOf(deg, baseOct) {
    oct  : 基準オクターブ（周波数の住み分け）
    hp/lp: 帯域の住み分けフィルタ                                   */
 const INSTRUMENTS = {
-  bass:    { label: 'ベース',       type: 'mono',  oct: 1, deg: 0, hp: 30,  lp: 420,   gain: -4,  vary: false },
+  bass:    { label: 'ベース',       type: 'mono',  oct: 2, deg: 0, hp: 35,  lp: 520,   gain: -1,  vary: false },
   drums:   { label: 'ドラム',       type: 'drum',  oct: 0, deg: 0, hp: 30,  lp: 12000, gain: -9,  vary: false },
-  guitar:  { label: 'ギター',       type: 'pluck', oct: 3, deg: 2, hp: 160, lp: 4800,  gain: -3,  vary: true  },
+  guitar:  { label: 'ギター',       type: 'pluck', oct: 3, deg: 0, hp: 140, lp: 5200,  gain: 1,   vary: false },
   piano:   { label: 'ピアノ',       type: 'poly',  oct: 4, deg: 0, hp: 180, lp: 6000,  gain: -10, vary: true  },
-  strings: { label: 'ストリングス', type: 'pad',   oct: 4, deg: 4, hp: 260, lp: 5000,  gain: -14, vary: true  },
+  brass:   { label: 'ブラス',       type: 'brass', oct: 4, deg: 4, hp: 220, lp: 6500,  gain: -8,  vary: true  },
   synth:   { label: 'シンセ',       type: 'lead',  oct: 5, deg: 2, hp: 420, lp: 9000,  gain: -16, vary: true  },
 };
-const INST_ORDER = ['piano', 'guitar', 'bass', 'drums', 'strings', 'synth'];
+const INST_ORDER = ['piano', 'guitar', 'bass', 'drums', 'brass', 'synth'];
 
 /* ============ 3. ジャンル（行） ============ */
-/* mel : 旋律パターン（1小節=16ステップ）s=ステップ, d=音度, v=強さ, l=音の長さ
-   drm : ドラムパターン k=キック s=スネア h=ハイハット                        */
+/* mel  : 旋律パターン（1小節=16ステップ）s=ステップ, d=音度, v=強さ, l=音の長さ
+          → ピアノ・シンセが共有する
+   bass : ベース専用パターン（歩く／刻む役割。存在感を出すため専用に用意）
+   comp : ギター専用パターン（コード刻み／リフ役。同上）
+   stab : ブラス専用パターン（短い一撃＝ホーンスタブ。同上）
+   drm  : ドラムパターン k=キック s=スネア h=ハイハット                        */
 const GENRES = {
   jazz: {
     label: 'ジャズ', sub: 'JAZZ', desc: '深い青・スウィング・裏拍',
@@ -41,6 +45,19 @@ const GENRES = {
       { s: 2, d: 0, v: .70, l: '8n' }, { s: 5, d: 2, v: .50, l: '16n' },
       { s: 6, d: 3, v: .45, l: '16n' }, { s: 8, d: 1, v: .72, l: '8n' },
       { s: 11, d: 4, v: .50, l: '16n' }, { s: 14, d: 2, v: .65, l: '8n' },
+    ],
+    bass: [   // ウォーキングベース：ルート→上って→下りる
+      { s: 0, d: 0, v: .80, l: '8n' }, { s: 3, d: 2, v: .60, l: '8n' },
+      { s: 6, d: 3, v: .65, l: '8n' }, { s: 8, d: 4, v: .78, l: '8n' },
+      { s: 11, d: 3, v: .60, l: '8n' }, { s: 14, d: 2, v: .65, l: '8n' },
+    ],
+    comp: [   // 裏拍コンピング（Freddie Green風）
+      { s: 2, d: 2, v: .55, l: '16n' }, { s: 6, d: 3, v: .50, l: '16n' },
+      { s: 10, d: 2, v: .55, l: '16n' }, { s: 14, d: 4, v: .60, l: '16n' },
+    ],
+    stab: [   // ホーンの合いの手（シャウト）
+      { s: 3, d: 3, v: .60, l: '8n' }, { s: 8, d: 1, v: .65, l: '8n' },
+      { s: 13, d: 4, v: .55, l: '8n' },
     ],
     drm: { k: [0, 10], s: [4, 12], h: [2, 3, 6, 10, 11, 14], hv: .28 },
   },
@@ -53,6 +70,22 @@ const GENRES = {
       { s: 8, d: 2, v: .88, l: '8n' }, { s: 10, d: 2, v: .55, l: '8n' },
       { s: 12, d: 4, v: .82, l: '8n' }, { s: 14, d: 3, v: .62, l: '8n' },
     ],
+    bass: [   // キックに張り付く8分の押し出し（ルート主体＋経過音）
+      { s: 0, d: 0, v: .90, l: '8n' }, { s: 2, d: 0, v: .55, l: '8n' },
+      { s: 4, d: 0, v: .60, l: '8n' }, { s: 6, d: 3, v: .75, l: '8n' },
+      { s: 8, d: 0, v: .88, l: '8n' }, { s: 10, d: 0, v: .55, l: '8n' },
+      { s: 12, d: 0, v: .60, l: '8n' }, { s: 14, d: 3, v: .75, l: '8n' },
+    ],
+    comp: [   // パワーコード（ルート⇔5度）のチャグ
+      { s: 0, d: 0, v: .85, l: '16n' }, { s: 3, d: 3, v: .60, l: '16n' },
+      { s: 4, d: 0, v: .80, l: '16n' }, { s: 7, d: 3, v: .60, l: '16n' },
+      { s: 8, d: 0, v: .85, l: '16n' }, { s: 11, d: 3, v: .60, l: '16n' },
+      { s: 12, d: 0, v: .80, l: '16n' }, { s: 15, d: 3, v: .60, l: '16n' },
+    ],
+    stab: [   // 一発でぶちかますホーンヒット
+      { s: 0, d: 0, v: .85, l: '8n' }, { s: 8, d: 2, v: .80, l: '8n' },
+      { s: 12, d: 4, v: .70, l: '8n' },
+    ],
     drm: { k: [0, 6, 8, 14], s: [4, 12], h: [0, 2, 4, 6, 8, 10, 12, 14], hv: .35 },
   },
   classic: {
@@ -61,6 +94,16 @@ const GENRES = {
     mel: [
       { s: 0, d: 0, v: .55, l: '2n' }, { s: 4, d: 2, v: .42, l: '4n' },
       { s: 8, d: 4, v: .55, l: '2n' }, { s: 12, d: 3, v: .42, l: '4n' },
+    ],
+    bass: [   // ペダルトーン（ルート→5度）
+      { s: 0, d: 0, v: .55, l: '2n' }, { s: 8, d: 3, v: .50, l: '2n' },
+    ],
+    comp: [   // ゆるやかな上行アルペジオ
+      { s: 0, d: 0, v: .38, l: '4n' }, { s: 4, d: 2, v: .34, l: '4n' },
+      { s: 8, d: 4, v: .40, l: '4n' }, { s: 12, d: 3, v: .32, l: '4n' },
+    ],
+    stab: [   // ファンファーレ（伸ばし気味の2音）
+      { s: 0, d: 0, v: .45, l: '4n' }, { s: 8, d: 3, v: .42, l: '4n' },
     ],
     drm: { k: [0, 8], s: [], h: [12, 13, 14], hv: .12 },
   },
@@ -75,6 +118,19 @@ const GENRES = {
       { s: 10, d: 3, v: .55, l: '16n' }, { s: 12, d: 4, v: .70, l: '16n' },
       { s: 13, d: 3, v: .45, l: '16n' }, { s: 14, d: 2, v: .55, l: '16n' },
       { s: 15, d: 0, v: .45, l: '16n' },
+    ],
+    bass: [   // キックと同期して脈打つルート（サイドチェイン風）
+      { s: 0, d: 0, v: .90, l: '16n' }, { s: 2, d: 0, v: .40, l: '16n' },
+      { s: 4, d: 0, v: .85, l: '16n' }, { s: 6, d: 0, v: .40, l: '16n' },
+      { s: 8, d: 0, v: .90, l: '16n' }, { s: 10, d: 0, v: .40, l: '16n' },
+      { s: 12, d: 0, v: .85, l: '16n' }, { s: 14, d: 0, v: .40, l: '16n' },
+    ],
+    comp: [   // 裏拍で刺すシンセスタブ（キック・ベースと組む）
+      { s: 1, d: 0, v: .50, l: '16n' }, { s: 5, d: 3, v: .45, l: '16n' },
+      { s: 9, d: 2, v: .50, l: '16n' }, { s: 13, d: 4, v: .45, l: '16n' },
+    ],
+    stab: [   // トランス風ホーンスタブ（ダウンビートに重ねる）
+      { s: 4, d: 2, v: .75, l: '16n' }, { s: 12, d: 4, v: .70, l: '16n' },
     ],
     drm: { k: [0, 4, 8, 12], s: [4, 12], h: [1, 3, 5, 7, 9, 11, 13, 15], hv: .3 },
   },
@@ -139,7 +195,7 @@ class Part {
 
     // 出口 → 帯域フィルタ → パート音量 → partsBus（＋残響へ少量）
     this.gain = new Tone.Gain(Tone.dbToGain(inst.gain)).connect(partsBus);
-    this.send = new Tone.Gain(instKey === 'strings' ? 0.35 : 0.12).connect(reverb);
+    this.send = new Tone.Gain(instKey === 'brass' ? 0.18 : 0.12).connect(reverb);
     this.gain.connect(this.send);
     this.lp = new Tone.Filter(inst.lp, 'lowpass').connect(this.gain);
     this.hp = new Tone.Filter(inst.hp, 'highpass').connect(this.lp);
@@ -156,19 +212,25 @@ class Part {
 
   makeVoice(inst) {
     switch (inst.type) {
-      case 'mono':   // ベース：太いサイン＋ノコギリ
-        return new Tone.MonoSynth({
+      case 'mono': { // ベース：太いノコギリ＋フィルタで倍音を稼ぎ、小さいスピーカーでも存在感を出す
+        const bass = new Tone.MonoSynth({
           oscillator: { type: 'sawtooth' },
-          filter: { Q: 1, type: 'lowpass', rolloff: -24 },
-          envelope: { attack: 0.01, decay: 0.25, sustain: 0.55, release: 0.25 },
-          filterEnvelope: { attack: 0.01, decay: 0.22, sustain: 0.25, release: 0.3, baseFrequency: 90, octaves: 2.6 },
+          filter: { Q: 1.4, type: 'lowpass', rolloff: -24 },
+          envelope: { attack: 0.008, decay: 0.22, sustain: 0.6, release: 0.22 },
+          filterEnvelope: { attack: 0.008, decay: 0.2, sustain: 0.3, release: 0.25, baseFrequency: 140, octaves: 3.0 },
         }).connect(this.hp);
-      case 'pluck':  // ギター
-        return new Tone.PluckSynth({ attackNoise: 1.1, dampening: 3400, resonance: 0.93 }).connect(this.hp);
-      case 'pad':    // ストリングス：ゆっくり立ち上がる
+        return bass;
+      }
+      case 'pluck': { // ギター：撥弦＋軽いドライブで芯を作る
+        const gtr = new Tone.PluckSynth({ attackNoise: 1.2, dampening: 3800, resonance: 0.95 });
+        this.drive = new Tone.Distortion({ distortion: 0.38, wet: 0.5 }).connect(this.hp);
+        gtr.connect(this.drive);
+        return gtr;
+      }
+      case 'brass':  // ブラス：太い斉唱のこぎり波で短く鋭いスタブ
         return new Tone.PolySynth(Tone.Synth, {
-          oscillator: { type: 'sawtooth' },
-          envelope: { attack: 0.35, decay: 0.4, sustain: 0.85, release: 1.6 },
+          oscillator: { type: 'fatsawtooth', count: 3, spread: 25 },
+          envelope: { attack: 0.012, decay: 0.16, sustain: 0.22, release: 0.22 },
         }).connect(this.hp);
       case 'lead':   // シンセ：短く硬い
         return new Tone.PolySynth(Tone.Synth, {
@@ -184,7 +246,11 @@ class Part {
   }
 
   tickMel(time, step) {
-    const ev = this.genre.mel.find(e => e.s === step);
+    const pattern = this.instKey === 'bass' ? this.genre.bass
+      : this.instKey === 'guitar' ? this.genre.comp
+      : this.instKey === 'brass' ? this.genre.stab
+      : this.genre.mel;
+    const ev = pattern.find(e => e.s === step);
     if (!ev) return;
     const vary = this.inst.vary && (barIndex % 4 === 3) ? 1 : 0;
     const note = noteOf(this.inst.deg + ev.d + vary, this.inst.oct);
@@ -213,7 +279,7 @@ class Part {
 
   dispose() {
     try { this.seq.stop(); this.seq.dispose(); } catch (e) {}
-    const nodes = [this.voice, ...(this.kit ? this.kit.nodes : []), this.hp, this.lp, this.send, this.gain];
+    const nodes = [this.voice, this.drive, ...(this.kit ? this.kit.nodes : []), this.hp, this.lp, this.send, this.gain];
     nodes.forEach(n => { try { n && n.dispose(); } catch (e) {} });
   }
 }
