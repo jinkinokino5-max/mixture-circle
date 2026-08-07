@@ -1,0 +1,4 @@
+# Windows のバッチファイルは必ず CRLF 改行にする
+# （LF だと cmd.exe が goto / ラベルの解析に失敗し、ダブルクリックしても動かない）
+*.bat text eol=crlf
+*.cmd text eol=crlf
