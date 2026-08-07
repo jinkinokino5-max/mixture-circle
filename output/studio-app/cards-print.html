@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>カード印刷用シート（24枚）— ミクスチャー・サークル</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Yu Gothic UI","Hiragino Kaku Gothic ProN",system-ui,sans-serif;background:#eceff4}
+  .toolbar{padding:14px 20px;background:#fff;border-bottom:1px solid #ccd;font-size:13px;color:#445}
+  .toolbar b{font-size:15px;color:#223}
+  .toolbar button{margin-left:14px;padding:7px 16px;border:0;border-radius:7px;background:#3a6ea8;color:#fff;cursor:pointer}
+  .sheet{
+    width:190mm; margin:8mm auto; background:#fff; padding:0;
+    display:grid; grid-template-columns:repeat(3,63mm); grid-auto-rows:88mm;
+    gap:2mm; justify-content:center; page-break-after:always;
+  }
+  .card{
+    width:63mm; height:88mm; border-radius:3.5mm; overflow:hidden; position:relative;
+    color:#fff; padding:6mm 5mm; display:flex; flex-direction:column; justify-content:space-between;
+    outline:0.2mm dashed rgba(0,0,0,.25); outline-offset:0;
+  }
+  .card .genre{font-size:3.4mm; letter-spacing:.28em; opacity:.85}
+  .card .inst{font-size:9mm; font-weight:700; line-height:1.15; text-shadow:0 0.4mm 1.2mm rgba(0,0,0,.35)}
+  .card .center{display:flex; flex-direction:column; align-items:center; gap:1.5mm}
+  .card .nfc{
+    width:30mm; height:30mm; border-radius:50%; border:0.3mm dashed rgba(255,255,255,.45);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card .mark{font-size:16mm; line-height:1; opacity:.95}
+  .card .nfclabel{font-size:2.4mm; letter-spacing:.1em; opacity:.5}
+  .card .foot{display:flex; justify-content:space-between; align-items:flex-end; font-size:3mm; opacity:.8}
+  .card .key{
+    border:0.3mm solid rgba(255,255,255,.6); border-radius:1.5mm; padding:0.6mm 2mm;
+    font-family:ui-monospace,monospace; font-size:3.2mm;
+  }
+  /* ジャンル＝背景の性格 */
+  .jazz{background:linear-gradient(160deg,#0d2138 0%,#1b4a78 55%,#2f6ea5 100%)}
+  .jazz .mark{color:#9fd0ff}
+  .rock{background:linear-gradient(160deg,#150406 0%,#5e1219 50%,#a8232e 100%)}
+  .rock .mark{color:#ffb0a4}
+  .classic{background:linear-gradient(160deg,#f4f1e6 0%,#e6dcbe 55%,#c9b47a 100%); color:#3a3117}
+  .classic .inst{text-shadow:none}
+  .classic .mark{color:#8d7a45}
+  .classic .nfc{border-color:rgba(0,0,0,.3)}
+  .classic .key{border-color:rgba(0,0,0,.4)}
+  .electro{background:linear-gradient(160deg,#04120f 0%,#0d5d52 50%,#17b295 100%)}
+  .electro .mark{color:#5fffd6}
+  @media print{
+    .toolbar{display:none}
+    body{background:#fff}
+    .sheet{margin:0; width:auto}
+    .card{outline:0.2mm dashed rgba(0,0,0,.35)}
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <b>カード印刷用シート（6楽器 × 4ジャンル = 24枚）</b>
+  A4に3枚×3列で印刷されます（全3ページ）。破線で切り、厚紙に貼って、中央の円の位置にNFCシールを貼ってください。
+  <button onclick="window.print()">印刷する</button>
+</div>
+<div id="sheets"></div>
+
+<script>
+const GENRES = [
+  {k:'jazz',    label:'ジャズ',       en:'JAZZ',    keys:['1','2','3','4','5','6']},
+  {k:'rock',    label:'ロック',       en:'ROCK',    keys:['Q','W','E','R','T','Y']},
+  {k:'classic', label:'クラシック',   en:'CLASSIC', keys:['A','S','D','F','G','H']},
+  {k:'electro', label:'エレクトロ',   en:'ELECTRO', keys:['Z','X','C','V','B','N']},
+];
+const INSTS = [
+  {k:'piano',   label:'ピアノ',       mark:'♪'},
+  {k:'guitar',  label:'ギター',       mark:'𝄞'},
+  {k:'bass',    label:'ベース',       mark:'𝄢'},
+  {k:'drums',   label:'ドラム',       mark:'◎'},
+  {k:'brass',   label:'ブラス',       mark:'✹'},
+  {k:'synth',   label:'シンセ',       mark:'∿'},
+];
+const cards = [];
+GENRES.forEach(g => INSTS.forEach((i, ci) => cards.push({g, i, key: g.keys[ci]})));
+
+const host = document.getElementById('sheets');
+for (let p = 0; p < cards.length; p += 9) {
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  cards.slice(p, p + 9).forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'card ' + c.g.k;
+    d.innerHTML = `
+      <div>
+        <div class="genre">${c.g.en}</div>
+        <div class="inst">${c.i.label}</div>
+      </div>
+      <div class="center">
+        <div class="nfc"><span class="mark">${c.i.mark}</span></div>
+        <div class="nfclabel">NFCシールを貼る位置</div>
+      </div>
+      <div class="foot">
+        <span>${c.g.label}</span>
+        <span class="key">${c.key}</span>
+      </div>`;
+    sheet.appendChild(d);
+  });
+  host.appendChild(sheet);
+}
+</script>
+</body>
+</html>
