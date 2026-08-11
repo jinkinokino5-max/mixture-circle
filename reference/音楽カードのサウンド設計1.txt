@@ -1,0 +1,116 @@
+【音楽カード：現在採用された設計】
+
+■ 基本構造
+カード ＝ ROLE × INSTRUMENT × GENRE
+
+ROLE
+＝ 音楽の中で何をするか
+
+INSTRUMENT
+＝ 何の音でそれをするか
+
+GENRE
+＝ どんな音楽的性格でそれをするか
+
+
+━━━━━━━━━━━━━━━━━━
+【ROLE：4分類】
+━━━━━━━━━━━━━━━━━━
+
+MELODY
+＝ 曲の「顔」
+・主旋律
+・覚えやすい／口ずさめる部分
+・曲の印象を大きく変える
+
+BASS
+＝ 曲の「足元」
+・低音
+・安定感
+・グルーヴ
+・コード感を支える
+
+RHYTHM
+＝ 曲の「動き」
+・拍
+・ノリ
+・時間感覚
+・身体を動かしたくさせる
+
+CHORD
+＝ 曲の「空間」
+・和音
+・伴奏
+・厚み
+・メロディを包む
+・明るい／暗いなどの雰囲気を作る
+
+
+━━━━━━━━━━━━━━━━━━
+【GENRE：5種類】
+━━━━━━━━━━━━━━━━━━
+
+ROCK
+＝ 力強い／激しい／エネルギー
+
+JAZZ
+＝ 夜／都会的／柔らかい／複雑
+
+CLASSICAL
+＝ 美しい／壮大／繊細／物語的
+
+ELECTRONIC
+＝ 未来的／機械的／反復／浮遊感
+
+POP
+＝ 明るい／親しみやすい／キャッチー
+
+
+━━━━━━━━━━━━━━━━━━
+【ジャンル × 代表楽器】
+━━━━━━━━━━━━━━━━━━
+
+ROCK
+MELODY      Electric Guitar
+BASS        Electric Bass
+RHYTHM      Drums
+CHORD       Guitar
+
+JAZZ
+MELODY      Saxophone
+BASS        Double Bass
+RHYTHM      Drums
+CHORD       Piano
+
+CLASSICAL
+MELODY      Violin
+BASS        Cello
+RHYTHM      Percussion
+CHORD       Piano / Strings
+
+ELECTRONIC
+MELODY      Synth Lead
+BASS        Synth Bass
+RHYTHM      Drum Machine
+CHORD       Synth Pad
+
+POP
+MELODY      Piano / Synth
+BASS        Electric Bass
+RHYTHM      Drums
+CHORD       Piano / Guitar
+
+
+━━━━━━━━━━━━━━━━━━
+【設計上の方針】
+━━━━━━━━━━━━━━━━━━
+
+・4 ROLE × 5 GENREを基本骨格とする
+・全ての「ROLE × 楽器 × GENRE」の組み合わせを作る必要はない
+・音楽として自然で、カードを出したときに意味が分かる組み合わせを採用する
+・ジャンルごとに代表的な楽器を変える
+・ROLEと楽器は完全固定ではない
+　例：PianoはMELODYにもCHORDにもなり得る
+・音楽理論の正確さより、初心者が直感的に理解できることを優先する
+
+→ 現時点では「4 ROLE × 5 GENRE」をカード設計の骨格として採用。
