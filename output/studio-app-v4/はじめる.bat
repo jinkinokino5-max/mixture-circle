@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-set PORT=8767
+set PORT=8769
 
 if not exist "samples\manifest.js" (
   echo 音源がまだありません。

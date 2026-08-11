@@ -2,7 +2,7 @@
    使い方: node server.js [ポート番号]
    Phase 0 版との違い：音源（.mp3 / .wav / .ogg）の Content-Type を足してある */
 const http = require('http'), fs = require('fs'), path = require('path');
-const port = Number(process.argv[2]) || 8766;
+const port = Number(process.argv[2]) || 8769;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
                 '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
                 '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
