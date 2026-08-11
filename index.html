@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ミクスチャー・サークル — 5つのプロトタイプ</title>
+<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる5つのプロトタイプ。">
+<style>
+  :root{
+    --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
+    --fg:#eef2f8; --dim:#8d96ab; --faint:#5f6a80;
+    --accent:#e0517a; --accent2:#48f7cd;
+    --p0:#5a6478;  --p0a:#aab4c8;
+    --v1:#2b62a0;  --v1a:#82c0f7;
+    --v2:#96803f;  --v2a:#f7e4a8;
+    --v3:#b53f86;  --v3a:#ffa2dd;
+    --v4:#0c9a83;  --v4a:#48f7cd;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.75;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 22px}
+  a{color:var(--accent2)}
+
+  /* ===== hero ===== */
+  header.hero{
+    padding:76px 0 56px;
+    background:
+      radial-gradient(900px 460px at 18% 0%, rgba(224,81,122,.18), transparent 62%),
+      radial-gradient(760px 420px at 88% 12%, rgba(72,247,205,.13), transparent 60%);
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    display:inline-block; font-size:11px; letter-spacing:.22em; color:var(--accent2);
+    border:1px solid #1d6b5c; border-radius:5px; padding:3px 10px; margin-bottom:20px;
+  }
+  h1{margin:0 0 16px; font-size:clamp(30px,5.4vw,50px); line-height:1.24; letter-spacing:.01em}
+  h1 small{display:block; font-size:clamp(13px,1.8vw,15px); color:var(--dim); font-weight:400; margin-top:12px; letter-spacing:0}
+  .lede{max-width:660px; color:#c3ccdd; font-size:15px; margin:0 0 26px}
+  .lede b{color:var(--fg)}
+  .heronote{
+    display:flex; gap:9px; align-items:flex-start; max-width:660px;
+    background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:9px; padding:13px 16px; font-size:12.5px; color:var(--dim);
+  }
+  .heronote b{color:var(--fg)}
+
+  /* ===== section ===== */
+  section{padding:60px 0}
+  h2{
+    margin:0 0 8px; font-size:21px; letter-spacing:.02em;
+    display:flex; align-items:baseline; gap:12px;
+  }
+  h2 em{font-style:normal; font-size:11px; letter-spacing:.18em; color:var(--faint)}
+  .sublede{margin:0 0 30px; color:var(--dim); font-size:13.5px; max-width:720px}
+
+  /* ===== app cards ===== */
+  .apps{display:flex; flex-direction:column; gap:16px}
+  .app{
+    position:relative; display:grid; grid-template-columns:1fr auto; gap:26px;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--c) 15%, var(--panel)) 0%, var(--panel) 62%);
+    border:1px solid var(--line); border-radius:15px; padding:24px 26px;
+    transition:border-color .18s, transform .12s;
+  }
+  .app:hover{border-color:var(--ca); transform:translateY(-2px)}
+  .app.featured{border-color:color-mix(in srgb, var(--ca) 55%, var(--line))}
+  .app .body{min-width:0}
+  .badges{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:11px}
+  .ver{
+    font-size:10.5px; letter-spacing:.14em; font-weight:700; color:var(--ca);
+    border:1px solid color-mix(in srgb, var(--ca) 45%, transparent); border-radius:5px; padding:2px 8px;
+  }
+  .tag{font-size:10.5px; letter-spacing:.06em; color:var(--faint); border:1px solid var(--line); border-radius:99px; padding:2px 9px}
+  .tag.hot{color:#ffd479; border-color:#6b5a24}
+  .app h3{margin:0 0 6px; font-size:19px; letter-spacing:.01em}
+  .app .tagline{margin:0 0 14px; color:#c3ccdd; font-size:13.5px}
+  .app .what{margin:0 0 15px; color:var(--dim); font-size:12.5px; line-height:1.85}
+  .app .what b{color:#dbe3f0; font-weight:600}
+  .spec{display:flex; gap:22px; flex-wrap:wrap; padding-top:13px; border-top:1px solid var(--line)}
+  .spec div{font-size:11px; color:var(--faint)}
+  .spec div b{display:block; font-size:14px; color:var(--fg); font-weight:600; font-variant-numeric:tabular-nums; margin-top:1px}
+  .actions{display:flex; flex-direction:column; gap:9px; justify-content:center; min-width:152px}
+  .play{
+    display:block; text-align:center; text-decoration:none; padding:13px 22px; border-radius:11px;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--ca) 78%, #000), color-mix(in srgb, var(--c) 88%, #000));
+    color:#fff; font-size:14px; font-weight:700; letter-spacing:.05em; white-space:nowrap;
+    box-shadow:0 7px 24px -10px var(--c);
+  }
+  .play:hover{filter:brightness(1.15)}
+  .docs{
+    display:block; text-align:center; text-decoration:none; padding:8px 14px; border-radius:9px;
+    border:1px solid var(--line); background:var(--panel2); color:var(--dim); font-size:11.5px; white-space:nowrap;
+  }
+  .docs:hover{color:var(--fg); border-color:var(--faint)}
+
+  /* ===== table ===== */
+  .scroller{overflow-x:auto; border:1px solid var(--line); border-radius:13px; background:var(--panel)}
+  table{border-collapse:collapse; width:100%; min-width:760px; font-size:12.5px}
+  th,td{padding:11px 15px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{background:var(--panel2); color:var(--dim); font-weight:600; font-size:11px; letter-spacing:.09em; white-space:nowrap}
+  tbody th{font-weight:600; color:var(--dim); font-size:11.5px; white-space:nowrap; background:rgba(26,31,43,.5)}
+  tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+  td.on{color:var(--accent2)}
+  td.off{color:var(--faint)}
+
+  /* ===== notes / credits ===== */
+  .cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:20px 22px}
+  .card h3{margin:0 0 10px; font-size:14px; display:flex; align-items:center; gap:8px}
+  .card h3 span{font-size:16px}
+  .card p,.card li{color:var(--dim); font-size:12.5px; margin:0 0 8px}
+  .card ul{margin:0; padding-left:19px}
+  .card li{margin-bottom:5px}
+  .card b{color:var(--fg)}
+  kbd{
+    background:var(--panel2); border:1px solid var(--line); border-bottom-width:2px; border-radius:4px;
+    padding:1px 6px; font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#dbe3f0;
+  }
+  .credits{font-size:12px; color:var(--dim)}
+  .credits dt{color:#dbe3f0; font-weight:600; font-size:12.5px; margin-top:14px}
+  .credits dt:first-child{margin-top:0}
+  .credits dd{margin:3px 0 0; padding-left:0}
+  .warn{
+    background:rgba(224,81,122,.07); border:1px solid rgba(224,81,122,.3);
+    border-radius:11px; padding:16px 20px; font-size:12.5px; color:var(--dim);
+  }
+  .warn b{color:var(--fg)}
+
+  footer{border-top:1px solid var(--line); padding:34px 0 54px; color:var(--faint); font-size:12px}
+  footer a{color:var(--dim)}
+
+  @media(max-width:720px){
+    .app{grid-template-columns:1fr; gap:18px}
+    .actions{flex-direction:row; min-width:0}
+    .play,.docs{flex:1}
+    section{padding:44px 0}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">MIXTURE CIRCLE</span>
+    <h1>
+      カードを出すと、音楽が増えていく。
+      <small>3〜6人が円になり、カードを出すたびに楽器が加わって、3分で1曲を共同生成する — 勝敗のない音楽カードゲーム。</small>
+    </h1>
+    <p class="lede">
+      同じ企画から生まれた <b>5つのプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
+      音楽の知識は要りません。<b>キーを押すか、マスをクリックするだけ</b>です。
+    </p>
+    <div class="heronote">
+      <span>🎧</span>
+      <div><b>スピーカーかヘッドホンを推奨。</b>低音とステレオが体験の半分を占めます。音が出るので音量にご注意ください。</div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>プロトタイプ <em>5 BUILDS</em></h2>
+    <p class="sublede">
+      上から順に作った順です。カードの構造・音の作り方・「出した瞬間の手ごたえ」を、作り直すたびに変えてきました。
+      どれも独立して動くので、好きなものから試せます。
+    </p>
+
+    <div class="apps">
+
+      <!-- v3 -->
+      <article class="app featured" style="--c:var(--v3); --ca:var(--v3a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v3</span>
+            <span class="tag hot">いちばん新しい</span>
+            <span class="tag">32枚</span>
+            <span class="tag">22楽器</span>
+          </div>
+          <h3>ミクスチャー・サークル v3</h3>
+          <p class="tagline">「カードを出した瞬間を気持ちよくする」ことだけを目的に作り直した版。</p>
+          <p class="what">
+            カード1枚が<b>2〜3楽器のかたまり</b>（サックス＋トランペット、バイオリン＋フルート…）。
+            押すと<b>「ポーン」と合図</b>が鳴り、次の小節頭で<b>一撃とともに入ってきます</b>。
+            重ねるほど音が<b>大きく厚くなる</b>設計で、キックのたびに全体が沈んで戻る「呼吸」が入ります。
+            同時に鳴らせる枚数を 3〜10枚 から選べます。
+          </p>
+          <div class="spec">
+            <div>カード<b>32枚</b></div>
+            <div>4役割 × <b>8ジャンル</b></div>
+            <div>初回の読み込み<b>約39MB</b></div>
+            <div>コード進行<b>Cm9→A♭→E♭→B♭</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v3/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v3/README.md">設計を読む</a>
+        </div>
+      </article>
+
+      <!-- v4 -->
+      <article class="app" style="--c:var(--v4); --ca:var(--v4a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v4</span>
+            <span class="tag">32枚</span>
+            <span class="tag">ジャンル撤廃</span>
+          </div>
+          <h3>STUDIO PULSE</h3>
+          <p class="tagline">ジャンルという枠をなくし、「役割 × 楽器」の2軸だけにした版。</p>
+          <p class="what">
+            <b>スペースキーでビルドアップ＆ドロップ</b>（2小節持ち上げて、次の小節頭で落とす）。
+            <kbd>↑</kbd><kbd>↓</kbd> で曲の熱量、<kbd>P</kbd> でコード進行を演奏中に切り替えられます。
+            同じカードをもう一度押すと止まる方式で、役割ごとに枚数上限があります。
+          </p>
+          <div class="spec">
+            <div>カード<b>32枚</b></div>
+            <div>4役割 × <b>8楽器</b></div>
+            <div>初回の読み込み<b>約26MB</b></div>
+            <div>コード進行<b>4種を切替</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v4/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v4/README.md">設計を読む</a>
+        </div>
+      </article>
+
+      <!-- v2 -->
+      <article class="app" style="--c:var(--v2); --ca:var(--v2a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v2</span>
+            <span class="tag">20枚</span>
+            <span class="tag">ROLE × GENRE</span>
+          </div>
+          <h3>ミクスチャー・サークル STUDIO v2</h3>
+          <p class="tagline">カードを「楽器 × ジャンル」から「<b>役割</b> × ジャンル」に組み替えた版。</p>
+          <p class="what">
+            楽器は「そのジャンルでその役割を担う代表楽器」として自動的に決まります。
+            <b>MELODY はジャズならサックス、クラシックならバイオリン</b>。
+            コード進行が入り、いつ投入しても拍がズレないよう作り直した版でもあります。
+          </p>
+          <div class="spec">
+            <div>カード<b>20枚</b></div>
+            <div>4役割 × <b>5ジャンル</b></div>
+            <div>初回の読み込み<b>約17MB</b></div>
+            <div>楽器<b>11種</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v2/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v2/README.md">設計を読む</a>
+        </div>
+      </article>
+
+      <!-- studio-app -->
+      <article class="app" style="--c:var(--v1); --ca:var(--v1a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">STUDIO</span>
+            <span class="tag">24枚</span>
+            <span class="tag">実録音はじめて</span>
+          </div>
+          <h3>ミクスチャー・サークル STUDIO</h3>
+          <p class="tagline">合成音をやめ、実際に録音された楽器の音に差し替えた最初の版。</p>
+          <p class="what">
+            ゲームの仕組みは Phase 0 と同じまま、ピアノ・ギター・ベース・ブラス・ドラムを
+            <b>実録音サンプル</b>で鳴らします（シンセだけは合成音のまま）。
+            行がジャンル、列が楽器のグリッドです。
+          </p>
+          <div class="spec">
+            <div>カード<b>24枚</b></div>
+            <div>6楽器 × <b>4ジャンル</b></div>
+            <div>初回の読み込み<b>約10MB</b></div>
+            <div>音源<b>実録音</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app/README.md">設計を読む</a>
+        </div>
+      </article>
+
+      <!-- phase0 -->
+      <article class="app" style="--c:var(--p0); --ca:var(--p0a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">PHASE 0</span>
+            <span class="tag">24枚</span>
+            <span class="tag">読み込みゼロ</span>
+          </div>
+          <h3>Phase 0（キーボード版）</h3>
+          <p class="tagline">「そもそも面白いのか」を確かめるために、費用0円・音源なしで作った最初の版。</p>
+          <p class="what">
+            音はすべて<b>その場で合成</b>しているので、<b>読み込みを待たずにすぐ遊べます</b>。
+            通信が細い環境や、まず手ざわりだけ試したいときはこれが速いです。
+          </p>
+          <div class="spec">
+            <div>カード<b>24枚</b></div>
+            <div>6楽器 × <b>4ジャンル</b></div>
+            <div>読み込み<b>ほぼ0MB</b></div>
+            <div>音源<b>合成音</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/phase0-app/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/phase0-app/README.md">設計を読む</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>ちがいの一覧 <em>COMPARISON</em></h2>
+    <p class="sublede">同じ企画を5回作り直した記録です。太字が、その版で新しく持ち込んだ考え方。</p>
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr><th></th><th>Phase 0</th><th>STUDIO</th><th>v2</th><th>v3</th><th>v4</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>カードの構造</th><td>楽器 × ジャンル</td><td>楽器 × ジャンル</td><td><b>役割</b> × ジャンル</td><td>役割 × ジャンル</td><td>役割 × <b>楽器</b></td></tr>
+          <tr><th>枚数</th><td>24</td><td>24</td><td>20</td><td><b>32</b></td><td>32</td></tr>
+          <tr><th>音源</th><td>合成音</td><td><b>実録音</b></td><td>実録音</td><td>実録音</td><td>実録音</td></tr>
+          <tr><th>楽器の数</th><td>6</td><td>6</td><td>11</td><td><b>22</b></td><td>20</td></tr>
+          <tr><th>1枚あたり</th><td>1楽器</td><td>1楽器</td><td>1楽器</td><td><b>2〜3楽器</b></td><td>1楽器</td></tr>
+          <tr><th>和声</th><td class="off">単一の和音</td><td class="off">単一の和音</td><td><b>4小節の進行</b></td><td>9th入り5声</td><td><b>進行を切替可</b></td></tr>
+          <tr><th>重ねたときの音量</th><td class="off">小さくなる</td><td class="off">小さくなる</td><td class="off">小さくなる</td><td class="on"><b>大きくなる</b></td><td class="on">大きくなる</td></tr>
+          <tr><th>投入時の演出</th><td class="off">なし</td><td class="off">なし</td><td class="off">なし</td><td class="on"><b>合図→一撃</b></td><td class="on">ビルド＆ドロップ</td></tr>
+          <tr><th>同時枚数</th><td>6</td><td>6</td><td>6</td><td><b>3〜10で選択</b></td><td>役割ごとに上限</td></tr>
+          <tr><th>初回の読み込み</th><td class="on">ほぼ0MB</td><td>約10MB</td><td>約17MB</td><td>約39MB</td><td>約26MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>遊びかた <em>HOW TO PLAY</em></h2>
+    <div class="cols">
+      <div class="card">
+        <h3><span>⌨️</span>操作はこれだけ</h3>
+        <ul>
+          <li><b>キーを押す</b>か、画面の<b>マスをクリック</b>すると音が加わります</li>
+          <li>キーボードの並びが、そのまま画面のグリッドです</li>
+          <li><kbd>Backspace</kbd> … 最後に入れた音を消す</li>
+          <li><kbd>Esc</kbd> … 終了して録音を書き出す</li>
+          <li>スマホ・タブレットでもクリック（タップ）で遊べます</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span>🎵</span>なぜ破綻しないのか</h3>
+        <ul>
+          <li><b>調を固定</b>しているので、何を重ねても音が外れません</li>
+          <li>役割ごとに<b>音の高さの居場所</b>を分けてあります</li>
+          <li>音が入るのは<b>次の拍（または小節）の頭</b>。ズレた音が混ざりません</li>
+          <li>同時に鳴る数に上限があり、古い音から抜けていきます</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span>⏳</span>最初の読み込みについて</h3>
+        <p>
+          実録音を使う版は、はじめに音源をまとめて読み込みます（<b>v3 は約39MB</b>）。
+          回線によっては数十秒かかります。
+        </p>
+        <p>
+          <b>すぐ試したいときは Phase 0 版</b>がおすすめです。読み込みが要りません。
+          読み込みに失敗した版も、合成音に切り替わって遊べます。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>この企画について <em>ABOUT</em></h2>
+    <div class="cols">
+      <div class="card">
+        <h3><span>🎴</span>本来はカードゲームです</h3>
+        <p>
+          3〜6人が円になって座り、<b>手番なし</b>で好きなときにカードを箱へ入れる遊びです。
+          箱がカードを読み取ると、次の拍から音が加わります。<b>勝敗はありません。</b>
+        </p>
+        <p>
+          円に座るのは「対立のない構造」の象徴として。競争ではなく共同創造を目指しています。
+          ここで公開しているのは、その<b>音の部分をブラウザで再現したもの</b>です。
+        </p>
+      </div>
+      <div class="card">
+        <h3><span>🔨</span>いまの状態</h3>
+        <p>
+          物理カードとRFIDリーダーによる読み取りは<b>準備中</b>です。
+          各アプリには、リーダーが届いたらカードIDを登録するだけで動く仕組みが入っています。
+        </p>
+        <p>
+          このサイトのアプリはすべて<b>キーボード／クリックで代用</b>して遊べる状態です。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>音源とライセンス <em>CREDITS</em></h2>
+    <p class="sublede">
+      実録音の音源は、いずれも公開されているサンプルライブラリを使わせていただいています。
+      ライセンスは <b>CC-BY 3.0</b>（作者名の明記が条件）です。
+    </p>
+    <div class="card">
+      <dl class="credits">
+        <dt>ピアノ — Salamander Grand Piano</dt>
+        <dd>© Alexander Holm / CC-BY 3.0 — <a href="https://tonejs.github.io/audio/salamander/" target="_blank" rel="noopener">tonejs.github.io/audio/salamander</a></dd>
+
+        <dt>ギター・ベース・弦楽器・管楽器・オルガン・ハープ ほか — tonejs-instruments</dt>
+        <dd>CC-BY 3.0（VSCO2 由来） — <a href="https://github.com/nbrosowsky/tonejs-instruments" target="_blank" rel="noopener">github.com/nbrosowsky/tonejs-instruments</a></dd>
+
+        <dt>ドラム — Tone.js drum-samples</dt>
+        <dd>配布元の表記に従います — <a href="https://github.com/Tonejs/audio" target="_blank" rel="noopener">github.com/Tonejs/audio</a></dd>
+
+        <dt>音の再生 — Tone.js v14.8.49</dt>
+        <dd>MIT License — <a href="https://tonejs.github.io/" target="_blank" rel="noopener">tonejs.github.io</a>（各アプリに同梱・改変なし）</dd>
+      </dl>
+      <p style="margin-top:18px; font-size:12px; color:var(--faint)">
+        シンセ音・サブベース・手拍子・合図音・衝撃音は、Tone.js を使ってその場で合成しているため、
+        外部の音源は使っていません。
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    ミクスチャー・サークル — 音楽カードゲームのプロトタイプ集<br>
+    <a href="output/learning-portal/index.html">制作学習ポータル</a>
+  </div>
+</footer>
+
+</body>
+</html>

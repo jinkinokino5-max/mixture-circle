@@ -28,12 +28,10 @@ Thumbs.db
 ~$*.pptx
 ~$*.xlsx
 
-# ダウンロードしてきた音源（第三者の素材・10〜39MB）
-# 音源をダウンロード.bat でいつでも取り直せるので、リポジトリには含めない
-output/studio-app/samples/
-output/studio-app-v2/samples/
-output/studio-app-v3/samples/
-output/studio-app-v4/samples/
+# 音源（第三者の素材・CC-BY 3.0）について
+# GitHub Pages で公開するため、samples/ もリポジトリに含めている。
+# 各アプリの README とトップページに出典・ライセンスを明記すること。
+# （取り直したいときは各アプリの 音源をダウンロード.bat を実行すればよい）
 
 # その他
 *.db
