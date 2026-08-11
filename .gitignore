@@ -33,6 +33,7 @@ Thumbs.db
 output/studio-app/samples/
 output/studio-app-v2/samples/
 output/studio-app-v3/samples/
+output/studio-app-v4/samples/
 
 # その他
 *.db

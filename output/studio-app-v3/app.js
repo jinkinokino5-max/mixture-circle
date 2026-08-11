@@ -39,7 +39,7 @@ function barSeconds() { return (60 / Tone.Transport.bpm.value) * 4; }
 
 /* ============ 2. 投入 ============
    ここが v3 の一番大事なところ。
-   「押した→次の小節頭で入る」の あいだ に ライザーを鳴らし、
+   押した瞬間に 短い合図音 を鳴らして受け付けたことを伝え、
    着弾の瞬間に クラッシュ＋低音の一撃 を置き、
    そこからフィルタが開いて新しい音が姿を現す。
    この3つが揃って初めて「音を足した」ことが快感になる。            */
@@ -73,8 +73,8 @@ function insertCard(cardId) {
     : Tone.now() + 0.3;
   const nowT = Tone.now();
 
-  /* 予感：着弾までのあいだ、ノイズが上へ昇っていく */
-  playRiser(Math.max(nowT + 0.02, entryTime - Math.min(1.4, barSeconds())), entryTime);
+  /* 合図：押した「その場で」短い音を鳴らし、受け付けたことを伝える */
+  playCue(nowT + 0.02);
   /* 衝撃：着弾の瞬間。枚数が増えるほど強くする（盛り上がりの演出） */
   playImpact(entryTime, 0.7 + 0.06 * State.parts.size);
 
@@ -111,15 +111,16 @@ function removeCard(cardId) {
   UI.refreshNow(); UI.energy();
 }
 
-/* 次の区切り（既定は小節頭）。ライザーを鳴らす余地が無いときは1つ先へ送る */
+/* 次の区切り（既定は小節頭） */
 function nextBoundaryTicks() {
   const ppq = Tone.Transport.PPQ;
   const q = State.quantize === 'beat' ? ppq : ppq * 4;
   const cur = Tone.Transport.ticks;
   let target = Math.ceil((cur + Math.max(2, ppq * 0.05)) / q) * q;
-  /* 着弾まで1拍を切ると、ライザー（予感）を作る時間が無い。
-     そのときは1つ先の区切りへ送る。待たせるより「溜め」がある方が気持ちいい */
-  if ((target - cur) < ppq) target += q;
+  /* 直前すぎると予約が間に合わないので、半拍を切っていたら1つ先へ送る。
+     以前はライザーを鳴らす時間を作るために1拍ぶん見ていたが、
+     合図が短い音になったので待ち時間を詰めた */
+  if ((target - cur) < ppq * 0.5) target += q;
   return target;
 }
 

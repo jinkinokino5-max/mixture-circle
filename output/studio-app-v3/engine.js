@@ -10,9 +10,9 @@
    │ 音量を 1/√n に下げていた    │ 大きく聞こえるのが正しい。全体は      │
    │ ＝音を足すと音楽が小さくなる │ グルーコンプ＋リミッターでまとめる    │
    ├────────────────────────┼──────────────────────────────┤
-   │ 投入＝ループが増えるだけ     │ 予感→衝撃→開放 を作る。            │
-   │ 何も起きた気がしない        │ ライザー（上昇音）→クラッシュ＋       │
-   │                          │ 低音の一撃→フィルタが開いて姿を現す   │
+   │ 投入＝ループが増えるだけ     │ 合図→間→衝撃 を作る。              │
+   │ 何も起きた気がしない        │ 押した瞬間に「ポーン」→着弾で         │
+   │                          │ クラッシュ＋低音の一撃で入ってくる     │
    ├────────────────────────┼──────────────────────────────┤
    │ 残響センド 0.05〜0.20 で   │ センドを 0.05〜0.34 に上げ、          │
    │ 極端に乾いていた            │ 付点8分ディレイを足して奥行きを作る    │
@@ -27,7 +27,7 @@
 /* ============ 1. 音の通り道 ============
    melodic（メロディ・ベース・コード） → pumpBus（キックで沈む）
    drums                              → drumBus（沈まない。沈ませる側なので）
-   ライザー・衝撃音                     → fxBus（沈まない。目立ってほしいので）
+   合図音・衝撃音                       → fxBus（沈まない。目立ってほしいので）
                                           ↓
                             masterGain → glue(圧縮) → limiter → 出力
    リバーブとディレイは各パートから送って masterGain に戻す。         */
@@ -97,50 +97,43 @@ function schedulePump(time, energy) {
 
 /* ============ 3. 投入の「気持ちよさ」を作る3つの音 ============ */
 
-/* 3-1. ライザー：着弾までの間、音が上に昇っていく＝予感
+/* 3-1. 合図：カードを受け付けたことを知らせる「ポーン」という1音
    ---------------------------------------------------------------------
-   最初はバンドパスのノイズだけで作ったが、実測したらほとんど音量が出て
-   おらず（狭い帯域＋指数カーブで大半の時間が無音）、予感として機能して
-   いなかった。そこで2つ重ねる形に作り直した：
-     ・ノイズのスイープ（ハイパスが上がっていく）＝「シャー」という空気
-     ・音程が上がっていく音              ＝「予感」の主役。これが効く
-   音量は直線で上げる。指数だと最後の一瞬まで聞こえない。            */
-function playRiser(from, to) {
-  const dur = Math.max(0.2, to - from);
+   以前はここに「きゅいーん」と上がっていくライザー（上昇スイープ）を
+   置いていたが、カードを出すたびに鳴るので耳についた。廃止した。
+
+   いまは鐘を軽く突いたような音を1つだけ鳴らす。
+   周波数は動かさない（＝スイープしない）ので「きゅいーん」にはならない。
+
+   役割を分けてある：
+     この合図 … 「受け付けた」ことをその場で伝える（押した瞬間に鳴る）
+     衝撃音   … 「入った」ことを伝える（着弾の小節頭で鳴る）
+   あいだは無音にして、着弾の一撃を引き立てる。                     */
+function playCue(time) {
   const nodes = [];
+  const g = new Tone.Gain(1).connect(Bus.fx);
+  const send = new Tone.Gain(0.30).connect(Bus.reverb);   // 残響に送って「ポーン」の余韻を作る
+  g.connect(send);
 
-  /* (1) ノイズのスイープ */
-  const noise = new Tone.Noise('white');
-  const hp = new Tone.Filter({ type: 'highpass', frequency: 300, Q: 0.7 });
-  const ng = new Tone.Gain(0).connect(Bus.fx);
-  const ns = new Tone.Gain(0.35).connect(Bus.reverb);
-  ng.connect(ns);
-  noise.connect(hp); hp.connect(ng);
-  hp.frequency.setValueAtTime(300, from);
-  hp.frequency.exponentialRampToValueAtTime(9000, to);
-  ng.gain.setValueAtTime(0, from);
-  ng.gain.linearRampToValueAtTime(0.26, to - 0.02);
-  ng.gain.linearRampToValueAtTime(0, to + 0.07);
-  noise.start(from); noise.stop(to + 0.09);
-  nodes.push(noise, hp, ng, ns);
+  /* [周波数, 音量, 減衰にかかる秒数]
+     基音 G5(784Hz) と、その1オクターブ上・2オクターブ上。
+     上の倍音ほど速く消えるようにすると、鐘や木琴のように聞こえる。
+     G はこのアプリの4つの和音すべてに含まれる（または自然に溶ける）音なので、
+     いつ鳴らしても曲とぶつからない。                                  */
+  [[784, 0.30, 0.90], [1568, 0.10, 0.42], [2352, 0.03, 0.20]].forEach(([hz, lv, dec]) => {
+    const o = new Tone.Oscillator({ type: 'sine', frequency: hz });
+    const og = new Tone.Gain(0).connect(g);
+    o.connect(og);
+    /* 立ち上がりは 6ms。速すぎるとカチッと硬くなり、遅いとぼやける */
+    og.gain.setValueAtTime(0, time);
+    og.gain.linearRampToValueAtTime(lv, time + 0.006);
+    og.gain.exponentialRampToValueAtTime(0.0005, time + dec);
+    o.start(time); o.stop(time + dec + 0.05);
+    nodes.push(o, og);
+  });
 
-  /* (2) 音程が上がっていく音（1.5オクターブほど昇る） */
-  const osc = new Tone.Oscillator({ type: 'sawtooth', frequency: 220 });
-  const lp = new Tone.Filter({ type: 'lowpass', frequency: 2600, Q: 1.2 });
-  const og = new Tone.Gain(0).connect(Bus.fx);
-  const os = new Tone.Gain(0.30).connect(Bus.reverb);
-  og.connect(os);
-  osc.connect(lp); lp.connect(og);
-  osc.frequency.setValueAtTime(220, from);
-  osc.frequency.exponentialRampToValueAtTime(1500, to);
-  og.gain.setValueAtTime(0, from);
-  og.gain.linearRampToValueAtTime(0.10, from + dur * 0.55);
-  og.gain.linearRampToValueAtTime(0.20, to - 0.02);
-  og.gain.linearRampToValueAtTime(0, to + 0.05);
-  osc.start(from); osc.stop(to + 0.07);
-  nodes.push(osc, lp, og, os);
-
-  disposeAt(nodes, to + 1.4);
+  nodes.push(g, send);
+  disposeAt(nodes, time + 2.0);
 }
 
 /* 3-2. 衝撃：着弾の瞬間のクラッシュ（高域）と一撃の低音（体で感じる） */
@@ -161,12 +154,14 @@ function playImpact(time, strength = 1) {
   cg.gain.exponentialRampToValueAtTime(0.0001, time + 1.7);
   noise.start(time); noise.stop(time + 1.8);
 
-  /* 低音の一撃：90Hz から 42Hz へ落ちるサイン波 */
+  /* 低音の一撃：90Hz から 45Hz へ落ちるサイン波。
+     落ちるのに 0.40 秒かけていたら「ドゥーン」と滑って聞こえたので、
+     0.10 秒に詰めて打撃音（ドッ）にした。スイープ感はこれで消える */
   const osc = new Tone.Oscillator({ type: 'sine', frequency: 90 });
   const bg = new Tone.Gain(0.0001).connect(Bus.fx);
   osc.connect(bg);
   osc.frequency.setValueAtTime(90, time);
-  osc.frequency.exponentialRampToValueAtTime(42, time + 0.40);
+  osc.frequency.exponentialRampToValueAtTime(45, time + 0.10);
   bg.gain.setValueAtTime(0.0001, time);
   bg.gain.linearRampToValueAtTime(0.55 * strength, time + 0.006);
   bg.gain.exponentialRampToValueAtTime(0.0001, time + 0.75);
@@ -262,7 +257,7 @@ class Part {
     const bus = (roleKey === 'rhythm') ? Bus.drums : Bus.pump;
 
     /* 出口側から順に組む：
-       partGain → panner → entryFilter → lp → hp ← 各レイヤー           */
+       partGain → panner → lp → hp ← 各レイヤー                        */
     this.gain = new Tone.Gain(Tone.dbToGain(R.gain)).connect(bus);
     this.nominal = Tone.dbToGain(R.gain);
 
@@ -271,9 +266,11 @@ class Part {
     if (R.delay > 0) { this.dly = new Tone.Gain(R.delay).connect(Bus.delay); this.gain.connect(this.dly); }
 
     this.pan = new Tone.Panner(R.pan * panBias).connect(this.gain);
-    /* 投入直後だけ閉じているフィルタ。1小節かけて開き、音が姿を現す */
-    this.entry = new Tone.Filter({ type: 'lowpass', frequency: 20000, Q: 0.6 }).connect(this.pan);
-    this.lp = new Tone.Filter(R.lp, 'lowpass').connect(this.entry);
+    /* ここに以前は「投入直後だけ閉じていて1小節かけて開くフィルタ」を
+       置いていたが、460Hz→20kHz のフィルタスイープ＝まさに
+       「きゅいーん」という音そのものだったので廃止した。
+       新しいパートは最初から素の音色で入ってくる。                   */
+    this.lp = new Tone.Filter(R.lp, 'lowpass').connect(this.pan);
     this.hp = new Tone.Filter(R.hp, 'highpass').connect(this.lp);
 
     this.card.layers.forEach(spec => this.layers.push(this.buildLayer(spec)));
@@ -376,12 +373,11 @@ class Part {
     }
   }
 
-  /* --- 投入。ここで「予感→衝撃→開放」を仕込む --- */
+  /* --- 投入 --- */
   start(entryTime, entryTicks, barSec) {
-    /* 開放：閉じたフィルタが1小節かけて開く */
-    this.entry.frequency.setValueAtTime(460, entryTime);
-    this.entry.frequency.exponentialRampToValueAtTime(20000, entryTime + barSec);
-    /* 登場は少し大きめに、2小節かけて定位置へ落ち着く */
+    /* 登場は少し大きめに鳴らし、2小節かけて定位置へ落ち着く。
+       音色は最初から素のまま。フィルタを開く演出は
+       「きゅいーん」に聞こえるので入れない（音量だけで存在感を出す） */
     this.gain.gain.setValueAtTime(this.nominal * 1.55, entryTime);
     this.gain.gain.linearRampToValueAtTime(this.nominal, entryTime + barSec * 2);
 
@@ -447,7 +443,7 @@ class Part {
       if (L.kit) nodes.push(...L.kit.nodes);
       nodes.push(L.out);
     });
-    nodes.push(this.hp, this.lp, this.entry, this.pan, this.rev, this.gain);
+    nodes.push(this.hp, this.lp, this.pan, this.rev, this.gain);
     if (this.dly) nodes.push(this.dly);
     nodes.forEach(n => { try { n && n.dispose(); } catch (e) {} });
   }
