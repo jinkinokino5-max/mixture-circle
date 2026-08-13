@@ -203,7 +203,10 @@ function barAtTime(time) {
 }
 function chordAtBar(bar) {
   const prog = PROGRESSIONS[State.prog];
-  return prog.bars[((bar % prog.bars.length) + prog.bars.length) % prog.bars.length];
+  const c = prog.bars[((bar % prog.bars.length) + prog.bars.length) % prog.bars.length];
+  /* 案A：いまの章の調へ移調する。全パートが同じものを見ているので、
+     ここ1か所で全員がいっせいに転調する。                          */
+  return State.keyOn ? shiftChord(c, State.keySemi || 0) : c;
 }
 function isFillBar(bar) { return bar % 8 === 7; }
 
@@ -489,6 +492,131 @@ function ensureBar(bar) {
 }
 
 /* =====================================================================
+   4b-2. 提案エンジン（案B）── 「シンプルな操作で」の中核
+   ---------------------------------------------------------------------
+   40キー × 3変化＝120枚は、覚えることが多すぎる。
+   このアプリのビジョン「芸術的な音楽をシンプルな操作で」といちばん
+   矛盾していたのがここ。
+
+   そこで engine 側が **いま足すと良い候補を3つだけ** 出す。
+   遊ぶ人は左・中・右のどれかを押すだけでよい（キー: J / K / L の代わりに
+   ← ↓ → の3つ）。40個を覚える必要がなくなる。
+
+   点数の付け方（高いほど「いま欲しい」）
+     ・空いている ROLE を強く推す（土台が無いのに飾りを足しても始まらない）
+     ・いまの密度と反対の変化を推す（賑やかなら余白、寂しいなら刻み）
+     ・章に合う密度を推す（導入は薄く、山は厚く）
+     ・すでに鳴っている楽器と音色がかぶるものは下げる
+     ・直前に出した候補は少し下げる（同じ提案を繰り返さない）
+   ===================================================================== */
+const SUGGEST_N = 3;
+
+function roleNeed(role) {
+  const cur = State.order.filter(id => CARDS[id].role === role).length;
+  const max = ROLES[role].max;
+  if (cur >= max) return -Infinity;                       // もう入らない
+  /* 埋まっていない ROLE ほど欲しい。特に土台（rhythm→bass）が先 */
+  const priority = { rhythm: 3.0, bass: 2.6, chord: 1.8, melody: 1.4 }[role] || 1;
+  return priority * (1 - cur / max);
+}
+
+/* いま全体がどれくらい賑やかか（0=無音 1=満杯） */
+function busyness() {
+  let notes = 0;
+  State.parts.forEach(p => {
+    if (p.kit) {
+      const d = p.card.drum;
+      notes += ['k', 's', 'h', 't', 'rd'].reduce((a, f) => a + (d[f] || []).length, 0) * 0.5;
+    } else notes += (p.curPat || []).length;
+  });
+  return clamp(notes / 34, 0, 1);
+}
+
+function suggestCards() {
+  const sec = currentSection();
+  const busy = busyness();
+  /* 章が求める密度。導入は薄く、山は厚く */
+  const wantThin = sec.thin == null ? 1 : sec.thin;
+  /* いま鳴っている音源（音色のかぶりを避けるため） */
+  const usedSets = new Set();
+  State.order.forEach(id => usedSets.add(CARDS[id].sound.set));
+
+  const scored = [];
+  Object.values(CARDS).forEach(card => {
+    if (State.parts.has(card.id)) return;                 // すでに鳴っている
+    /* 同じ楽器が鳴っていたら、その楽器は候補にしない（差し替えは手動で） */
+    if (State.order.some(id => CARDS[id].inst === card.inst)) return;
+
+    const need = roleNeed(card.role);
+    if (need === -Infinity) return;
+
+    let s = need * 3.0;
+
+    /* 賑やかなら「余白」、寂しいなら「刻み」を推す。
+       ただし始めたばかり（1枚以下）のときは必ず「基本」から。
+       何も無いところへいきなり刻みを入れても曲は始まらない。      */
+    const wantVar = State.order.length < 2 ? 1
+                  : busy > 0.62 ? 2 : busy < 0.28 ? 3 : 1;
+    s += (card.n === wantVar) ? 1.6 : (card.n === 1 ? 0.5 : 0);
+
+    /* 章が薄いところでは密度の高いカードを下げる */
+    const dens = card.shape ? (card.shape.d || 6) : 8;
+    s -= Math.abs(dens * (card.shape ? (card.shape.poly || 1) : 1) / 10 - wantThin) * 0.5;
+
+    /* 音色がかぶるものは下げる（同じ音源が2枚鳴ると混ざる） */
+    if (usedSets.has(card.sound.set)) s -= 1.4;
+
+    /* リズムが1枚も無いときは、キック持ちを強く推す（土台が先） */
+    if (card.role === 'rhythm') {
+      const hasKick = State.order.some(id => CARDS[id].drum && CARDS[id].drum.hasKick);
+      const cardHasKick = card.drum && card.drum.hasKick && card.drum.k.length;
+      s += (!hasKick && cardHasKick) ? 2.2 : (hasKick && cardHasKick) ? -1.8 : 0.4;
+    }
+
+    /* 直前に出した候補は少し下げる（同じ提案の繰り返しを防ぐ） */
+    if (State.lastSuggest && State.lastSuggest.includes(card.id)) s -= 1.2;
+
+    /* 決定的な小さなゆらぎ。毎回まったく同じ順にならないように */
+    const r = makeRng(hashSeed(card.id, State.bar, 13))();
+    s += r * 0.7;
+
+    scored.push({ id: card.id, s });
+  });
+
+  scored.sort((a, b) => b.s - a.s);
+  /* 出す3つの中身も整える
+       ・同じ ROLE は最大2つまで（3つとも同じ役割だと選ぶ意味がない）
+       ・キック持ちは1つまで（土台は1枚なので、2つ並べても片方は死ぬ） */
+  const out = [], perRole = {};
+  let kickShown = 0;
+  for (const x of scored) {
+    const c = CARDS[x.id];
+    if ((perRole[c.role] || 0) >= 2) continue;
+    const isKick = !!(c.drum && c.drum.hasKick && c.drum.k.length);
+    if (isKick && kickShown >= 1) continue;
+    if (isKick) kickShown++;
+    perRole[c.role] = (perRole[c.role] || 0) + 1;
+    out.push(x.id);
+    if (out.length >= SUGGEST_N) break;
+  }
+  State.lastSuggest = out;
+  return out;
+}
+
+/* 提案を採用する（0=左 1=中 2=右） */
+function takeSuggestion(i) {
+  const list = State.suggest || [];
+  if (!list[i]) return;
+  insertCard(list[i]);
+  refreshSuggestions();
+}
+function refreshSuggestions() {
+  if (!State.playing) return;
+  State.suggest = suggestCards();
+  UI.drawSuggestions();
+}
+
+/* =====================================================================
    4c. アレンジ・エンジン（案3）
    ---------------------------------------------------------------------
    v5 は4小節ループが延々と続くだけで、4分回しても「曲」にならなかった。
@@ -508,6 +636,21 @@ function updateArrangement() {
 
   /* 章が変わったら、次の小節の頭にクラッシュを1発入れる合図を出す */
   State.sectionCrashBar = State.bar + 1;
+
+  /* 案A：章に割り当てられた調へ移る。共通音が2つ以上ある移動しか
+     計画に入っていないので、切り替わっても濁らない。               */
+  if (State.keyOn) {
+    if (!State.keyPlan) State.keyPlan = keyPlanFor(State.prog, State.keySeed || 1);
+    const step = State.keyPlan.find(p => p.key === sec.key);
+    const next = step ? step.semi : 0;
+    if (next !== State.keySemi) {
+      State.keySemi = next;
+      State.genBar = -1;                                  // 音域が変わるので作り直す
+      UI.toast(`— ${sec.label}（${keyLabel(next)}）—`);
+      UI.syncSection();
+      return;                                             // トーストが二重にならないように
+    }
+  }
 
   /* ENERGY は人が最近さわっていなければ自動で動かす */
   if (performance.now() - (State.lastManualEnergy || 0) > 30000) {
@@ -625,6 +768,11 @@ const State = {
   space: true,                                   // 案D：左右と奥行き
   cadenceOn: true,                               // 案E：終わりを「終止」にする
   cadence: false,                                // いま終止の最中か
+  keyOn: true,                                   // 案A：章ごとに転調する
+  keySemi: 0,                                    // いまの調（原調からの半音）
+  keyPlan: null,                                 // 章 → 調の計画
+  suggest: [],                                   // 案B：いまの3つの候補
+  lastSuggest: null,                             // 直前の候補（繰り返し防止）
   section: null,                                 // いまの章
   sectionCrashBar: -1,                           // 章の変わり目に鳴らすクラッシュ
   lastManualEnergy: 0,                           // 手で ENERGY を触った時刻
@@ -705,6 +853,7 @@ function insertCard(cardId) {
   recomputeKickOwner();
   duckByCount();
   UI.refreshNow();
+  refreshSuggestions();                 // 案B：入れたら候補を出し直す
 
   Tone.Transport.scheduleOnce((t) => {
     Tone.Draw.schedule(() => {
@@ -730,6 +879,7 @@ function removeCard(cardId) {
   recomputeKickOwner();
   duckByCount();
   UI.refreshNow();
+  refreshSuggestions();
 }
 
 /* ---- 楽器キーを押したとき（キーボード・セル本体のクリック）------------
@@ -862,6 +1012,8 @@ async function startGame(bpm) {
       UI.time();
       updateArrangement();
       updateAutoMix();
+      /* 候補は4秒ごとに出し直す。曲が進めば「いま欲しいもの」も変わる */
+      if (State.elapsed % 4 === 0) refreshSuggestions();
       if (State.durationSec > 0 && State.elapsed >= State.durationSec) endGame();
     }, time);
   }, 1, 0);
@@ -875,6 +1027,7 @@ async function startGame(bpm) {
   /* 準備中に押されていたカードをここで入れる */
   const q = State.queue.splice(0);
   q.forEach(id => insertCard(id));
+  refreshSuggestions();                    // 案B：最初の候補を出す
 }
 
 /* =====================================================================
@@ -1165,12 +1318,37 @@ const UI = {
       c.setAttribute('aria-pressed', String(c.dataset.prog === State.prog)));
   },
 
+  /* --- 案B：いま足すと良い3枚を大きく出す ------------------------
+     40個のキーを覚えなくても、← ↓ → の3つだけで遊べるようにする。 */
+  drawSuggestions() {
+    const box = document.getElementById('suggest');
+    if (!box) return;
+    const list = State.suggest || [];
+    box.innerHTML = '';
+    const KEYS = ['←', '↓', '→'];
+    list.forEach((id, i) => {
+      const c = CARDS[id];
+      const b = el('button', 'sug', '');
+      b.style.setProperty('--r', `var(--${c.role})`);
+      b.style.setProperty('--ra', `var(--${c.role}-a)`);
+      b.innerHTML =
+        `<span class="sk">${KEYS[i]}</span>` +
+        `<span class="sr">${ROLES[c.role].jp}</span>` +
+        `<span class="sn">${c.label}<b>${c.n}</b></span>` +
+        `<span class="st">${c.tag}</span>`;
+      b.addEventListener('click', () => takeSuggestion(i));
+      box.appendChild(b);
+    });
+    if (!list.length) box.innerHTML = '<div class="empty">これ以上は足せません（各役割が上限です）</div>';
+  },
+
   /* --- v6：いまの章を出す（案3） --- */
   syncSection() {
     const el = document.getElementById('sectionname');
     if (!el) return;
     const sec = currentSection();
-    el.textContent = sec.label;
+    const k = (State.keyOn && State.keySemi) ? `・${keyLabel(State.keySemi)}` : '';
+    el.textContent = sec.label + k;
     el.className = 'secbadge s-' + sec.key;
   },
 
@@ -1381,8 +1559,16 @@ document.addEventListener('keydown', (e) => {
     if (last) removeCard(last);
     return;
   }
-  if (e.key === 'ArrowUp') { e.preventDefault(); setEnergy(State.energy + 1); return; }
-  if (e.key === 'ArrowDown') { e.preventDefault(); setEnergy(State.energy - 1); return; }
+  /* 案B：← ↓ → で提案を採用。これだけで遊べるのが「シンプルな操作」。
+     ENERGY は Shift+↑↓ へ移した（↓が提案の真ん中とぶつかるため）。   */
+  if (e.key === 'ArrowUp')   { e.preventDefault(); setEnergy(State.energy + 1); return; }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); takeSuggestion(0); return; }
+  if (e.key === 'ArrowRight'){ e.preventDefault(); takeSuggestion(2); return; }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (e.shiftKey) setEnergy(State.energy - 1); else takeSuggestion(1);
+    return;
+  }
   /* v5：カードが40枚になり P が CHORD のキーになったので、進行の切り替えは Tab へ */
   if (e.key === 'Tab') { e.preventDefault(); setProgression(PROG_ORDER[(PROG_ORDER.indexOf(State.prog) + 1) % PROG_ORDER.length]); return; }
   if (e.key === 'Enter') {                    // HIDリーダーは末尾にEnterを打つ
@@ -1480,6 +1666,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (k === 'timbre' && !State.timbre) {
         /* 切ったらフィルタを本来の明るさへ戻す */
         State.parts.forEach(p => { try { p.lp.frequency.rampTo(p.s.lp || 16000, .3); } catch (e) {} });
+      }
+      if (k === 'keyOn') {
+        State.keySemi = 0; State.keyPlan = null; State.genBar = -1;
+        UI.toast(State.keyOn ? '章ごとに転調します' : '調を固定します');
       }
       if (k === 'space') {
         /* 定位は配線なので、鳴っているカードを入れ直して反映する */

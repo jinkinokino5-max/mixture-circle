@@ -724,143 +724,143 @@
   "role": "rhythm",
   "inst": "rhythm-kit",
   "n": 1,
-  "lufs": -26.626789321629037,
-  "peak": 0.336398184299469
+  "lufs": -26.627027590982085,
+  "peak": 0.3228708505630493
  },
  {
   "id": "rhythm-kit-2",
   "role": "rhythm",
   "inst": "rhythm-kit",
   "n": 2,
-  "lufs": -26.493185344734137,
-  "peak": 0.38420313596725464
+  "lufs": -26.49317549228875,
+  "peak": 0.3841787874698639
  },
  {
   "id": "rhythm-kit-3",
   "role": "rhythm",
   "inst": "rhythm-kit",
   "n": 3,
-  "lufs": -26.28939996910979,
-  "peak": 0.32829251885414124
+  "lufs": -26.272385775349395,
+  "peak": 0.33441463112831116
  },
  {
   "id": "rhythm-break-1",
   "role": "rhythm",
   "inst": "rhythm-break",
   "n": 1,
-  "lufs": -26.600103925381067,
-  "peak": 0.22366607189178467
+  "lufs": -26.600164833019303,
+  "peak": 0.2315816432237625
  },
  {
   "id": "rhythm-break-2",
   "role": "rhythm",
   "inst": "rhythm-break",
   "n": 2,
-  "lufs": -26.359697242017912,
-  "peak": 0.28737717866897583
+  "lufs": -26.359678212231007,
+  "peak": 0.2939634621143341
  },
  {
   "id": "rhythm-break-3",
   "role": "rhythm",
   "inst": "rhythm-break",
   "n": 3,
-  "lufs": -26.490080834273982,
-  "peak": 0.224722221493721
+  "lufs": -26.490124853705243,
+  "peak": 0.2246403694152832
  },
  {
   "id": "rhythm-four-1",
   "role": "rhythm",
   "inst": "rhythm-four",
   "n": 1,
-  "lufs": -26.386648311744572,
-  "peak": 0.258517861366272
+  "lufs": -26.38650530249403,
+  "peak": 0.2593494653701782
  },
  {
   "id": "rhythm-four-2",
   "role": "rhythm",
   "inst": "rhythm-four",
   "n": 2,
-  "lufs": -26.61156317531582,
-  "peak": 0.2184896618127823
+  "lufs": -26.61162267208348,
+  "peak": 0.21903292834758759
  },
  {
   "id": "rhythm-four-3",
   "role": "rhythm",
   "inst": "rhythm-four",
   "n": 3,
-  "lufs": -26.719377798928644,
-  "peak": 0.35186976194381714
+  "lufs": -26.717276575037438,
+  "peak": 0.3523332476615906
  },
  {
   "id": "rhythm-machine-1",
   "role": "rhythm",
   "inst": "rhythm-machine",
   "n": 1,
-  "lufs": -26.61332032455342,
-  "peak": 0.403921902179718
+  "lufs": -26.61334935400146,
+  "peak": 0.40165960788726807
  },
  {
   "id": "rhythm-machine-2",
   "role": "rhythm",
   "inst": "rhythm-machine",
   "n": 2,
-  "lufs": -26.725754294765682,
-  "peak": 0.457810640335083
+  "lufs": -26.725743064655614,
+  "peak": 0.45320025086402893
  },
  {
   "id": "rhythm-machine-3",
   "role": "rhythm",
   "inst": "rhythm-machine",
   "n": 3,
-  "lufs": -26.513538095317816,
-  "peak": 0.20542187988758087
+  "lufs": -26.51381694485802,
+  "peak": 0.2152925431728363
  },
  {
   "id": "rhythm-linn-1",
   "role": "rhythm",
   "inst": "rhythm-linn",
   "n": 1,
-  "lufs": -26.976974016198277,
-  "peak": 0.383861243724823
+  "lufs": -26.976178028544325,
+  "peak": 0.3701411485671997
  },
  {
   "id": "rhythm-linn-2",
   "role": "rhythm",
   "inst": "rhythm-linn",
   "n": 2,
-  "lufs": -26.636582933471498,
-  "peak": 0.38560473918914795
+  "lufs": -26.636557567098425,
+  "peak": 0.37909263372421265
  },
  {
   "id": "rhythm-linn-3",
   "role": "rhythm",
   "inst": "rhythm-linn",
   "n": 3,
-  "lufs": -26.81094194781662,
-  "peak": 0.24885374307632446
+  "lufs": -26.810951280759756,
+  "peak": 0.24943140149116516
  },
  {
   "id": "rhythm-stark-1",
   "role": "rhythm",
   "inst": "rhythm-stark",
   "n": 1,
-  "lufs": -26.593385185667575,
-  "peak": 0.41551023721694946
+  "lufs": -26.594861221763814,
+  "peak": 0.40196502208709717
  },
  {
   "id": "rhythm-stark-2",
   "role": "rhythm",
   "inst": "rhythm-stark",
   "n": 2,
-  "lufs": -26.763388859755626,
-  "peak": 0.382408082485199
+  "lufs": -26.763667598724506,
+  "peak": 0.3856925368309021
  },
  {
   "id": "rhythm-stark-3",
   "role": "rhythm",
   "inst": "rhythm-stark",
   "n": 3,
-  "lufs": -26.915726876599912,
+  "lufs": -26.915666745582357,
   "peak": 0.27886518836021423
  },
  {
@@ -940,23 +940,23 @@
   "role": "rhythm",
   "inst": "rhythm-ride",
   "n": 1,
-  "lufs": -32.41741652922133,
-  "peak": 0.15273620188236237
+  "lufs": -32.26188016396311,
+  "peak": 0.14264227449893951
  },
  {
   "id": "rhythm-ride-2",
   "role": "rhythm",
   "inst": "rhythm-ride",
   "n": 2,
-  "lufs": -32.28297203128351,
-  "peak": 0.16042238473892212
+  "lufs": -32.15974741956942,
+  "peak": 0.14653876423835754
  },
  {
   "id": "rhythm-ride-3",
   "role": "rhythm",
   "inst": "rhythm-ride",
   "n": 3,
-  "lufs": -32.5452886527445,
-  "peak": 0.14667877554893494
+  "lufs": -31.998596528130136,
+  "peak": 0.14397411048412323
  }
 ]

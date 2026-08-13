@@ -186,6 +186,36 @@
   }
   .pill .vk{font-style:normal; font-size:10.5px; opacity:.75}
 
+  /* ===== 案B：つぎに足すなら（提案） ===== */
+  .sugwrap{display:flex; flex-direction:column; gap:9px}
+  .sughead{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+  .sughead b{font-size:13px; letter-spacing:.1em}
+  .sughead span{font-size:11px; color:var(--fg-dim)}
+  #suggest{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .sug{
+    display:flex; flex-direction:column; gap:3px; align-items:flex-start; cursor:pointer;
+    padding:13px 15px 14px; border-radius:13px; text-align:left;
+    border:1px solid color-mix(in srgb, var(--ra) 45%, var(--line));
+    background:linear-gradient(180deg, color-mix(in srgb, var(--r) 30%, var(--panel)) 0%, var(--panel) 100%);
+    color:var(--fg); transition:transform .09s, box-shadow .15s, border-color .15s;
+  }
+  .sug:hover{border-color:var(--ra); transform:translateY(-2px); box-shadow:0 0 26px -10px var(--ra)}
+  .sug:active{transform:translateY(0)}
+  .sug .sk{
+    font-size:15px; line-height:1; color:var(--ra); font-family:ui-monospace,monospace;
+    border:1px solid color-mix(in srgb, var(--ra) 45%, transparent); border-radius:6px;
+    padding:3px 8px; margin-bottom:4px;
+  }
+  .sug .sr{font-size:9.5px; letter-spacing:.14em; color:var(--fg-dim)}
+  .sug .sn{font-size:16px; font-weight:700; line-height:1.25}
+  .sug .sn b{
+    font-size:10px; margin-left:6px; padding:1px 5px; border-radius:4px; vertical-align:2px;
+    background:var(--ra); color:#06090f;
+  }
+  .sug .st{font-size:10.5px; color:var(--fg-dim); line-height:1.4}
+  #suggest .empty{grid-column:1/-1; color:#5b6478; font-size:12px; padding:10px 0}
+  @media(max-width:720px){ #suggest{grid-template-columns:1fr} }
+
   /* ===== v6：章のバッジ ===== */
   .secbadge{
     font-size:10.5px; letter-spacing:.16em; padding:3px 10px; border-radius:999px;
@@ -392,6 +422,7 @@
           <button class="chip" data-auto="timbre"      aria-pressed="true">強さで音色を変える</button>
           <button class="chip" data-auto="space"       aria-pressed="true">左右と奥行きに置く</button>
           <button class="chip" data-auto="cadenceOn"   aria-pressed="true">終わりを締める</button>
+          <button class="chip" data-auto="keyOn"       aria-pressed="true">章ごとに転調する</button>
         </div>
       </div>
       <div class="ctlrow">
@@ -406,9 +437,18 @@
       <div class="hint">
         行＝ROLE（役割）／列＝INSTRUMENT（楽器）。キーボードの並びがそのままグリッドです。<br>
         <b>同じキーを押すたびに 変化1 → 2 → 3 → 止まる</b>と巡回します。数字ボタンを直接クリックしてもかまいません。<br>
-        <kbd>スペース</kbd> ビルドアップ＆ドロップ　<kbd>Tab</kbd> コード進行　<kbd>Backspace</kbd> 最後の1枚を戻す　<kbd>Esc</kbd> 終了
+        <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 提案を採用　<kbd>スペース</kbd> ドロップ　<kbd>↑</kbd>/<kbd>Shift+↓</kbd> ENERGY　<kbd>Tab</kbd> コード進行　<kbd>Backspace</kbd> 1枚戻す　<kbd>Esc</kbd> 終了
       </div>
     </div>
+  </div>
+
+  <!-- 案B：いま足すと良い3枚。40キーを覚えなくても、ここだけで遊べる -->
+  <div class="wrap sugwrap">
+    <div class="sughead">
+      <b>つぎに足すなら</b>
+      <span>← ↓ → のキー、またはクリック。下のカード表は「自分で選びたい人」向けです</span>
+    </div>
+    <div id="suggest"></div>
   </div>
 
   <div class="wrap grid" id="grid"></div>

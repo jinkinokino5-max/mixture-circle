@@ -21,7 +21,8 @@ vm.createContext(ctx);
 
 const EXPORTS = ['CARDS', 'CARD_ORDER', 'ROLES', 'ROLE_ORDER', 'PROGRESSIONS', 'PROG_ORDER',
                  'resolveNotes', 'INSTRUMENTS', 'INSTRUMENT_ORDER', 'VARIATIONS',
-                 'generateBar', 'generateFill', 'occupancyOf', 'SECTIONS', 'sectionAt', 'GROOVE'];
+                 'generateBar', 'generateFill', 'occupancyOf', 'SECTIONS', 'sectionAt', 'GROOVE',
+                 'TIMBRE', 'SPACE', 'KEY_MOVES', 'shiftChord', 'keyPlanFor', 'safeKeyMoves', 'commonTones'];
 vm.runInContext(
   fs.readFileSync(path.join(ROOT, 'music.js'), 'utf8')
   + '\n;(' + JSON.stringify(EXPORTS) + ').forEach(n => { globalThis[n] = eval(n); });',
@@ -30,7 +31,8 @@ vm.runInContext(fs.readFileSync(path.join(ROOT, 'samples/manifest.js'), 'utf8'),
 
 const { CARDS, CARD_ORDER, ROLES, ROLE_ORDER, PROGRESSIONS, PROG_ORDER,
         resolveNotes, INSTRUMENTS, INSTRUMENT_ORDER, VARIATIONS,
-        generateBar, generateFill, occupancyOf, SECTIONS, sectionAt, GROOVE } = ctx;
+        generateBar, generateFill, occupancyOf, SECTIONS, sectionAt, GROOVE,
+        TIMBRE, SPACE, KEY_MOVES, shiftChord, keyPlanFor, safeKeyMoves, commonTones } = ctx;
 const MANIFEST = ctx.window.SAMPLE_MANIFEST || { pitched: {}, drums: {} };
 
 const err = [], warn = [];
@@ -86,7 +88,10 @@ for (const [id, card] of Object.entries(CARDS)) {
   for (const pk of PROG_ORDER) {
     const prog = PROGRESSIONS[pk];
     for (let bar = 0; bar < BARS; bar++) {
-      const chord = prog.bars[bar % prog.bars.length];
+      /* 案A：転調したときも音域が壊れないことを見たいので、
+         全部の移調先を総当たりする（ここを省くと転調で音が痩せる）。 */
+      const semi = KEY_MOVES[bar % KEY_MOVES.length].semi;
+      const chord = shiftChord(prog.bars[bar % prog.bars.length], semi);
       const lift = (card.role === 'melody' && bar % 8 === 7) ? 1 : 0;
       let evs;
       try { evs = generateBar(card, bar, 2, null, 1); }
@@ -207,6 +212,66 @@ for (const [iid, inst] of Object.entries(INSTRUMENTS)) {
   densRows.avoidRate = rate;
 }
 
+/* ---- 7b. 案A：転調が「必ず噛み合う」条件を守っているか ----------
+   この作品の生命線は「何と何を重ねても噛み合う」こと。自由な転調は
+   それを壊すので、共通音2つ以上の移動しか許していない。その検査。   */
+{
+  const bad = [];
+  PROG_ORDER.forEach(pk => {
+    const first = PROGRESSIONS[pk].bars[0];
+    /* 計画に出てくる移動が、すべて共通音2つ以上か */
+    for (let seed = 1; seed <= 40; seed++) {
+      const plan = keyPlanFor(pk, seed);
+      if (plan.length !== SECTIONS.length) err.push(`keyPlanFor(${pk},${seed}) の長さが章の数と違う`);
+      if (plan[0].semi !== 0) err.push(`${pk}/${seed}: 導入が原調でない`);
+      if (plan[plan.length - 1].semi !== 0) err.push(`${pk}/${seed}: 終わりが原調へ帰っていない`);
+      let prev = 0;
+      plan.forEach(p => {
+        if (p.semi !== prev) {
+          const n = commonTones(first, prev, first, p.semi);
+          if (n < 2) bad.push(`${pk}: ${prev}→${p.semi} は共通音 ${n} 個`);
+        }
+        prev = p.semi;
+      });
+    }
+    /* safeKeyMoves が返すものは必ず条件を満たすこと */
+    KEY_MOVES.forEach(from => {
+      safeKeyMoves(pk, from.semi).forEach(to => {
+        if (to.semi === from.semi) return;
+        const n = commonTones(first, from.semi, first, to.semi);
+        if (n < 2) bad.push(`safeKeyMoves(${pk},${from.semi}) が共通音 ${n} 個の ${to.semi} を返した`);
+      });
+    });
+  });
+  [...new Set(bad)].forEach(b => err.push('転調: ' + b));
+
+  /* どの進行でも、原調から動ける先が1つ以上あること（動かないと意味がない） */
+  PROG_ORDER.forEach(pk => {
+    const n = safeKeyMoves(pk, 0).filter(m => m.semi !== 0).length;
+    if (n === 0) warn.push(`${pk}: 原調から安全に動ける調が無い（転調が起きない）`);
+  });
+  const moves = {};
+  PROG_ORDER.forEach(pk => { moves[pk] = safeKeyMoves(pk, 0).map(m => m.label).join(''); });
+  densRows.keyMoves = moves;
+}
+
+/* ---- 7c. 案C/D：音色と空間の定義が壊れていないか ---- */
+{
+  Object.entries(TIMBRE).forEach(([k, t]) => {
+    if (!(t.open > 0 && t.open < 1)) err.push(`TIMBRE.${k}: open ${t.open} は 0..1 の外`);
+    if (!(t.curve > 0 && t.curve <= 2)) err.push(`TIMBRE.${k}: curve ${t.curve} が範囲外`);
+  });
+  Object.values(CARDS).forEach(c => {
+    if (!c.timbre) err.push(`${c.id}: timbre が無い`);
+    if (!c.space) err.push(`${c.id}: space が無い`);
+    else {
+      if (Math.abs(c.space.pan) > 0.85) err.push(`${c.id}: pan ${c.space.pan} が振れすぎ`);
+      if (c.space.depth < 0 || c.space.depth > 1) err.push(`${c.id}: depth ${c.space.depth} が範囲外`);
+      if (c.role === 'bass' && Math.abs(c.space.pan) > 0.001) err.push(`${c.id}: ベースは中央に置くこと`);
+    }
+  });
+}
+
 /* ---- 8. 章立て ---- */
 {
   let last = -1;
@@ -226,7 +291,8 @@ console.log(`同時上限 : ` + ROLE_ORDER.map(r => `${ROLES[r].label} ${ROLES[r
 const avg = i => (densRows.reduce((a, r) => a + r.ds[i], 0) / densRows.length).toFixed(1);
 console.log(`1小節あたりの平均音数 : 基本 ${avg(0)} / 余白 ${avg(1)} / 刻み ${avg(2)}`);
 console.log(`埋まっている位置に置いた割合 : ${(densRows.avoidRate * 100).toFixed(0)}%（低いほど良い）`);
-console.log(`章 : ` + SECTIONS.map(s => s.label).join(' → '));
+console.log(`章 : ` + SECTIONS.map(s => s.label).join(" → "));
+console.log(`原調から動ける調 : ` + Object.entries(densRows.keyMoves).map(([k,v])=>k+" "+v).join(" / "));
 console.log('');
 if (warn.length) { console.log('― 注意 ―'); warn.forEach(w => console.log('  ' + w)); console.log(''); }
 if (err.length) { console.log('― エラー ―'); err.forEach(e => console.log('  ' + e)); process.exitCode = 1; }

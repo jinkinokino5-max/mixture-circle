@@ -94,6 +94,96 @@ const PROGRESSIONS = {
 };
 const PROG_ORDER = ['night', 'sunrise', 'spell', 'city'];
 
+/* =====================================================================
+   2b. 転調（案A）
+   ---------------------------------------------------------------------
+   v6 まで、4分間ずっと Cマイナー1つだった。どれだけ音符を工夫しても、
+   調が動かないと「習作」の響きが残る。曲が大きく見えるかどうかは
+   ここで決まる。
+
+   ただし、この作品の生命線は「何と何を重ねても必ず噛み合う」こと。
+   自由な転調を許すとそれが壊れる。そこで **共通音による転調** だけを許す。
+
+     ・移調先は、いまのコードと **共通音を2つ以上** 持つ調に限る
+     ・切り替えるのは章の変わり目だけ（曲の途中で唐突に動かさない）
+     ・戻ってくる（最後は必ず元の調へ帰る）
+
+   共通音が2つあると、耳は「同じ場所にいる」と感じたまま景色だけが変わる。
+   これがいちばん安全で、いちばん効果の大きい転調のしかた。
+   ---------------------------------------------------------------------
+   key は「元の Cマイナーから何半音ずらすか」で表す。
+   0=原調 / +5=Fマイナー方向 / −2=B♭マイナー方向 / +3=E♭（平行長調側）
+   ===================================================================== */
+const KEY_MOVES = [
+  { semi:  0, label: '原', desc: 'もとの調' },
+  { semi:  5, label: '沈', desc: '4度上（重くなる）' },
+  { semi: -2, label: '翳', desc: '2度下（陰る）' },
+  { semi:  3, label: '晴', desc: '3度上（明るく開ける）' },
+  { semi: -5, label: '飛', desc: '5度下（遠くへ行く）' },
+];
+
+/* ふたつのコードの共通音（ピッチクラス）を数える */
+function commonTones(chordA, shiftA, chordB, shiftB) {
+  const pcs = (c, sh) => new Set(c.voiced.map(v => ((v + sh) % 12 + 12) % 12));
+  const a = pcs(chordA, shiftA), b = pcs(chordB, shiftB);
+  let n = 0; a.forEach(x => { if (b.has(x)) n++; });
+  return n;
+}
+
+/* いまの調から安全に行ける移調先だけを返す --------------------------
+   条件は2つあり、両方を満たす必要がある。
+
+     ① いまの調と共通音が2つ以上（＝行きが滑らか）
+     ② 原調とも共通音が2つ以上（＝**帰りも滑らか**）
+
+   ②が要る理由：曲の終わりでは必ず原調へ帰す。行きだけを見て遠くまで
+   行くと、帰り道が飛び石になって、そこだけ唐突に聞こえる。
+   最初この②が無くて、検査が「-2→0 は共通音1個」と拾った。        */
+function safeKeyMoves(progKey, fromSemi) {
+  const first = PROGRESSIONS[progKey].bars[0];
+  return KEY_MOVES.filter(m =>
+    m.semi === fromSemi || (
+      commonTones(first, fromSemi, first, m.semi) >= 2 &&
+      commonTones(first, 0, first, m.semi) >= 2));
+}
+
+/* 章の並びに対して、どの章でどの調にいるかを決める --------------------
+   決定的に作るので、同じ設定なら何度やっても同じ曲になる。
+   導入と終盤は必ず原調（＝出て、帰ってくる）。                        */
+function keyPlanFor(progKey, seed) {
+  const rnd = makeRng((seed >>> 0) ^ 0x9E3779B9);
+  const plan = [];
+  let cur = 0;
+  SECTIONS.forEach((sec, i) => {
+    if (i === 0 || i >= SECTIONS.length - 2) { cur = 0; }        // 導入と終盤は原調
+    else if (rnd() < 0.55) {
+      const cands = safeKeyMoves(progKey, cur).filter(m => m.semi !== cur);
+      if (cands.length) cur = cands[Math.floor(rnd() * cands.length)].semi;
+    }
+    plan.push({ key: sec.key, semi: cur });
+  });
+  return plan;
+}
+function keyLabel(semi) {
+  const m = KEY_MOVES.find(k => k.semi === semi);
+  return m ? m.label : String(semi);
+}
+
+/* コードを移調する。makeChord をやり直すので、畳み込み（fold）も
+   かかり直して音域が跳ねない。下流（音名の解決・各パート）は
+   「ただのコード」を受け取るだけなので、一切変更が要らない。      */
+const _shiftCache = new Map();
+function shiftChord(chord, semi) {
+  if (!semi) return chord;
+  const k = chord.rootPc + ':' + chord.quality + ':' + semi;
+  let c = _shiftCache.get(k);
+  if (!c) {
+    c = makeChord(((chord.rootPc + semi) % 12 + 12) % 12, chord.quality);
+    _shiftCache.set(k, c);
+  }
+  return c;
+}
+
 /* ============ 3. 構成音 → 実際の音名 ============ */
 function toneName(chord, idx, oct) {
   const n = chord.voiced.length;
@@ -762,7 +852,7 @@ const INSTRUMENTS = {
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 6, 8, 12, 14], rv: .55, hasKick: false } },
       { tag: '余白・4分で鳴らす', trim: -1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 8, 12], rv: .60, hasKick: false } },
-      { tag: '刻み・全8分＋アクセント', trim: 0.5,
+      { tag: '刻み・全8分＋アクセント', trim: 1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 2, 4, 6, 8, 10, 12, 14], rv: .42,
                 oh: [7, 15], hasKick: false } },
     ],

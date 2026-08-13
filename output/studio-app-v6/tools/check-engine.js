@@ -121,7 +121,7 @@ load('app.js',
   '\n;["Part","State","buildMaster","CARDS","CARD_ORDER","ROLE_ORDER","ROLES","INSTRUMENTS",'
   + '"INSTRUMENT_ORDER","VARIATIONS","pressInstrument","insertCard","removeCard","KEYMAP",'
   + '"ensureBar","updateArrangement","updateAutoMix","currentSection","roleBus","SECTIONS",'
-  + '"generateBar","setEnergy","playCadence","endGame","dropPart"]'
+  + '"generateBar","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness"]'
   + '.forEach(n=>{ try{ globalThis[n]=eval(n); }catch(e){} });');
 
 /* ---------- 実行 ---------- */
@@ -318,6 +318,77 @@ load('app.js',
     try { booked[booked.length - 1].cb(0); } catch (e) { errors.push('終止の最後の一撃: ' + e.message); }
     if (!State.cadence) errors.push('State.cadence が立っていない');
     State.cadence = false; State.prog = before;
+  }
+
+  /* ===== 9. 案A：転調が全パートに一斉にかかるか ===== */
+  {
+    State.keyOn = true; State.prog = 'night'; State.keySemi = 0;
+    const c0 = ctx.chordAtBar(0);
+    State.keySemi = 5;
+    const c5 = ctx.chordAtBar(0);
+    console.log(`転調 : 原調 ${c0.label} → +5 ${c5.label}`);
+    if (c0.label === c5.label) errors.push('keySemi を変えてもコードが変わらない（案Aが効いていない）');
+    State.keyOn = false;
+    if (ctx.chordAtBar(0).label !== c0.label) errors.push('keyOn を切っても転調が残っている');
+    State.keyOn = true; State.keySemi = 0;
+  }
+
+  /* ===== 10. 案B：提案エンジン ===== */
+  {
+    State.playing = true;
+    State.parts.clear(); State.order = []; State.suggest = []; State.lastSuggest = null;
+    State.elapsed = 0; State.durationSec = 240; State.bar = 0;
+
+    /* 何も無いときは、まず土台（リズム／ベース）を推すはず */
+    let sug = ctx.suggestCards();
+    console.log('最初の提案 : ' + sug.map(id => `${ROLES[CARDS[id].role].jp}の${CARDS[id].label}${CARDS[id].n}`).join(' / '));
+    if (sug.length !== 3) errors.push(`提案が ${sug.length} 個（3個であるべき）`);
+    const firstRoles = sug.map(id => CARDS[id].role);
+    if (!firstRoles.includes('rhythm')) errors.push('何も無い状態でリズムを推していない（土台が先であるべき）');
+    /* 何も無いところへ「刻み」を勧めない。曲は基本から始まる */
+    if (sug.every(id => CARDS[id].n === 3)) errors.push('始めたばかりなのに全部「刻み」を推している');
+    /* キック持ちは1つまで（土台は1枚なので2つ並べても片方は死ぬ） */
+    const kickSug = sug.filter(id => CARDS[id].drum && CARDS[id].drum.hasKick && CARDS[id].drum.k.length);
+    if (kickSug.length > 1) errors.push(`キック持ちを ${kickSug.length} 個同時に提案している`);
+    /* 3つとも同じ ROLE ではないこと（選ぶ意味がなくなる） */
+    if (new Set(firstRoles).size === 1) errors.push('3つとも同じ役割を推している');
+
+    /* 提案どおりに8回積んでも、ROLE の上限を超えないこと */
+    for (let i = 0; i < 8; i++) {
+      State.suggest = ctx.suggestCards();
+      if (!State.suggest.length) break;
+      State.lastInput.clear();
+      ctx.takeSuggestion(0);
+    }
+    const counts = {};
+    State.order.forEach(id => { counts[CARDS[id].role] = (counts[CARDS[id].role] || 0) + 1; });
+    console.log('提案だけで積んだ結果 : ' + ROLE_ORDER.map(r => `${ROLES[r].jp}${counts[r] || 0}/${ROLES[r].max}`).join(' '));
+    ROLE_ORDER.forEach(r => {
+      if ((counts[r] || 0) > ROLES[r].max) errors.push(`${r} が上限 ${ROLES[r].max} を超えた（${counts[r]}枚）`);
+    });
+    /* 同じ楽器が2枚入っていないこと */
+    const insts = State.order.map(id => CARDS[id].inst);
+    if (new Set(insts).size !== insts.length) errors.push('提案で同じ楽器が2枚入った');
+    /* キック持ちが2枚以上にならないこと（土台は1枚） */
+    const kicks = State.order.filter(id => CARDS[id].drum && CARDS[id].drum.hasKick && CARDS[id].drum.k.length);
+    if (kicks.length > 1) errors.push(`キック持ちが ${kicks.length} 枚（提案が土台を重ねている）`);
+
+    /* 満杯になったら提案が空になること */
+    let guard = 0;
+    while (guard++ < 20) {
+      const s = ctx.suggestCards();
+      if (!s.length) break;
+      State.lastInput.clear();
+      ctx.insertCard(s[0]);
+    }
+    if (ctx.suggestCards().length) errors.push('満杯なのに提案が出続けている');
+
+    /* 賑やかなときは「余白」、寂しいときは「刻み」を推すか */
+    State.parts.forEach(p => p.dispose());
+    State.parts.clear(); State.order = []; State.lastSuggest = null;
+    const quiet = ctx.suggestCards().map(id => CARDS[id].n);
+    console.log(`寂しいときの提案の変化番号 : ${quiet.join(',')}（3=刻み が多いはず）`);
+    State.parts.clear(); State.order = [];
   }
 
   /* ---------- 出力 ---------- */
