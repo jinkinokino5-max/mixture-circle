@@ -185,6 +185,82 @@ const GROOVE = {
   pad:     { push: 0, tight: 6, drag: .70, accent: 'flat' },
 };
 
+/* =====================================================================
+   5b. 音色の可変化（案C）
+   ---------------------------------------------------------------------
+   v6 までは、強く弾いても弱く弾いても **音量が変わるだけ** だった。
+   実際の楽器は、弱く吹いたサックスは丸く、強く吹くと開く。
+   ピアノも弱打は柔らかく、強打は硬い。この「音色そのものの変化」が
+   無いと、どれだけ音符を工夫しても機械が鳴っている印象が残る。
+
+   ここでは各カードの lp（ローパス）を「いちばん開いたときの明るさ」と
+   読み替えて、弱い音ほど閉じる。
+
+     cut = lp × ( open + (1 − open) × v ^ curve )
+
+     open  … いちばん弱いときにどこまで閉じるか（0.3 なら 3割の高さまで）
+     curve … 効き方。小さいほど弱音側で急に閉じる
+
+   v=1 でちょうど lp になるので、**設定した明るさより明るくはならない**。
+   実測で合わせた音量バランスを壊しにくい向きに倒してある。
+   ===================================================================== */
+const TIMBRE = {
+  default: { open: .50, curve: .70 },
+  /* 息もの：弱いと丸く、強いと開く。いちばん効果が分かりやすい */
+  wind:    { open: .32, curve: .60 },
+  /* 弓もの：弱音はほとんど倍音が出ない */
+  bow:     { open: .34, curve: .65 },
+  /* 撥弦：爪の当たりが強さで変わる */
+  pluck:   { open: .45, curve: .70 },
+  /* 鍵盤：ハンマーの硬さ */
+  key:     { open: .42, curve: .75 },
+  /* 面で支える音はあまり変わらない（変えると不安定に聞こえる） */
+  pad:     { open: .68, curve: .90 },
+  /* 機械は素直に。ただし完全に一定だと硬すぎる */
+  machine: { open: .62, curve: .80 },
+  /* 太鼓と金物：強打ほど明るい */
+  kit:     { open: .55, curve: .65 },
+  hat:     { open: .48, curve: .60 },
+  bass:    { open: .52, curve: .70 },
+};
+
+/* =====================================================================
+   5c. 空間（案D）
+   ---------------------------------------------------------------------
+   v6 まで、全パートが左右の中央・同じ距離で鳴っていた。
+   実際の演奏では、ドラムとベースは真ん中、ギターは左、鍵盤は右、
+   というふうに **場所が分かれている**。これが無いと、何枚重ねても
+   「1つのスピーカーから全部出ている」窮屈さが残る。
+
+     pan   … 左右 −1（左）〜 +1（右）
+     depth … 奥行き 0（手前）〜 1（奥）。奥ほど残響が増え、高域が減る
+
+   決め方の原則：
+     ・低音（ベース）と土台（キック）は必ず真ん中。左右に振ると芯がぶれる
+     ・同じ ROLE の2枚は左右に分かれる（重ねたとき混ざらないように）
+     ・面で支える音（パッド・ストリングス）は奥へ。前に出ると邪魔になる
+   ===================================================================== */
+const SPACE = {
+  /* ROLE ごとの基本位置。同じ ROLE の2枚目は左右反転して置く */
+  melody: { pan: -0.22, depth: 0.20 },
+  chord:  { pan:  0.26, depth: 0.42 },
+  bass:   { pan:  0.00, depth: 0.05 },   // 足元は動かさない
+  rhythm: { pan:  0.00, depth: 0.15 },
+};
+
+/* 楽器ごとの微調整。実際の編成での立ち位置に近づける */
+const SPACE_TWEAK = {
+  'chord-strings': { depth: 0.72 }, 'chord-pad': { depth: 0.78 },
+  'chord-horn':    { depth: 0.66 }, 'chord-harmonium': { depth: 0.55 },
+  'chord-cutting': { pan: 0.44, depth: 0.22 },
+  'chord-aguitar': { pan: 0.38 },   'chord-harp': { pan: 0.34, depth: 0.38 },
+  'melody-eguitar': { pan: -0.36 }, 'melody-nylon': { pan: -0.30 },
+  'melody-violin':  { depth: 0.46 }, 'melody-flute': { pan: -0.14, depth: 0.36 },
+  'melody-trumpet': { pan: -0.28, depth: 0.30 }, 'melody-trombone': { pan: -0.18, depth: 0.32 },
+  'rhythm-shaker': { pan:  0.40 },  'rhythm-bongo': { pan: -0.42 },
+  'rhythm-ride':   { pan:  0.30 },  'rhythm-xylo':  { pan: -0.34, depth: 0.30 },
+};
+
 /* ============ 6. バリエーションの意味 ============ */
 const VARIATIONS = [
   { n: 1, label: '基本', desc: 'その楽器の代表的な弾き方' },
@@ -434,7 +510,7 @@ const INSTRUMENTS = {
              gain: -3.5, rev: .03, dly: 0, duck: true, env: { attack: .002, release: .25 } },
     variants: [
       { tag: 'キックに張りつく', trim: -2, shape: { d: 7, pref: [0, 3, 6, 8, 11, 14], syn: .35, walk: 'move', len: '8n', vel: .90 } },
-      { tag: '余白・ルートを踏むだけ', trim: 2.5, shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .92, glue: .9 } },
+      { tag: '余白・ルートを踏むだけ', trim: 3, shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .92, glue: .9 } },
       { tag: '刻み・16分で走る', shape: { d: 13, syn: .3, walk: 'move', len: '16n', vel: .62 } },
     ],
   },
@@ -474,7 +550,7 @@ const INSTRUMENTS = {
     sound: { kind: 'sampler', set: 'bassoon', fb: 'mono', oct: 3, hp: 60, lp: 2000,
              gain: -9, rev: .14, dly: 0, duck: true, env: { attack: .02, release: .45 } },
     variants: [
-      { tag: '木の中低音・語尾がある', trim: -3, shape: { d: 6, syn: .25, walk: 'move', len: '8n', vel: .76 } },
+      { tag: '木の中低音・語尾がある', trim: -2.5, shape: { d: 6, syn: .25, walk: 'move', len: '8n', vel: .76 } },
       { tag: '余白・ぽつぽつ置く', trim: 0.5,   shape: { d: 2, syn: .1, walk: 'root', len: '2n', vel: .76, glue: .85 } },
       { tag: '刻み・跳ね回る',       shape: { d: 12, syn: .4, walk: 'move', len: '16n', vel: .56 } },
     ],
@@ -485,7 +561,7 @@ const INSTRUMENTS = {
              gain: -11, rev: .05, dly: 0, duck: true, env: { attack: .03, release: .4 } },
     variants: [
       { tag: '途切れない・地鳴り', trim: -1, shape: { d: 3, syn: .1, walk: 'root', len: '2n', vel: .68 } },
-      { tag: '余白・1小節ずっと踏む', trim: 4, shape: { d: 1, syn: 0, walk: 'root', len: '1n', vel: .68, glue: .95 } },
+      { tag: '余白・1小節ずっと踏む', trim: 3.5, shape: { d: 1, syn: 0, walk: 'root', len: '1n', vel: .68, glue: .95 } },
       { tag: '刻み・8分で押し続ける', shape: { d: 9, syn: .2, walk: 'move', len: '8n', vel: .54 } },
     ],
   },
@@ -566,7 +642,7 @@ const INSTRUMENTS = {
       { tag: '転がる・つんのめる',
         drum: { k: [0, 2, 9], s: [4, 11, 12], h: [0, 3, 6, 8, 10, 14], hv: .34,
                 h3: [1, 5, 7, 13, 15], ghost: [7, 15], t: [13], oh: [10], cr: [0], hasKick: true } },
-      { tag: '余白・骨だけ残す', trim: 1.5,
+      { tag: '余白・骨だけ残す', trim: 2,
         drum: { k: [0, 9], s: [4, 12], h: [], hv: .34,
                 h3: [2, 6, 10, 14], ghost: [7], cr: [0], hasKick: true } },
       { tag: '刻み・アーメン風', trim: -1.5, set: 'Kit8',
@@ -680,7 +756,7 @@ const INSTRUMENTS = {
   'rhythm-ride': {
     label: 'ライド', groove: 'hat',
     /* シンバルは合成（samples.js の makeCymbals）。キットは音を借りるだけ */
-    sound: { kind: 'kit', set: 'acoustic-kit', gain: 9.5, hp: 300, lp: 16000, rev: .18 },
+    sound: { kind: 'kit', set: 'acoustic-kit', gain: 9, hp: 300, lp: 16000, rev: .18 },
     variants: [
       { tag: '金物で刻む・濁らない', trim: -0.5,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 6, 8, 12, 14], rv: .55, hasKick: false } },
@@ -728,6 +804,11 @@ ROLE_ORDER.forEach(rk => {
         label: inst.label, tag: va.tag,
         sound, shape: va.shape, drum: va.drum,
         groove: GROOVE[inst.groove] || GROOVE.default,
+        /* 音色の変化のしかたも、グルーヴと同じ「楽器の系統」で決まる。
+           楽器ごとに書き分けなくてよいように groove 名を流用している。 */
+        timbre: TIMBRE[inst.groove] || TIMBRE.default,
+        /* 立ち位置。ROLE の基本 ＋ 楽器ごとの微調整 */
+        space: Object.assign({}, SPACE[instId.split('-')[0]], SPACE_TWEAK[instId] || {}),
       };
       CARD_ORDER[rk].push(id);
     });

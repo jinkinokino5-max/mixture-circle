@@ -187,6 +187,15 @@ function makeSynthKit(dest, level) {
   };
 }
 
+/* ---- 案D：同じ ROLE の何枚目か。2枚目は左右を反転して置く -----------
+   MELODY を2枚重ねたときに、両方とも同じ場所から鳴ると混ざってしまう。
+   1枚目は定義どおり、2枚目は左右反転、3枚目は中央寄りにする。       */
+function seatFlipOf(cardId) {
+  const role = cardId.split('-')[0];
+  const same = State.order.filter(id => id.split('-')[0] === role && id !== cardId);
+  return [1, -1, 0.35][same.length] != null ? [1, -1, 0.35][same.length] : 0;
+}
+
 /* ============ 3. いま何小節目・どのコードか ============ */
 function barAtTime(time) {
   const ticks = Tone.Transport.getTicksAtTime(time);
@@ -208,14 +217,35 @@ class Part {
     const s = card.sound;
     this.s = s;
 
-    /* v6：ROLE ごとのバスを経由する（自動ミックスが役割単位で効くように） */
+    /* v6：ROLE ごとのバスを経由する（自動ミックスが役割単位で効くように）。
+       案D：さらにその手前に定位（左右）を挟む。                        */
     const rb = roleBus[this.role];
-    const bus = (s.duck && s.kind !== 'kit') ? rb.duck : rb.dry;
+    const busIn = (s.duck && s.kind !== 'kit') ? rb.duck : rb.dry;
+    const sp = card.space || { pan: 0, depth: 0 };
+    /* 同じ ROLE の2枚目は左右を反転して置く。重ねたとき混ざらないように。
+       いま何枚目かは投入時に決まるので、ここでは席番号だけ受け取る。   */
+    const seatFlip = seatFlipOf(cardId);
+    const depth = State.space ? clamp(sp.depth || 0, 0, 1) : 0;
+    const pan = State.space ? clamp(sp.pan * seatFlip, -0.85, 0.85) : 0;
+
+    /* 信号の道すじ（手前 → 奥）
+         voice → hp → lp（音色） → gain（音量） → air（距離） → panner（左右） → roleBus
+                                        └→ revSend / dlySend
+       air は depth があるときだけ挟む。順番を後から変えないよう、
+       挿す先（chainOut）を先に決めてから gain を作る。               */
+    this.panner = new Tone.Panner(pan).connect(busIn);
+    if (depth > 0.05) {
+      /* 奥ほど高域が落ちる＝空気による減衰。これが「遠さ」の正体 */
+      this.air = new Tone.Filter({ type: 'lowpass', frequency: 16000 - depth * 8500, rolloff: -12 })
+        .connect(this.panner);
+    }
+    const chainOut = this.air || this.panner;
+
     /* v5：実録音の楽器には samples.js が実測した「録音レベル差の補正」を足す。
        これで music.js の gain は純粋に「どのくらい前に出したいか」になる。
        実録音が読めず合成音に落ちる場合は補正しない（測る対象が無いため）。 */
     const trim = (s.kind === 'sampler' && samplerUrls(s.set)) ? setTrimDb(s.set) : 0;
-    this.gain = new Tone.Gain(Tone.dbToGain(s.gain + trim)).connect(bus);
+    this.gain = new Tone.Gain(Tone.dbToGain(s.gain + trim)).connect(chainOut);
 
     /* 案4：グルーヴのゆらぎは前の音を引きずる（1次自己回帰）。その保持 */
     this.wander = 0;
@@ -225,8 +255,11 @@ class Part {
     this.lp = new Tone.Filter(s.lp || 16000, 'lowpass').connect(this.gain);
     this.hp = new Tone.Filter(s.hp || 20, 'highpass').connect(this.lp);
 
-    if (s.rev) { this.revSend = new Tone.Gain(s.rev).connect(reverb); this.gain.connect(this.revSend); }
+    /* 送り。奥にあるものほど残響を多く送る＝遠くに聞こえる */
+    const revAmt = (s.rev || 0) + depth * 0.30;
+    if (revAmt > 0.001) { this.revSend = new Tone.Gain(revAmt).connect(reverb); this.gain.connect(this.revSend); }
     if (s.dly) { this.dlySend = new Tone.Gain(s.dly).connect(delay);  this.gain.connect(this.dlySend); }
+    this.depth = depth;
 
     if (s.kind === 'kit') {
       this.kit = makeSampleKit(this.hp, s.set, 0) || makeSynthKit(this.hp, 0);
@@ -286,9 +319,23 @@ class Part {
     });
   }
 
+  /* --- 案C：この一撃を「どんな音色で」鳴らすか ----------------------
+     lp を「いちばん開いたときの明るさ」と読み替え、弱い音ほど閉じる。
+     フィルタはパートに1つしか無いので、音符ごとにその時刻へ値を置く。
+     ひとつのパート内で音が重なることは稀なので、これで十分効く。   */
+  applyTimbre(time, v) {
+    if (!State.timbre || !this.lp) return;
+    const t = this.card.timbre;
+    if (!t) return;
+    const lp = this.s.lp || 16000;
+    const k = t.open + (1 - t.open) * Math.pow(clamp(v, 0, 1), t.curve);
+    try { this.lp.frequency.setValueAtTime(clamp(lp * k, 180, 18000), time); } catch (e) {}
+  }
+
   play(notes, dur, time, v) {
     const voice = this.voice;
     if (!voice) return;
+    this.applyTimbre(time, v);
     try {
       if (voice.__mono) { notes.forEach((n, i) => voice.triggerAttack(n, time + i * 0.012)); return; }
       if (voice instanceof Tone.MonoSynth) { voice.triggerAttackRelease(notes[0], dur, time, v); return; }
@@ -309,6 +356,8 @@ class Part {
     const owner = State.kickOwner === this.id;
     const fill = isFillBar(bar) && owner;
     const gt = () => this.groovedTime(time);
+    /* 案C：太鼓も強打ほど明るく。ゴーストノートやハットの表裏で効く */
+    const dh = (fn, v) => { const t = gt(); this.applyTimbre(t, v); fn.call(this.kit, t, v); };
 
     /* フィル：8小節目の4拍目。v6 は generateFill が毎回ちがう形を作る */
     if (fill && step >= 12) {
@@ -326,24 +375,24 @@ class Part {
 
     if (d.k.includes(step)) {
       /* キックを出せるのは「最初に入ったリズムカード」だけ。土台を1枚に絞る */
-      if (owner) { this.kit.kick(gt(), 0.92); pump(time); this.flash(time, 1); UI.kickPulse(); }
+      if (owner) { dh(this.kit.kick, 0.92); pump(time); this.flash(time, 1); UI.kickPulse(); }
     }
-    if (d.s.includes(step)) { this.kit.snare(gt(), 0.56); this.flash(time, 0.7); }
+    if (d.s.includes(step)) { dh(this.kit.snare, 0.56); this.flash(time, 0.7); }
     /* 案1：ハットは他のパートが埋めている位置ほど間引く。
        上ものが16分を刻んでいるところにハットも刻むと団子になるため。 */
     if (d.h.includes(step) && !this.hatMuted(step)) {
-      this.kit.hat(gt(), d.hv * (step % 4 === 0 ? 1.15 : 0.85));
+      dh(this.kit.hat, d.hv * (step % 4 === 0 ? 1.15 : 0.85));
     }
-    if (State.energy >= 3 && d.h3 && d.h3.includes(step) && !this.hatMuted(step)) this.kit.hat(gt(), d.hv * 0.55);
-    if (State.energy >= 2 && d.ghost && d.ghost.includes(step)) this.kit.snare(gt(), 0.16);
+    if (State.energy >= 3 && d.h3 && d.h3.includes(step) && !this.hatMuted(step)) dh(this.kit.hat, d.hv * 0.55);
+    if (State.energy >= 2 && d.ghost && d.ghost.includes(step)) dh(this.kit.snare, 0.16);
 
     /* --- v5 で足した語彙 --- */
-    if (d.t  && d.t.includes(step))  { this.kit.tom(gt(), 0.50);  this.flash(time, 0.5); }
-    if (d.t2 && d.t2.includes(step)) { this.kit.tom2(gt(), 0.52); this.flash(time, 0.5); }
-    if (d.t3 && d.t3.includes(step)) { this.kit.tom3(gt(), 0.56); this.flash(time, 0.5); }
-    if (d.oh && d.oh.includes(step)) this.kit.open(gt(), 0.55);              // オープンハット
+    if (d.t  && d.t.includes(step))  { dh(this.kit.tom, 0.50);  this.flash(time, 0.5); }
+    if (d.t2 && d.t2.includes(step)) { dh(this.kit.tom2, 0.52); this.flash(time, 0.5); }
+    if (d.t3 && d.t3.includes(step)) { dh(this.kit.tom3, 0.56); this.flash(time, 0.5); }
+    if (d.oh && d.oh.includes(step)) dh(this.kit.open, 0.55);                // オープンハット
     if (d.rd && d.rd.includes(step)) {                                       // ライド
-      this.kit.ride(gt(), (d.rv || 0.5) * (step % 4 === 0 ? 1.15 : 0.85));
+      dh(this.kit.ride, (d.rv || 0.5) * (step % 4 === 0 ? 1.15 : 0.85));
       this.flash(time, 0.45);
     }
     /* クラッシュは crEvery 小節に1回だけ。土台役か、キックを持たない薄い層のみ
@@ -377,7 +426,8 @@ class Part {
   dispose() {
     try { this.seq.stop(); this.seq.dispose(); } catch (e) {}
     const nodes = [this.voice, this.drive, ...(this.kit ? this.kit.nodes : []),
-                   this.hp, this.lp, this.revSend, this.dlySend, this.gain];
+                   this.hp, this.lp, this.revSend, this.dlySend, this.gain,
+                   this.air, this.panner];
     nodes.forEach(n => { try { n && n.dispose(); } catch (e) {} });
   }
 }
@@ -571,6 +621,10 @@ const State = {
   autoAvoid: true,                               // 案1：衝突回避
   autoArrange: true,                             // 案3：アレンジ・エンジン
   autoMix: true,                                 // 案5：自動ミックス
+  timbre: true,                                  // 案C：ベロシティで音色が変わる
+  space: true,                                   // 案D：左右と奥行き
+  cadenceOn: true,                               // 案E：終わりを「終止」にする
+  cadence: false,                                // いま終止の最中か
   section: null,                                 // いまの章
   sectionCrashBar: -1,                           // 章の変わり目に鳴らすクラッシュ
   lastManualEnergy: 0,                           // 手で ENERGY を触った時刻
@@ -823,9 +877,75 @@ async function startGame(bpm) {
   q.forEach(id => insertCard(id));
 }
 
-async function endGame() {
+/* =====================================================================
+   案E：終止 ── 曲を「止める」のではなく「終わらせる」
+   ---------------------------------------------------------------------
+   v6 まで endGame() は 3.2 秒でマスターを絞るだけだった。
+   フェードアウトは「録音を止めた」だけで、曲が終わった感じがしない。
+   「作品になった」という感覚はここで決まる。
+
+   やること（次の小節の頭から4小節かけて）
+     1. コード進行をトニック（Cm）へ寄せる ＝ 帰ってきた感じ
+     2. リタルダンド（だんだん遅く）
+     3. 最後の小節でリズムを抜き、上ものだけ残す
+     4. 一撃（クラッシュ＋キック）を置いて、残響だけ残して消える
+   ===================================================================== */
+const CADENCE_BARS = 4;
+
+function playCadence() {
+  return new Promise(resolve => {
+    const ppq = Tone.Transport.PPQ, barTicks = ppq * 4;
+    const startTicks = Math.ceil((Tone.Transport.ticks + ppq * 0.25) / barTicks) * barTicks;
+    const bpm0 = Tone.Transport.bpm.value;
+    const beat = 60 / bpm0;
+
+    State.cadence = true;
+    UI.toast('— 終わりへ —');
+
+    /* 1. トニックへ帰る。全パートが同じ進行を見ているので、
+          進行を差し替えるだけで一斉に解決へ向かう。               */
+    Tone.Transport.scheduleOnce(() => {
+      State.prog = 'spell';                  // Cm7 が2小節続く＝トニックが立つ
+      State.genBar = -1;
+      Tone.Draw.schedule(() => { UI.syncProg(); UI.chordMap(); }, Tone.now());
+    }, startTicks + 'i');
+
+    /* 2. リタルダンド。最後の2小節で 25% ゆっくりになる */
+    Tone.Transport.scheduleOnce(() => {
+      try { Tone.Transport.bpm.rampTo(bpm0 * 0.75, beat * 8); } catch (e) {}
+    }, (startTicks + barTicks * 2) + 'i');
+
+    /* 3. 最後の小節でリズムを抜く（上ものだけ残ると「締め」に聞こえる） */
+    Tone.Transport.scheduleOnce(() => {
+      State.parts.forEach(p => { if (p.kit) { try { p.gain.gain.rampTo(0, beat * 1.5); } catch (e) {} } });
+    }, (startTicks + barTicks * (CADENCE_BARS - 1)) + 'i');
+
+    /* 4. 最後の一撃 → 残響だけ残して消える */
+    const endTicks = startTicks + barTicks * CADENCE_BARS;
+    Tone.Transport.scheduleOnce((time) => {
+      const owner = State.kickOwner && State.parts.get(State.kickOwner);
+      const kit = owner ? owner.kit : baseKit;
+      try { kit.kick(time, 1); kit.crash(time, 0.9); } catch (e) {}
+      pump(time, 1.2);
+      /* 一撃のあとは、残響を残したまま本体だけ落とす */
+      try { partsBus.gain.rampTo(0, beat * 2.2); baseBus.gain.rampTo(0, beat * 1.2); } catch (e) {}
+      Tone.Draw.schedule(() => UI.dropFlash(), time);
+      setTimeout(resolve, (beat * 4) * 1000);
+    }, endTicks + 'i');
+
+    /* 万一 Transport が止まっていても、必ず終わるようにする保険 */
+    setTimeout(resolve, (beat * 4 * (CADENCE_BARS + 2)) * 1000 + 1500);
+  });
+}
+
+async function endGame(opts) {
   if (!State.playing) return;
   State.playing = false;
+
+  /* 終止を鳴らしてから片付ける。Esc の連打や時間切れでも1回だけ */
+  if (State.cadenceOn && !(opts && opts.immediate) && !State.cadence) {
+    try { await playCadence(); } catch (e) {}
+  }
   master.gain.rampTo(0, 3.2);
   setTimeout(async () => {
     Tone.Transport.stop();
@@ -1252,7 +1372,8 @@ document.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   const k = e.key.toLowerCase();
 
-  if (e.key === 'Escape') { endGame(); return; }
+  /* Esc は終止つきで終わる。すぐ止めたいときは Shift+Esc */
+  if (e.key === 'Escape') { endGame({ immediate: e.shiftKey }); return; }
   if (e.key === ' ') { e.preventDefault(); triggerBuild(); return; }
   if (e.key === 'Backspace') {
     e.preventDefault();
@@ -1356,6 +1477,17 @@ document.addEventListener('DOMContentLoaded', () => {
       State[k] = !State[k];
       c.setAttribute('aria-pressed', String(State[k]));
       if (k === 'autoAvoid' || k === 'autoArrange') State.genBar = -1;   // 作り直す
+      if (k === 'timbre' && !State.timbre) {
+        /* 切ったらフィルタを本来の明るさへ戻す */
+        State.parts.forEach(p => { try { p.lp.frequency.rampTo(p.s.lp || 16000, .3); } catch (e) {} });
+      }
+      if (k === 'space') {
+        /* 定位は配線なので、鳴っているカードを入れ直して反映する */
+        const ids = State.order.slice();
+        ids.forEach(id => dropPart(id));
+        ids.forEach(id => insertCard(id));
+        UI.toast(State.space ? '左右と奥行きを使います' : '全部を中央に置きます');
+      }
       if (k === 'autoMix' && !State.autoMix) {
         /* 切ったら補正を戻す */
         ROLE_ORDER.forEach(rk => {

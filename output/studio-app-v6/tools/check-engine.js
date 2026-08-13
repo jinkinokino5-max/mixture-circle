@@ -50,6 +50,7 @@ class NoiseSynth extends Node { triggerAttackRelease(d, t, v) { rec('noise', 'x'
 class MetalSynth extends Node { triggerAttackRelease(d, t, v) { rec('metal', 'x', v, t); } }
 class PluckSynth extends Node { triggerAttack(n, t) { rec('pluck', n, 1, t); } }
 class Limiter extends Node {} class Compressor extends Node {}
+class Panner extends Node { constructor(p){super(); this.__pan=p;} }
 class Analyser extends Node { getValue() { return new Float32Array(8); } }
 class Meter extends Node { constructor(){super(); this.__b=Meter.__n++;} getValue() { return [-18,-26,-30,-40][this.__b%4] + (Math.random()-.5)*2; } }
 Meter.__n=0;
@@ -62,7 +63,7 @@ const repeats = [];
 const Tone = {
   Gain, Filter, Distortion, Sampler, PolySynth, Synth, MonoSynth, MembraneSynth,
   NoiseSynth, MetalSynth, PluckSynth, Limiter, Compressor, Analyser, Meter, Reverb,
-  PingPongDelay, Recorder, Sequence, Noise: Node,
+  PingPongDelay, Recorder, Sequence, Panner, Noise: Node,
   dbToGain: (db) => Math.pow(10, db / 20),
   ToneAudioBuffer: {
     fromUrl: async (url) => {
@@ -120,7 +121,7 @@ load('app.js',
   '\n;["Part","State","buildMaster","CARDS","CARD_ORDER","ROLE_ORDER","ROLES","INSTRUMENTS",'
   + '"INSTRUMENT_ORDER","VARIATIONS","pressInstrument","insertCard","removeCard","KEYMAP",'
   + '"ensureBar","updateArrangement","updateAutoMix","currentSection","roleBus","SECTIONS",'
-  + '"generateBar","setEnergy"]'
+  + '"generateBar","setEnergy","playCadence","endGame","dropPart"]'
   + '.forEach(n=>{ try{ globalThis[n]=eval(n); }catch(e){} });');
 
 /* ---------- 実行 ---------- */
@@ -250,6 +251,73 @@ load('app.js',
     const over = ROLE_ORDER.filter(rk => Math.abs(ctx.roleBus[rk].corr) > 4.001);
     if (over.length) errors.push('自動ミックスが ±4dB を超えた: ' + over.join(','));
     State.parts.forEach(p => p.dispose());
+  }
+
+  /* ===== 6. 案C：ベロシティで音色（lp）が動くか ===== */
+  {
+    State.timbre = true;
+    const p = new ctx.Part('melody-sax-1');
+    const seen = [];
+    p.lp.frequency.setValueAtTime = (f) => seen.push(f);
+    p.applyTimbre(0, 0.2); p.applyTimbre(0, 0.9);
+    const nominal = p.s.lp;
+    console.log(`音色 : 弱 ${Math.round(seen[0])}Hz / 強 ${Math.round(seen[1])}Hz （設定 ${nominal}Hz）`);
+    if (!(seen[0] < seen[1])) errors.push('弱いほうが明るくなっている（案Cが逆）');
+    if (seen[1] > nominal + 1) errors.push('設定した lp より明るくなっている（音量バランスが崩れる）');
+    if (seen[0] / seen[1] > 0.9) errors.push('音色の変化が小さすぎる（効いていない）');
+    State.timbre = false;
+    seen.length = 0; p.applyTimbre(0, 0.2);
+    if (seen.length) errors.push('timbre を切っても音色を動かしている');
+    State.timbre = true;
+    p.dispose();
+  }
+
+  /* ===== 7. 案D：左右と奥行きが設定されるか ===== */
+  {
+    State.space = true;
+    State.parts.clear(); State.order = [];
+    const mk = id => { const p = new ctx.Part(id); State.parts.set(id, p); State.order.push(id); return p; };
+    const a = mk('melody-eguitar-1');
+    const b = mk('melody-flute-1');           // 同じ ROLE の2枚目 → 反転するはず
+    const bass = mk('bass-ebass-1');
+    const pad = mk('chord-pad-1');
+    console.log(`定位 : ギター ${a.panner.__pan.toFixed(2)} / フルート(2枚目) ${b.panner.__pan.toFixed(2)}`
+      + ` / ベース ${bass.panner.__pan.toFixed(2)}`);
+    console.log(`奥行き : ギター ${a.depth.toFixed(2)} / パッド ${pad.depth.toFixed(2)}`);
+    if (Math.abs(bass.panner.__pan) > 0.001) errors.push('ベースが中央にいない（低音は真ん中であるべき）');
+    if (a.panner.__pan * b.panner.__pan >= 0) errors.push('同じ ROLE の2枚が同じ側にいる（左右に分かれるべき）');
+    if (!(pad.depth > a.depth)) errors.push('パッドがギターより手前にいる（面ものは奥であるべき）');
+    if (!pad.air) errors.push('奥にいるのに空気の減衰が入っていない');
+    if (a.depth > 0.05 && !a.air) errors.push('depth があるのに air が無い');
+    State.parts.forEach(p => p.dispose());
+    State.parts.clear(); State.order = [];
+
+    /* 切ったら全部中央・奥行きなしに戻ること */
+    State.space = false;
+    const c = new ctx.Part('chord-pad-1');
+    if (Math.abs(c.panner.__pan) > 0.001 || c.depth > 0.001) errors.push('space を切っても定位が残っている');
+    c.dispose();
+    State.space = true;
+  }
+
+  /* ===== 8. 案E：終止が組み立てられるか ===== */
+  {
+    /* scheduleOnce をスタブしているので、何を何拍目に仕込んだかを数える */
+    const booked = [];
+    ctx.Tone.Transport.scheduleOnce = (cb, at) => { booked.push({ cb, at }); };
+    State.playing = true; State.cadenceOn = true; State.cadence = false;
+    State.prog = 'night'; State.kickOwner = null;
+    const before = State.prog;
+    const pr = ctx.playCadence();
+    console.log(`終止 : ${booked.length} 個の仕込み（進行の解決・リタルダンド・リズム抜き・最後の一撃）`);
+    if (booked.length < 4) errors.push(`終止の仕込みが ${booked.length} 個しかない（4つ必要）`);
+    /* 1つめを実行すると進行がトニック側へ切り替わるはず */
+    try { booked[0].cb(0); } catch (e) { errors.push('終止1: ' + e.message); }
+    if (State.prog === before) errors.push('終止でコード進行がトニックへ切り替わっていない');
+    /* 最後の一撃が例外を出さないこと */
+    try { booked[booked.length - 1].cb(0); } catch (e) { errors.push('終止の最後の一撃: ' + e.message); }
+    if (!State.cadence) errors.push('State.cadence が立っていない');
+    State.cadence = false; State.prog = before;
   }
 
   /* ---------- 出力 ---------- */

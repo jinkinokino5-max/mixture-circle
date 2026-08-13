@@ -103,10 +103,28 @@ async function renderCard(cardId) {
   const s = card.sound;
   const ac = new OfflineAudioContext(1, Math.ceil(DUR * SR) + SR, SR);
 
-  /* music.js の hp / lp をそのまま通す（帯域で音量感が変わるので必須） */
+  /* music.js の hp / lp をそのまま通す（帯域で音量感が変わるので必須）。
+     さらに v6 の案C（強さで音色が変わる）と案D（奥行きの空気減衰）も
+     アプリと同じ式で再現する。これを入れないと、実際より明るい音を
+     測ってしまい、音量合わせが 1〜2dB ずれる。                      */
   const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = s.lp || 16000;
   const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = s.hp || 20;
-  hp.connect(lp); lp.connect(ac.destination);
+  hp.connect(lp);
+  const depth = (card.space && card.space.depth) || 0;
+  if (depth > 0.05) {
+    const air = ac.createBiquadFilter(); air.type = 'lowpass';
+    air.frequency.value = 16000 - depth * 8500;
+    lp.connect(air); air.connect(ac.destination);
+  } else lp.connect(ac.destination);
+
+  /* 案C：音符ごとに lp を動かす（app.js の applyTimbre と同じ式） */
+  const tb = card.timbre;
+  const timbreAt = (t, v) => {
+    if (!tb) return;
+    const nominal = s.lp || 16000;
+    const k = tb.open + (1 - tb.open) * Math.pow(Math.max(0, Math.min(1, v)), tb.curve);
+    lp.frequency.setValueAtTime(Math.max(180, Math.min(18000, nominal * k)), Math.max(0, t));
+  };
 
   const isKit = s.kind === 'kit';
   const sampled = isKit
@@ -175,6 +193,7 @@ async function renderCard(cardId) {
       generateBar(card, bar, ENERGY, null, 1).forEach(ev => {
         const t = barT + ev.s * STEP;
         const dur = DURS[ev.l] || BEAT / 4;
+        timbreAt(t, ev.v);
         resolveNotes(role, chord, ev, s.oct, lift).forEach(nm => {
           const midi = toMidi(nm);
           if (sampled) {
@@ -191,8 +210,8 @@ async function renderCard(cardId) {
       const d = card.drum;
       const kb = p => BUF.get(`drums/${s.set}/${p}`);
       const kt = p => db2g(KIT_TRIM.get(`${s.set}/${p}`) || 0);
-      const hit = (p, t, v) => sampled ? playBuf(kb(p), t, Math.min(1, v * kt(p)))
-                                       : playSyn(48, t, v * .5, .1);
+      const hit = (p, t, v) => { timbreAt(t, v);
+        return sampled ? playBuf(kb(p), t, Math.min(1, v * kt(p))) : playSyn(48, t, v * .5, .1); };
       for (let st = 0; st < 16; st++) {
         const t = barT + st * STEP;
         if (d.k.includes(st)) hit('kick', t, .92);
