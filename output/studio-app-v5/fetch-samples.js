@@ -35,9 +35,10 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const SALAMANDER = 'https://tonejs.github.io/audio/salamander';
+const TONE_AUDIO = 'https://tonejs.github.io/audio';
+const SALAMANDER = TONE_AUDIO + '/salamander';
 const INSTRUMENTS_BASE = 'https://nbrosowsky.github.io/tonejs-instruments/samples';
-const DRUMS_BASE = 'https://tonejs.github.io/audio/drum-samples';
+const DRUMS_BASE = TONE_AUDIO + '/drum-samples';
 
 /* ---- 落としてくる音の一覧 ----------------------------------------
    Tone.Sampler は間の音を自動で補間するので、全音そろえる必要はない。
@@ -134,13 +135,22 @@ const PITCHED = {
     base: INSTRUMENTS_BASE + '/harmonium',
     notes: ['C2','Ds2','Fs2','A2','C3','Ds3','Fs3','A3','C4','Ds4','Fs4','A4','C5'],
   },
+
+  /* ---- v5.1 追加。tonejs-instruments ではなく Tone.js 本体の音源 ----
+     ローファイな電子鍵盤。Gs1〜A2 の13音しか無い＝完全に低音楽器なので、
+     ベースのバリエーションとしてだけ使う。                            */
+  casio: {
+    base: TONE_AUDIO + '/casio',
+    notes: ['Gs1','A1','As1','B1','C2','Cs2','D2','Ds2','E2','F2','Fs2','G2','A2'],
+  },
 };
 
 /* v5：Stark（生々しいロックキット）と Bongos（音程感のある手叩き）を追加。
    tom2 / tom3 まで落とすので、フィルが「下りていくタム回し」になる。
-   Kit3 は v5 ではカードに割り当てていないが、v4 から引き継いだファイルが
-   あるので manifest には載せておく（カードを増やすときの予備）。          */
-const DRUM_KITS = ['acoustic-kit', 'breakbeat13', 'Techno', 'CR78', 'LINN', 'Stark', 'Bongos', 'Kit3'];
+   v5.1：公開されている12キットを全部落とす。バリエーション（同じカードの
+   1/2/3）で別のキットに差し替えるため、余らせずに全部使う。              */
+const DRUM_KITS = ['acoustic-kit', 'breakbeat13', 'Techno', 'CR78', 'LINN', 'Stark',
+                   'Bongos', 'Kit3', 'R8', '4OP-FM', 'KPR77', 'Kit8'];
 const DRUM_PARTS = ['kick', 'snare', 'hihat', 'tom1', 'tom2', 'tom3'];
 
 /* ---- 1ファイル取得（リダイレクト追従つき） ---- */

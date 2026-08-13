@@ -373,10 +373,13 @@ function duckByCount() {
 
 function labelOf(id) {
   const role = id.split('-')[0];
-  return `${ROLES[role].jp}の${CARDS[id].label}`;
+  const c = CARDS[id];
+  return `${ROLES[role].jp}の${c.label}${c.n}`;
 }
 
-/* ---- カード投入（Phase 1 のリーダーもここを呼ぶだけでよい） ---- */
+/* ---- カード投入（Phase 1 のリーダーもここを呼ぶだけでよい） ------------
+   v5.1：同じ楽器の別バリエーション（ギター1が鳴っているところへギター3）が
+   来たら、足すのではなく **差し替える**。物理カードでも同じ挙動になる。  */
 function insertCard(cardId) {
   if (!CARDS[cardId]) return;
   /* 「はじめる」直後は音の準備（残響の生成など）に1秒ほどかかる。
@@ -384,13 +387,20 @@ function insertCard(cardId) {
   if (!State.playing) { if (State.queue.length < MAX_PARTS) State.queue.push(cardId); return; }
   if (State.paused) return;
   const role = cardId.split('-')[0];
+  const inst = CARDS[cardId].inst;
 
+  /* 連打よけは「楽器」単位。バリエーションを巡回しても弾かれないよう、
+     同じカードの再投入だけを見る */
   const now = performance.now();
   if (now - (State.lastInput.get(cardId) || 0) < RETRIGGER_GUARD_MS) return;
   State.lastInput.set(cardId, now);
 
   /* 同じカードをもう一度 → 引っ込める（トグル） */
   if (State.parts.has(cardId)) { removeCard(cardId); UI.toast(`${labelOf(cardId)} を止めました`); return; }
+
+  /* 同じ楽器の別バリエーションが鳴っていたら、それと入れ替える */
+  const sibling = State.order.find(id => CARDS[id].inst === inst);
+  if (sibling) dropPart(sibling);
 
   /* ROLE ごとの上限。超えたらその ROLE のいちばん古い音と入れ替える */
   const sameRole = State.order.filter(id => id.split('-')[0] === role);
@@ -437,6 +447,22 @@ function removeCard(cardId) {
   recomputeKickOwner();
   duckByCount();
   UI.refreshNow();
+}
+
+/* ---- 楽器キーを押したとき（キーボード・セル本体のクリック）------------
+   1回目 → 変化1 が入る
+   2回目 → 変化2 に差し替わる
+   3回目 → 変化3 に差し替わる
+   4回目 → 止まる
+   「同じカードをもう一度押すと止まる」を、バリエーションを一巡してから
+   止まる形に伸ばしただけ。物理カードでは1枚ずつが独立したカードなので、
+   この巡回はキーボード（とクリック）だけの都合。                      */
+function pressInstrument(instId) {
+  const playing = State.order.find(id => CARDS[id].inst === instId);
+  if (!playing) { insertCard(`${instId}-1`); return; }
+  const n = CARDS[playing].n;
+  if (n < VARIATIONS.length) insertCard(`${instId}-${n + 1}`);
+  else { removeCard(playing); UI.toast(`${labelOf(playing)} を止めました`); }
 }
 
 /* ============ 7. ビルドアップ＆ドロップ ============
@@ -600,18 +626,37 @@ const UI = {
                        <div class="rl-max">同時${r.max}枚まで</div>`;
       grid.appendChild(lab);
 
-      CARD_ORDER[rk].forEach((id, i) => {
-        const c = CARDS[id];
+      /* セルは「楽器」1つぶん。中の 1/2/3 がバリエーション。 */
+      INSTRUMENT_ORDER[rk].forEach((instId, i) => {
+        const inst = INSTRUMENTS[instId];
         const cell = el('div', 'cell', '');
         cell.style.setProperty('--r', `var(--${rk})`);
         cell.style.setProperty('--ra', `var(--${rk}-a)`);
-        cell.innerHTML = `<div class="top"><span class="key">${(r.keys[i] || '').toUpperCase()}</span><span class="src"></span></div>
-                          <div class="name">${c.label}</div>
-                          <div class="tag">${c.tag}</div>
-                          <div class="bar"></div>`;
-        cell.addEventListener('click', () => insertCard(id));
+        cell.dataset.inst = instId;
+        cell.innerHTML =
+          `<div class="top"><span class="key">${(r.keys[i] || '').toUpperCase()}</span><span class="src"></span></div>
+           <div class="name">${inst.label}</div>
+           <div class="tag">${inst.variants[0].tag}</div>
+           <div class="vars">` +
+          inst.variants.map((va, k) =>
+            `<button class="vb" data-n="${k + 1}" title="${VARIATIONS[k].label}：${va.tag}">${k + 1}</button>`
+          ).join('') +
+          `</div><div class="bar"></div>`;
+
+        /* セル本体 → バリエーションを巡回。番号ボタン → その変化を直接 */
+        cell.addEventListener('click', (ev) => {
+          const b = ev.target.closest('.vb');
+          if (b) { ev.stopPropagation(); insertCard(`${instId}-${b.dataset.n}`); return; }
+          pressInstrument(instId);
+        });
+        /* 番号にさわると、その変化の説明が下の tag に出る */
+        cell.querySelectorAll('.vb').forEach((b, k) => {
+          b.addEventListener('mouseenter', () => UI.showTag(instId, k + 1));
+        });
+        cell.addEventListener('mouseleave', () => UI.showTag(instId, null));
+
         grid.appendChild(cell);
-        UI.cells[id] = cell;
+        UI.cells[instId] = cell;
       });
     });
 
@@ -639,31 +684,61 @@ const UI = {
       });
     });
 
+    /* --- 変化1/2/3 が何なのかの凡例 --- */
+    const leg = document.getElementById('varlegend');
+    if (leg) {
+      leg.innerHTML = VARIATIONS
+        .map(v => `<span><b>${v.n}</b>${v.label}／${v.desc}</span>`).join('');
+    }
+
     UI.chordMap();
     UI.time();
   },
 
-  /* 各カードが実録音か合成音かを表示する */
+  /* 各楽器が実録音か合成音かを表示する。バリエーションで音源が変わる楽器
+     （ドラムのキット差し替えなど）は、ひとつでも合成に落ちたら「一部合成」 */
   markSources() {
-    Object.keys(CARDS).forEach(id => {
-      const cell = UI.cells[id]; if (!cell) return;
-      const s = CARDS[id].sound;
-      let real = false;
-      if (s.kind === 'kit') real = !!kitUrls(s.set);
-      else if (s.kind === 'sampler') real = !!samplerUrls(s.set);
+    Object.keys(INSTRUMENTS).forEach(instId => {
+      const cell = UI.cells[instId]; if (!cell) return;
+      const reals = INSTRUMENTS[instId].variants.map((_, k) => {
+        const s = CARDS[`${instId}-${k + 1}`].sound;
+        if (s.kind === 'kit') return !!kitUrls(s.set);
+        if (s.kind === 'sampler') return !!samplerUrls(s.set);
+        return false;
+      });
+      const all = reals.every(Boolean), none = !reals.some(Boolean);
       const e = cell.querySelector('.src');
-      e.textContent = real ? '実録音' : '合成音';
-      e.className = 'src' + (real ? ' real' : '');
+      e.textContent = all ? '実録音' : none ? '合成音' : '一部合成';
+      e.className = 'src' + (all ? ' real' : '');
     });
   },
 
-  setCell(id, cls) {
-    const c = UI.cells[id]; if (!c) return;
+  /* cardId を渡すと、その楽器のセルに印をつけ、何番の変化かも示す */
+  setCell(cardId, cls) {
+    const card = CARDS[cardId]; if (!card) return;
+    const c = UI.cells[card.inst]; if (!c) return;
     c.classList.remove('pending', 'active');
     if (cls) c.classList.add(cls);
+    c.querySelectorAll('.vb').forEach(b =>
+      b.classList.toggle('on', !!cls && Number(b.dataset.n) === card.n));
+    UI.showTag(card.inst, cls ? card.n : null);
   },
-  flashCell(id, v) {
-    const c = UI.cells[id]; if (!c) return;
+
+  /* セルの説明文を「いま鳴っている変化」または「さわっている変化」にする */
+  showTag(instId, n) {
+    const c = UI.cells[instId]; if (!c) return;
+    const inst = INSTRUMENTS[instId];
+    let k = n;
+    if (k == null) {
+      const on = c.querySelector('.vb.on');
+      k = on ? Number(on.dataset.n) : 1;
+    }
+    c.querySelector('.tag').textContent = inst.variants[k - 1].tag;
+  },
+
+  flashCell(cardId, v) {
+    const card = CARDS[cardId]; if (!card) return;
+    const c = UI.cells[card.inst]; if (!c) return;
     const bar = c.querySelector('.bar');
     bar.style.transition = 'none'; bar.style.width = Math.round(v * 100) + '%';
     requestAnimationFrame(() => { bar.style.transition = 'width .26s ease-out'; bar.style.width = '0%'; });
@@ -710,11 +785,13 @@ const UI = {
     }
     State.order.forEach(id => {
       const role = id.split('-')[0];
+      const card = CARDS[id];
       const p = el('div', 'pill', '');
       p.style.setProperty('--r', `var(--${role})`);
       p.style.setProperty('--ra', `var(--${role}-a)`);
       const tag = (State.kickOwner === id) ? ' ★土台' : '';
-      p.innerHTML = `<span>${labelOf(id)}${tag}</span>`;
+      p.innerHTML = `<span>${card.label}<b class="vn">${card.n}</b>`
+                  + `<i class="vk">${VARIATIONS[card.n - 1].label}</i>${tag}</span>`;
       const b = el('button', '', '×');
       b.title = 'この音を止める';
       b.addEventListener('click', () => removeCard(id));
@@ -867,11 +944,14 @@ function setSwing(v) {
   document.getElementById('swingv').textContent = Math.round(v * 100) + '%';
 }
 
-/* ============ 11. キーボード（＝カードの代わり） ============ */
+/* ============ 11. キーボード（＝カードの代わり） ============
+   キーは「楽器」に対応する。同じキーを押すたびに変化1→2→3→止まる。
+   数字キー（Shift＋）ではなく巡回にしたのは、40楽器ぶんのキーで
+   手いっぱいだから。物理カードでは変化ごとに別のカードになる。      */
 const KEYMAP = {};
 ROLE_ORDER.forEach(rk => {
   ROLES[rk].keys.forEach((k, i) => {
-    const id = CARD_ORDER[rk][i];
+    const id = INSTRUMENT_ORDER[rk][i];
     if (id) KEYMAP[k] = id;
   });
 });
@@ -905,8 +985,8 @@ document.addEventListener('keydown', (e) => {
     clearTimeout(uidTimer);
     uidTimer = setTimeout(() => { uidBuf = ''; }, 400);
   }
-  const id = KEYMAP[k];
-  if (id) { e.preventDefault(); insertCard(id); }
+  const instId = KEYMAP[k];
+  if (instId) { e.preventDefault(); pressInstrument(instId); }
 });
 
 /* ============ 12. 起動時：音源の読み込み ============ */

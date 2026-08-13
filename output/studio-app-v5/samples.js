@@ -217,18 +217,22 @@ function makeCymbals(dest) {
     return { s, g };
   };
 
+  /* レベルは v5.1 でそれぞれ +6dB した。
+     元の値だと、書き出して測ったときシンバルだけ他の打楽器から
+     20dB 以上沈んでいて、「小節頭で開ける」という役目を果たして
+     いなかった（特にライドだけのカードはほぼ聞こえない状態）。 */
   const crash = mk({
     frequency: 260, resonance: 3000, modulationIndex: 40, octaves: 1.6,
     envelope: { attack: 0.001, decay: 1.6, release: 1.4 },
-  }, -22);
+  }, -16);
   const ride = mk({
     frequency: 420, resonance: 5200, modulationIndex: 26, octaves: 1.2,
     envelope: { attack: 0.001, decay: 0.45, release: 0.4 },
-  }, -25);
+  }, -19);
   const open = mk({
     frequency: 360, resonance: 6500, modulationIndex: 30, octaves: 1.4,
     envelope: { attack: 0.001, decay: 0.25, release: 0.2 },
-  }, -26);
+  }, -20);
 
   const fire = (o, t, v, dur) => { try { o.s.triggerAttackRelease(dur, t, v); } catch (e) {} };
   return {

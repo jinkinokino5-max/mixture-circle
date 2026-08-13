@@ -167,6 +167,33 @@
   .cell.active .key,.cell.active .tag{color:#f0f4ff}
   .cell .bar{position:absolute; left:0; bottom:0; height:3px; width:0; background:var(--ra); opacity:.95}
 
+  /* ===== バリエーション（1／2／3）の選択チップ ===== */
+  .cell .vars{display:flex; gap:3px; margin-top:6px}
+  .cell .vb{
+    flex:1; padding:3px 0; border-radius:5px; cursor:pointer;
+    border:1px solid var(--line); background:#0e1119; color:var(--fg-dim);
+    font-size:10px; font-family:ui-monospace,monospace; line-height:1.4;
+  }
+  .cell .vb:hover{border-color:var(--ra); color:var(--fg)}
+  .cell .vb.on{background:var(--ra); border-color:var(--ra); color:#06090f; font-weight:700}
+  .cell.active .vb{background:rgba(6,9,15,.32); color:#dfe6f5}
+  .cell.active .vb.on{background:#fff; border-color:#fff; color:#06090f}
+
+  /* 「いま鳴っている音」の丸薬に出す変化番号 */
+  .pill .vn{
+    display:inline-block; min-width:14px; text-align:center; margin:0 4px;
+    border-radius:4px; background:rgba(0,0,0,.34); font-size:10px; padding:1px 3px;
+  }
+  .pill .vk{font-style:normal; font-size:10.5px; opacity:.75}
+
+  /* 変化の意味を説明する凡例 */
+  .varlegend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--fg-dim)}
+  .varlegend span b{
+    display:inline-block; min-width:15px; text-align:center; margin-right:5px;
+    border:1px solid var(--line); border-radius:4px; background:var(--panel2);
+    color:var(--fg); font-family:ui-monospace,monospace; font-size:10px; padding:1px 0;
+  }
+
   /* ===== 下部 ===== */
   .bottom{display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start}
   .now{flex:1; min-width:300px}
@@ -224,7 +251,9 @@
     <p class="sub">
       ジャンルはもうありません。カードは <b>「曲の中で何をするか（ROLE）」</b> と <b>「何の音でするか（INSTRUMENT）」</b> の2つだけでできています。<br>
       全員が同じ調・同じ4小節のコード進行・同じグルーヴの上に立つので、<b>どれとどれを重ねても必ず噛み合います。</b><br>
-      カードは <b>40枚</b>（役割ごとに10枚）。4小節目だけパターンが変わるので、入れっぱなしでも景色が動きます。
+      <b>40楽器 × 3つの弾き方 ＝ 120枚。</b>3つの変化は
+      <b>1 基本</b>／<b>2 余白</b>（音数が少なく長い・下に敷く）／<b>3 刻み</b>（音数が多く短い・上に乗せる）。
+      いま鳴っているものが賑やかなら 2 を、寂しいなら 3 を選ぶと噛み合います。
     </p>
 
     <div class="loadbox">
@@ -314,9 +343,14 @@
         <input type="range" id="swing" min="0" max="55" step="1" value="0">
         <span id="swingv">0%</span>
       </div>
+      <div class="ctlrow">
+        <label>変化（1／2／3）</label>
+        <div class="varlegend" id="varlegend"></div>
+      </div>
       <div class="hint">
         行＝ROLE（役割）／列＝INSTRUMENT（楽器）。キーボードの並びがそのままグリッドです。<br>
-        <kbd>スペース</kbd> ビルドアップ＆ドロップ　<kbd>Tab</kbd> コード進行　<kbd>Backspace</kbd> 最後の1枚を戻す　<kbd>Esc</kbd> 終了　同じカードをもう一度押すと止まります。
+        <b>同じキーを押すたびに 変化1 → 2 → 3 → 止まる</b>と巡回します。数字ボタンを直接クリックしてもかまいません。<br>
+        <kbd>スペース</kbd> ビルドアップ＆ドロップ　<kbd>Tab</kbd> コード進行　<kbd>Backspace</kbd> 最後の1枚を戻す　<kbd>Esc</kbd> 終了
       </div>
     </div>
   </div>

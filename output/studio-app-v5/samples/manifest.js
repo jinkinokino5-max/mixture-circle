@@ -259,6 +259,21 @@ window.SAMPLE_MANIFEST = {
       "Ds4",
       "A4",
       "C5"
+    ],
+    "casio": [
+      "Gs1",
+      "A1",
+      "As1",
+      "B1",
+      "C2",
+      "Cs2",
+      "D2",
+      "Ds2",
+      "E2",
+      "F2",
+      "Fs2",
+      "G2",
+      "A2"
     ]
   },
   "drums": {
@@ -319,6 +334,38 @@ window.SAMPLE_MANIFEST = {
       "tom3"
     ],
     "Kit3": [
+      "kick",
+      "snare",
+      "hihat",
+      "tom1",
+      "tom2",
+      "tom3"
+    ],
+    "R8": [
+      "kick",
+      "snare",
+      "hihat",
+      "tom1",
+      "tom2",
+      "tom3"
+    ],
+    "4OP-FM": [
+      "kick",
+      "snare",
+      "hihat",
+      "tom1",
+      "tom2",
+      "tom3"
+    ],
+    "KPR77": [
+      "kick",
+      "snare",
+      "hihat",
+      "tom1",
+      "tom2",
+      "tom3"
+    ],
+    "Kit8": [
       "kick",
       "snare",
       "hihat",
