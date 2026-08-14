@@ -1,0 +1,962 @@
+[
+ {
+  "id": "melody-piano-1",
+  "role": "melody",
+  "inst": "melody-piano",
+  "n": 1,
+  "lufs": -29.703430209656197,
+  "peak": 0.19463121891021729
+ },
+ {
+  "id": "melody-piano-2",
+  "role": "melody",
+  "inst": "melody-piano",
+  "n": 2,
+  "lufs": -29.549625340101315,
+  "peak": 0.24276942014694214
+ },
+ {
+  "id": "melody-piano-3",
+  "role": "melody",
+  "inst": "melody-piano",
+  "n": 3,
+  "lufs": -29.78166064391238,
+  "peak": 0.1753050684928894
+ },
+ {
+  "id": "melody-eguitar-1",
+  "role": "melody",
+  "inst": "melody-eguitar",
+  "n": 1,
+  "lufs": -29.060799686745977,
+  "peak": 0.21389788389205933
+ },
+ {
+  "id": "melody-eguitar-2",
+  "role": "melody",
+  "inst": "melody-eguitar",
+  "n": 2,
+  "lufs": -29.067131146242264,
+  "peak": 0.2604333758354187
+ },
+ {
+  "id": "melody-eguitar-3",
+  "role": "melody",
+  "inst": "melody-eguitar",
+  "n": 3,
+  "lufs": -29.21228946491923,
+  "peak": 0.1859694868326187
+ },
+ {
+  "id": "melody-nylon-1",
+  "role": "melody",
+  "inst": "melody-nylon",
+  "n": 1,
+  "lufs": -29.71244159100222,
+  "peak": 0.21396276354789734
+ },
+ {
+  "id": "melody-nylon-2",
+  "role": "melody",
+  "inst": "melody-nylon",
+  "n": 2,
+  "lufs": -29.598147340844886,
+  "peak": 0.2751748263835907
+ },
+ {
+  "id": "melody-nylon-3",
+  "role": "melody",
+  "inst": "melody-nylon",
+  "n": 3,
+  "lufs": -29.441879371124582,
+  "peak": 0.20943567156791687
+ },
+ {
+  "id": "melody-sax-1",
+  "role": "melody",
+  "inst": "melody-sax",
+  "n": 1,
+  "lufs": -29.326492071108344,
+  "peak": 0.16465432941913605
+ },
+ {
+  "id": "melody-sax-2",
+  "role": "melody",
+  "inst": "melody-sax",
+  "n": 2,
+  "lufs": -29.385887371404817,
+  "peak": 0.13938958942890167
+ },
+ {
+  "id": "melody-sax-3",
+  "role": "melody",
+  "inst": "melody-sax",
+  "n": 3,
+  "lufs": -29.19455986549867,
+  "peak": 0.17142081260681152
+ },
+ {
+  "id": "melody-clarinet-1",
+  "role": "melody",
+  "inst": "melody-clarinet",
+  "n": 1,
+  "lufs": -29.36874408148575,
+  "peak": 0.16932202875614166
+ },
+ {
+  "id": "melody-clarinet-2",
+  "role": "melody",
+  "inst": "melody-clarinet",
+  "n": 2,
+  "lufs": -29.39919933998449,
+  "peak": 0.17710483074188232
+ },
+ {
+  "id": "melody-clarinet-3",
+  "role": "melody",
+  "inst": "melody-clarinet",
+  "n": 3,
+  "lufs": -29.124604883199613,
+  "peak": 0.18430308997631073
+ },
+ {
+  "id": "melody-flute-1",
+  "role": "melody",
+  "inst": "melody-flute",
+  "n": 1,
+  "lufs": -29.221324764994957,
+  "peak": 0.16723230481147766
+ },
+ {
+  "id": "melody-flute-2",
+  "role": "melody",
+  "inst": "melody-flute",
+  "n": 2,
+  "lufs": -29.321749704848187,
+  "peak": 0.1517023742198944
+ },
+ {
+  "id": "melody-flute-3",
+  "role": "melody",
+  "inst": "melody-flute",
+  "n": 3,
+  "lufs": -29.02432380744499,
+  "peak": 0.18407225608825684
+ },
+ {
+  "id": "melody-violin-1",
+  "role": "melody",
+  "inst": "melody-violin",
+  "n": 1,
+  "lufs": -28.846574064027894,
+  "peak": 0.1652693748474121
+ },
+ {
+  "id": "melody-violin-2",
+  "role": "melody",
+  "inst": "melody-violin",
+  "n": 2,
+  "lufs": -29.14581973714099,
+  "peak": 0.178466334939003
+ },
+ {
+  "id": "melody-violin-3",
+  "role": "melody",
+  "inst": "melody-violin",
+  "n": 3,
+  "lufs": -28.903589773222915,
+  "peak": 0.16865944862365723
+ },
+ {
+  "id": "melody-trumpet-1",
+  "role": "melody",
+  "inst": "melody-trumpet",
+  "n": 1,
+  "lufs": -28.86119121372496,
+  "peak": 0.1823076754808426
+ },
+ {
+  "id": "melody-trumpet-2",
+  "role": "melody",
+  "inst": "melody-trumpet",
+  "n": 2,
+  "lufs": -28.993182556199677,
+  "peak": 0.17193306982517242
+ },
+ {
+  "id": "melody-trumpet-3",
+  "role": "melody",
+  "inst": "melody-trumpet",
+  "n": 3,
+  "lufs": -28.994070382182436,
+  "peak": 0.1696968674659729
+ },
+ {
+  "id": "melody-trombone-1",
+  "role": "melody",
+  "inst": "melody-trombone",
+  "n": 1,
+  "lufs": -29.08650102489438,
+  "peak": 0.19854193925857544
+ },
+ {
+  "id": "melody-trombone-2",
+  "role": "melody",
+  "inst": "melody-trombone",
+  "n": 2,
+  "lufs": -29.09112771779136,
+  "peak": 0.16868306696414948
+ },
+ {
+  "id": "melody-trombone-3",
+  "role": "melody",
+  "inst": "melody-trombone",
+  "n": 3,
+  "lufs": -29.014835039980696,
+  "peak": 0.20766739547252655
+ },
+ {
+  "id": "melody-lead-1",
+  "role": "melody",
+  "inst": "melody-lead",
+  "n": 1,
+  "lufs": -29.2122035005469,
+  "peak": 0.26400312781333923
+ },
+ {
+  "id": "melody-lead-2",
+  "role": "melody",
+  "inst": "melody-lead",
+  "n": 2,
+  "lufs": -29.42850042323752,
+  "peak": 0.24449926614761353
+ },
+ {
+  "id": "melody-lead-3",
+  "role": "melody",
+  "inst": "melody-lead",
+  "n": 3,
+  "lufs": -29.57238754595114,
+  "peak": 0.21862879395484924
+ },
+ {
+  "id": "chord-piano-1",
+  "role": "chord",
+  "inst": "chord-piano",
+  "n": 1,
+  "lufs": -37.215057551027044,
+  "peak": 0.08976240456104279
+ },
+ {
+  "id": "chord-piano-2",
+  "role": "chord",
+  "inst": "chord-piano",
+  "n": 2,
+  "lufs": -37.29320760617469,
+  "peak": 0.10715405642986298
+ },
+ {
+  "id": "chord-piano-3",
+  "role": "chord",
+  "inst": "chord-piano",
+  "n": 3,
+  "lufs": -37.314399312182445,
+  "peak": 0.06723389029502869
+ },
+ {
+  "id": "chord-aguitar-1",
+  "role": "chord",
+  "inst": "chord-aguitar",
+  "n": 1,
+  "lufs": -37.18657854180936,
+  "peak": 0.0650162473320961
+ },
+ {
+  "id": "chord-aguitar-2",
+  "role": "chord",
+  "inst": "chord-aguitar",
+  "n": 2,
+  "lufs": -37.27557169239807,
+  "peak": 0.09740400314331055
+ },
+ {
+  "id": "chord-aguitar-3",
+  "role": "chord",
+  "inst": "chord-aguitar",
+  "n": 3,
+  "lufs": -37.40391680800401,
+  "peak": 0.06121720001101494
+ },
+ {
+  "id": "chord-cutting-1",
+  "role": "chord",
+  "inst": "chord-cutting",
+  "n": 1,
+  "lufs": -36.95744003299192,
+  "peak": 0.09613369405269623
+ },
+ {
+  "id": "chord-cutting-2",
+  "role": "chord",
+  "inst": "chord-cutting",
+  "n": 2,
+  "lufs": -37.189401150137826,
+  "peak": 0.13092929124832153
+ },
+ {
+  "id": "chord-cutting-3",
+  "role": "chord",
+  "inst": "chord-cutting",
+  "n": 3,
+  "lufs": -36.9790473502193,
+  "peak": 0.07108533382415771
+ },
+ {
+  "id": "chord-organ-1",
+  "role": "chord",
+  "inst": "chord-organ",
+  "n": 1,
+  "lufs": -37.260265156705636,
+  "peak": 0.06350453197956085
+ },
+ {
+  "id": "chord-organ-2",
+  "role": "chord",
+  "inst": "chord-organ",
+  "n": 2,
+  "lufs": -37.411320229475756,
+  "peak": 0.06808160990476608
+ },
+ {
+  "id": "chord-organ-3",
+  "role": "chord",
+  "inst": "chord-organ",
+  "n": 3,
+  "lufs": -37.13134419407396,
+  "peak": 0.06758994609117508
+ },
+ {
+  "id": "chord-harmonium-1",
+  "role": "chord",
+  "inst": "chord-harmonium",
+  "n": 1,
+  "lufs": -37.18249431819571,
+  "peak": 0.0678076446056366
+ },
+ {
+  "id": "chord-harmonium-2",
+  "role": "chord",
+  "inst": "chord-harmonium",
+  "n": 2,
+  "lufs": -36.87765520091542,
+  "peak": 0.0719878226518631
+ },
+ {
+  "id": "chord-harmonium-3",
+  "role": "chord",
+  "inst": "chord-harmonium",
+  "n": 3,
+  "lufs": -36.85062798636478,
+  "peak": 0.08544586598873138
+ },
+ {
+  "id": "chord-harp-1",
+  "role": "chord",
+  "inst": "chord-harp",
+  "n": 1,
+  "lufs": -37.25098428083165,
+  "peak": 0.06498905271291733
+ },
+ {
+  "id": "chord-harp-2",
+  "role": "chord",
+  "inst": "chord-harp",
+  "n": 2,
+  "lufs": -37.49065594444059,
+  "peak": 0.076027050614357
+ },
+ {
+  "id": "chord-harp-3",
+  "role": "chord",
+  "inst": "chord-harp",
+  "n": 3,
+  "lufs": -37.72843747933474,
+  "peak": 0.06118796020746231
+ },
+ {
+  "id": "chord-strings-1",
+  "role": "chord",
+  "inst": "chord-strings",
+  "n": 1,
+  "lufs": -36.90496355472158,
+  "peak": 0.07363466173410416
+ },
+ {
+  "id": "chord-strings-2",
+  "role": "chord",
+  "inst": "chord-strings",
+  "n": 2,
+  "lufs": -36.693388519447495,
+  "peak": 0.06827674806118011
+ },
+ {
+  "id": "chord-strings-3",
+  "role": "chord",
+  "inst": "chord-strings",
+  "n": 3,
+  "lufs": -36.61382817215169,
+  "peak": 0.07245467603206635
+ },
+ {
+  "id": "chord-brass-1",
+  "role": "chord",
+  "inst": "chord-brass",
+  "n": 1,
+  "lufs": -37.20072897068839,
+  "peak": 0.07270272076129913
+ },
+ {
+  "id": "chord-brass-2",
+  "role": "chord",
+  "inst": "chord-brass",
+  "n": 2,
+  "lufs": -37.08610997905149,
+  "peak": 0.07758910208940506
+ },
+ {
+  "id": "chord-brass-3",
+  "role": "chord",
+  "inst": "chord-brass",
+  "n": 3,
+  "lufs": -37.21545402395263,
+  "peak": 0.07369780540466309
+ },
+ {
+  "id": "chord-horn-1",
+  "role": "chord",
+  "inst": "chord-horn",
+  "n": 1,
+  "lufs": -37.43115157639319,
+  "peak": 0.06925938278436661
+ },
+ {
+  "id": "chord-horn-2",
+  "role": "chord",
+  "inst": "chord-horn",
+  "n": 2,
+  "lufs": -37.4983489100974,
+  "peak": 0.08300850540399551
+ },
+ {
+  "id": "chord-horn-3",
+  "role": "chord",
+  "inst": "chord-horn",
+  "n": 3,
+  "lufs": -37.44118582678556,
+  "peak": 0.05574553832411766
+ },
+ {
+  "id": "chord-pad-1",
+  "role": "chord",
+  "inst": "chord-pad",
+  "n": 1,
+  "lufs": -37.020354047482186,
+  "peak": 0.1284978985786438
+ },
+ {
+  "id": "chord-pad-2",
+  "role": "chord",
+  "inst": "chord-pad",
+  "n": 2,
+  "lufs": -36.81349366515744,
+  "peak": 0.15622426569461823
+ },
+ {
+  "id": "chord-pad-3",
+  "role": "chord",
+  "inst": "chord-pad",
+  "n": 3,
+  "lufs": -37.245746903269584,
+  "peak": 0.08787161856889725
+ },
+ {
+  "id": "bass-ebass-1",
+  "role": "bass",
+  "inst": "bass-ebass",
+  "n": 1,
+  "lufs": -24.205253439150642,
+  "peak": 0.3857194781303406
+ },
+ {
+  "id": "bass-ebass-2",
+  "role": "bass",
+  "inst": "bass-ebass",
+  "n": 2,
+  "lufs": -23.995295549911507,
+  "peak": 0.4152367115020752
+ },
+ {
+  "id": "bass-ebass-3",
+  "role": "bass",
+  "inst": "bass-ebass",
+  "n": 3,
+  "lufs": -24.190036223090804,
+  "peak": 0.2882782220840454
+ },
+ {
+  "id": "bass-upright-1",
+  "role": "bass",
+  "inst": "bass-upright",
+  "n": 1,
+  "lufs": -24.127427017082002,
+  "peak": 0.34012705087661743
+ },
+ {
+  "id": "bass-upright-2",
+  "role": "bass",
+  "inst": "bass-upright",
+  "n": 2,
+  "lufs": -23.924086595646457,
+  "peak": 0.3260856568813324
+ },
+ {
+  "id": "bass-upright-3",
+  "role": "bass",
+  "inst": "bass-upright",
+  "n": 3,
+  "lufs": -23.96591010170215,
+  "peak": 0.3365909159183502
+ },
+ {
+  "id": "bass-cello-1",
+  "role": "bass",
+  "inst": "bass-cello",
+  "n": 1,
+  "lufs": -24.174702599522476,
+  "peak": 0.2893238365650177
+ },
+ {
+  "id": "bass-cello-2",
+  "role": "bass",
+  "inst": "bass-cello",
+  "n": 2,
+  "lufs": -23.972797189774777,
+  "peak": 0.2999175488948822
+ },
+ {
+  "id": "bass-cello-3",
+  "role": "bass",
+  "inst": "bass-cello",
+  "n": 3,
+  "lufs": -24.273251790772093,
+  "peak": 0.30925148725509644
+ },
+ {
+  "id": "bass-tuba-1",
+  "role": "bass",
+  "inst": "bass-tuba",
+  "n": 1,
+  "lufs": -24.502775566313883,
+  "peak": 0.31414514780044556
+ },
+ {
+  "id": "bass-tuba-2",
+  "role": "bass",
+  "inst": "bass-tuba",
+  "n": 2,
+  "lufs": -24.385057320731146,
+  "peak": 0.33733147382736206
+ },
+ {
+  "id": "bass-tuba-3",
+  "role": "bass",
+  "inst": "bass-tuba",
+  "n": 3,
+  "lufs": -24.272725044762204,
+  "peak": 0.29182276129722595
+ },
+ {
+  "id": "bass-bassoon-1",
+  "role": "bass",
+  "inst": "bass-bassoon",
+  "n": 1,
+  "lufs": -24.49669598240929,
+  "peak": 0.31124207377433777
+ },
+ {
+  "id": "bass-bassoon-2",
+  "role": "bass",
+  "inst": "bass-bassoon",
+  "n": 2,
+  "lufs": -24.616530108757377,
+  "peak": 0.2754126489162445
+ },
+ {
+  "id": "bass-bassoon-3",
+  "role": "bass",
+  "inst": "bass-bassoon",
+  "n": 3,
+  "lufs": -24.58711838137423,
+  "peak": 0.28768590092658997
+ },
+ {
+  "id": "bass-organ-1",
+  "role": "bass",
+  "inst": "bass-organ",
+  "n": 1,
+  "lufs": -24.546190400672828,
+  "peak": 0.2817938029766083
+ },
+ {
+  "id": "bass-organ-2",
+  "role": "bass",
+  "inst": "bass-organ",
+  "n": 2,
+  "lufs": -24.7591629894042,
+  "peak": 0.3433867394924164
+ },
+ {
+  "id": "bass-organ-3",
+  "role": "bass",
+  "inst": "bass-organ",
+  "n": 3,
+  "lufs": -24.56945326471784,
+  "peak": 0.3212592303752899
+ },
+ {
+  "id": "bass-pianolow-1",
+  "role": "bass",
+  "inst": "bass-pianolow",
+  "n": 1,
+  "lufs": -24.7261285708825,
+  "peak": 0.3189004063606262
+ },
+ {
+  "id": "bass-pianolow-2",
+  "role": "bass",
+  "inst": "bass-pianolow",
+  "n": 2,
+  "lufs": -24.55243185212086,
+  "peak": 0.34968462586402893
+ },
+ {
+  "id": "bass-pianolow-3",
+  "role": "bass",
+  "inst": "bass-pianolow",
+  "n": 3,
+  "lufs": -24.474649029843707,
+  "peak": 0.30803316831588745
+ },
+ {
+  "id": "bass-synth-1",
+  "role": "bass",
+  "inst": "bass-synth",
+  "n": 1,
+  "lufs": -24.593436089173967,
+  "peak": 0.5107530355453491
+ },
+ {
+  "id": "bass-synth-2",
+  "role": "bass",
+  "inst": "bass-synth",
+  "n": 2,
+  "lufs": -24.604889493182306,
+  "peak": 0.5547627210617065
+ },
+ {
+  "id": "bass-synth-3",
+  "role": "bass",
+  "inst": "bass-synth",
+  "n": 3,
+  "lufs": -24.409700536255073,
+  "peak": 0.47552603483200073
+ },
+ {
+  "id": "bass-fuzz-1",
+  "role": "bass",
+  "inst": "bass-fuzz",
+  "n": 1,
+  "lufs": -24.154463343635417,
+  "peak": 0.3816196024417877
+ },
+ {
+  "id": "bass-fuzz-2",
+  "role": "bass",
+  "inst": "bass-fuzz",
+  "n": 2,
+  "lufs": -24.184425929120476,
+  "peak": 0.4084431231021881
+ },
+ {
+  "id": "bass-fuzz-3",
+  "role": "bass",
+  "inst": "bass-fuzz",
+  "n": 3,
+  "lufs": -24.131922675031245,
+  "peak": 0.38872185349464417
+ },
+ {
+  "id": "bass-sub-1",
+  "role": "bass",
+  "inst": "bass-sub",
+  "n": 1,
+  "lufs": -24.43496356670808,
+  "peak": 0.28380492329597473
+ },
+ {
+  "id": "bass-sub-2",
+  "role": "bass",
+  "inst": "bass-sub",
+  "n": 2,
+  "lufs": -24.40117607247044,
+  "peak": 0.18962761759757996
+ },
+ {
+  "id": "bass-sub-3",
+  "role": "bass",
+  "inst": "bass-sub",
+  "n": 3,
+  "lufs": -24.322432658783573,
+  "peak": 0.3464191257953644
+ },
+ {
+  "id": "rhythm-kit-1",
+  "role": "rhythm",
+  "inst": "rhythm-kit",
+  "n": 1,
+  "lufs": -26.626302787271722,
+  "peak": 0.3228708505630493
+ },
+ {
+  "id": "rhythm-kit-2",
+  "role": "rhythm",
+  "inst": "rhythm-kit",
+  "n": 2,
+  "lufs": -26.493143584372962,
+  "peak": 0.4032719135284424
+ },
+ {
+  "id": "rhythm-kit-3",
+  "role": "rhythm",
+  "inst": "rhythm-kit",
+  "n": 3,
+  "lufs": -26.271461227898534,
+  "peak": 0.3284332752227783
+ },
+ {
+  "id": "rhythm-break-1",
+  "role": "rhythm",
+  "inst": "rhythm-break",
+  "n": 1,
+  "lufs": -26.599280074391856,
+  "peak": 0.22492891550064087
+ },
+ {
+  "id": "rhythm-break-2",
+  "role": "rhythm",
+  "inst": "rhythm-break",
+  "n": 2,
+  "lufs": -26.359694054875117,
+  "peak": 0.2900736927986145
+ },
+ {
+  "id": "rhythm-break-3",
+  "role": "rhythm",
+  "inst": "rhythm-break",
+  "n": 3,
+  "lufs": -26.490070409038804,
+  "peak": 0.2246297001838684
+ },
+ {
+  "id": "rhythm-four-1",
+  "role": "rhythm",
+  "inst": "rhythm-four",
+  "n": 1,
+  "lufs": -26.384541126247218,
+  "peak": 0.2585268020629883
+ },
+ {
+  "id": "rhythm-four-2",
+  "role": "rhythm",
+  "inst": "rhythm-four",
+  "n": 2,
+  "lufs": -26.611517539510128,
+  "peak": 0.21714726090431213
+ },
+ {
+  "id": "rhythm-four-3",
+  "role": "rhythm",
+  "inst": "rhythm-four",
+  "n": 3,
+  "lufs": -26.7193095251754,
+  "peak": 0.3523734509944916
+ },
+ {
+  "id": "rhythm-machine-1",
+  "role": "rhythm",
+  "inst": "rhythm-machine",
+  "n": 1,
+  "lufs": -26.61333406972797,
+  "peak": 0.3963167071342468
+ },
+ {
+  "id": "rhythm-machine-2",
+  "role": "rhythm",
+  "inst": "rhythm-machine",
+  "n": 2,
+  "lufs": -26.72571179839284,
+  "peak": 0.4628618359565735
+ },
+ {
+  "id": "rhythm-machine-3",
+  "role": "rhythm",
+  "inst": "rhythm-machine",
+  "n": 3,
+  "lufs": -26.513786219744528,
+  "peak": 0.2156723290681839
+ },
+ {
+  "id": "rhythm-linn-1",
+  "role": "rhythm",
+  "inst": "rhythm-linn",
+  "n": 1,
+  "lufs": -26.97713256741317,
+  "peak": 0.3613070845603943
+ },
+ {
+  "id": "rhythm-linn-2",
+  "role": "rhythm",
+  "inst": "rhythm-linn",
+  "n": 2,
+  "lufs": -26.63663132164149,
+  "peak": 0.3801286518573761
+ },
+ {
+  "id": "rhythm-linn-3",
+  "role": "rhythm",
+  "inst": "rhythm-linn",
+  "n": 3,
+  "lufs": -26.81085699972186,
+  "peak": 0.24884095788002014
+ },
+ {
+  "id": "rhythm-stark-1",
+  "role": "rhythm",
+  "inst": "rhythm-stark",
+  "n": 1,
+  "lufs": -26.592802043613137,
+  "peak": 0.41194212436676025
+ },
+ {
+  "id": "rhythm-stark-2",
+  "role": "rhythm",
+  "inst": "rhythm-stark",
+  "n": 2,
+  "lufs": -26.763945267092513,
+  "peak": 0.3805382251739502
+ },
+ {
+  "id": "rhythm-stark-3",
+  "role": "rhythm",
+  "inst": "rhythm-stark",
+  "n": 3,
+  "lufs": -26.915555910157632,
+  "peak": 0.27886518836021423
+ },
+ {
+  "id": "rhythm-xylo-1",
+  "role": "rhythm",
+  "inst": "rhythm-xylo",
+  "n": 1,
+  "lufs": -32.32760044687222,
+  "peak": 0.1636005938053131
+ },
+ {
+  "id": "rhythm-xylo-2",
+  "role": "rhythm",
+  "inst": "rhythm-xylo",
+  "n": 2,
+  "lufs": -32.648728455193115,
+  "peak": 0.2433256059885025
+ },
+ {
+  "id": "rhythm-xylo-3",
+  "role": "rhythm",
+  "inst": "rhythm-xylo",
+  "n": 3,
+  "lufs": -32.42818427643349,
+  "peak": 0.1300165206193924
+ },
+ {
+  "id": "rhythm-shaker-1",
+  "role": "rhythm",
+  "inst": "rhythm-shaker",
+  "n": 1,
+  "lufs": -31.466376589524195,
+  "peak": 0.2633281946182251
+ },
+ {
+  "id": "rhythm-shaker-2",
+  "role": "rhythm",
+  "inst": "rhythm-shaker",
+  "n": 2,
+  "lufs": -31.53128833052928,
+  "peak": 0.32931211590766907
+ },
+ {
+  "id": "rhythm-shaker-3",
+  "role": "rhythm",
+  "inst": "rhythm-shaker",
+  "n": 3,
+  "lufs": -31.486061525402434,
+  "peak": 0.23167982697486877
+ },
+ {
+  "id": "rhythm-bongo-1",
+  "role": "rhythm",
+  "inst": "rhythm-bongo",
+  "n": 1,
+  "lufs": -32.91363597949129,
+  "peak": 0.23794125020503998
+ },
+ {
+  "id": "rhythm-bongo-2",
+  "role": "rhythm",
+  "inst": "rhythm-bongo",
+  "n": 2,
+  "lufs": -32.67063511520072,
+  "peak": 0.25206995010375977
+ },
+ {
+  "id": "rhythm-bongo-3",
+  "role": "rhythm",
+  "inst": "rhythm-bongo",
+  "n": 3,
+  "lufs": -32.68154499419961,
+  "peak": 0.2646610736846924
+ },
+ {
+  "id": "rhythm-ride-1",
+  "role": "rhythm",
+  "inst": "rhythm-ride",
+  "n": 1,
+  "lufs": -32.39873142539196,
+  "peak": 0.1436137706041336
+ },
+ {
+  "id": "rhythm-ride-2",
+  "role": "rhythm",
+  "inst": "rhythm-ride",
+  "n": 2,
+  "lufs": -32.15340900398736,
+  "peak": 0.17399083077907562
+ },
+ {
+  "id": "rhythm-ride-3",
+  "role": "rhythm",
+  "inst": "rhythm-ride",
+  "n": 3,
+  "lufs": -31.876547673306142,
+  "peak": 0.15620452165603638
+ }
+]

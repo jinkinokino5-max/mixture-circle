@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ミクスチャー・サークル — 6つのプロトタイプ</title>
-<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる6つのプロトタイプ。">
+<title>ミクスチャー・サークル — 7つのプロトタイプ</title>
+<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる7つのプロトタイプ。">
 <style>
   :root{
     --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
@@ -17,6 +17,7 @@
     --v4:#0c9a83;  --v4a:#48f7cd;
     --v5:#8a5cf6;  --v5a:#c4a6ff;
     --v6:#c2185b;  --v6a:#ff86b3;
+    --v7:#e65100;  --v7a:#ffb74d;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -153,7 +154,7 @@
       <small>3〜6人が円になり、カードを出すたびに楽器が加わって、3分で1曲を共同生成する — 勝敗のない音楽カードゲーム。</small>
     </h1>
     <p class="lede">
-      同じ企画から生まれた <b>6つのプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
+      同じ企画から生まれた <b>7つのプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
       音楽の知識は要りません。<b>キーを押すか、マスをクリックするだけ</b>です。
     </p>
     <div class="heronote">
@@ -165,7 +166,7 @@
 
 <section>
   <div class="wrap">
-    <h2>プロトタイプ <em>6 BUILDS</em></h2>
+    <h2>プロトタイプ <em>7 BUILDS</em></h2>
     <p class="sublede">
       上から順に作った順です。カードの構造・音の作り方・「出した瞬間の手ごたえ」を、作り直すたびに変えてきました。
       どれも独立して動くので、好きなものから試せます。
@@ -203,12 +204,41 @@
         </div>
       </article>
 
+      <!-- v7 -->
+      <article class="app" style="--c:var(--v7); --ca:var(--v7a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v7</span>
+            <span class="tag">最新</span>
+            <span class="tag">音の中身に表情をつける</span>
+          </div>
+          <h3>STUDIO PULSE IV</h3>
+          <p class="tagline">「もっと芸術的な音楽を、もっとシンプルな操作で」──改善サイクルを回し続けている版。</p>
+          <p class="what">
+            v6 の土台（音割れ・メモリ膨張によるプツプツ切れ）をまず直したうえで、
+            四分音符より長く伸びる音に<b>微かな脈動（音量と明るさの揺れ）</b>を足しました。
+            人が長い音を伸ばすときのような「歌っている」感触を、
+            新しいノードを1つも増やさずに実現しています。
+            改善案の策定・計画・実装のサイクルは止めるまで回り続けます。
+          </p>
+          <div class="spec">
+            <div>カード<b>120枚</b></div>
+            <div>ロングトーンが<b>脈動する</b></div>
+            <div>初回の読み込み<b>約43MB</b></div>
+            <div>自動機能<b>8つ（個別に切れる）</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v7/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v7/README.md">設計を読む</a>
+        </div>
+      </article>
+
       <!-- v6 -->
       <article class="app" style="--c:var(--v6); --ca:var(--v6a)">
         <div class="body">
           <div class="badges">
             <span class="ver">v6</span>
-            <span class="tag">最新</span>
             <span class="tag">音楽を生成する</span>
           </div>
           <h3>STUDIO PULSE III</h3>
