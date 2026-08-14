@@ -1276,16 +1276,28 @@ function playCadence() {
       State.parts.forEach(p => { if (p.kit) { try { p.gain.gain.rampTo(0, beat * 1.5); } catch (e) {} } });
     }, (startTicks + barTicks * (CADENCE_BARS - 1)) + 'i');
 
-    /* 4. 最後の一撃 → 残響だけ残して消える */
+    /* 4. 終わり方（案K：終止のバリエーション）
+       ずっと同じ「一撃で締める」だけだと、静かな曲まで無理に締めた感じに
+       なる。そのとき ENERGY にいた場所で、終わり方そのものを変える。
+         熱（3）／走（2） … 従来どおり。クラッシュ＋キックで締める
+         静（1）          … 一撃を使わず、キック1発だけで静かに溶ける。
+                            画面のフラッシュも出さない（静かな曲の余韻を壊さない） */
+    const soft = State.energy <= 1;
     const endTicks = startTicks + barTicks * CADENCE_BARS;
     Tone.Transport.scheduleOnce((time) => {
       const owner = State.kickOwner && State.parts.get(State.kickOwner);
       const kit = owner ? owner.kit : baseKit;
-      try { kit.kick(time, 1); kit.crash(time, 0.9); } catch (e) {}
-      pump(time, 1.2);
-      /* 一撃のあとは、残響を残したまま本体だけ落とす */
-      try { partsBus.gain.rampTo(0, beat * 2.2); baseBus.gain.rampTo(0, beat * 1.2); } catch (e) {}
-      Tone.Draw.schedule(() => UI.dropFlash(), time);
+      if (soft) {
+        try { kit.kick(time, 0.55); } catch (e) {}
+        pump(time, 0.5);
+        try { partsBus.gain.rampTo(0, beat * 3.5); baseBus.gain.rampTo(0, beat * 2.2); } catch (e) {}
+      } else {
+        try { kit.kick(time, 1); kit.crash(time, 0.9); } catch (e) {}
+        pump(time, 1.2);
+        /* 一撃のあとは、残響を残したまま本体だけ落とす */
+        try { partsBus.gain.rampTo(0, beat * 2.2); baseBus.gain.rampTo(0, beat * 1.2); } catch (e) {}
+        Tone.Draw.schedule(() => UI.dropFlash(), time);
+      }
       setTimeout(resolve, (beat * 4) * 1000);
     }, endTicks + 'i');
 

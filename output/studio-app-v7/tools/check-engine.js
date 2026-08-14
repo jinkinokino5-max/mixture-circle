@@ -129,7 +129,7 @@ load('app.js',
   '\n;["Part","State","buildMaster","CARDS","CARD_ORDER","ROLE_ORDER","ROLES","INSTRUMENTS",'
   + '"INSTRUMENT_ORDER","VARIATIONS","pressInstrument","insertCard","removeCard","KEYMAP",'
   + '"ensureBar","updateArrangement","updateAutoMix","currentSection","roleBus","SECTIONS",'
-  + '"generateBar","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness","triggerBreak","partsBusLevel"]'
+  + '"generateBar","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness","triggerBreak","partsBusLevel","UI"]'
   + '.forEach(n=>{ try{ globalThis[n]=eval(n); }catch(e){} });');
 
 /* ---------- 実行 ---------- */
@@ -326,6 +326,27 @@ load('app.js',
     try { booked[booked.length - 1].cb(0); } catch (e) { errors.push('終止の最後の一撃: ' + e.message); }
     if (!State.cadence) errors.push('State.cadence が立っていない');
     State.cadence = false; State.prog = before;
+
+    /* 案K：ENERGY が低いときは、フラッシュを出さない「静かな終わり方」になるか */
+    let flashed = false;
+    const origFlash = ctx.UI.dropFlash;
+    ctx.UI.dropFlash = () => { flashed = true; };
+    booked.length = 0;
+    State.cadence = false; State.energy = 1;
+    ctx.playCadence();
+    try { booked[booked.length - 1].cb(0); } catch (e) { errors.push('終止（静）の最後: ' + e.message); }
+    if (flashed) errors.push('ENERGY=1 の終止なのにフラッシュ（派手な演出）が出た');
+    State.cadence = false;
+
+    /* ENERGY が高いときは、従来どおりフラッシュが出るか */
+    flashed = false;
+    booked.length = 0;
+    State.energy = 3;
+    ctx.playCadence();
+    try { booked[booked.length - 1].cb(0); } catch (e) { errors.push('終止（熱）の最後: ' + e.message); }
+    if (!flashed) errors.push('ENERGY=3 の終止でフラッシュが出ていない');
+    ctx.UI.dropFlash = origFlash;
+    State.cadence = false; State.energy = 2;
   }
 
   /* ===== 9. 案A：転調が全パートに一斉にかかるか ===== */
