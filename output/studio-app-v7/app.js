@@ -105,6 +105,18 @@ async function buildMaster() {
       dry:  new Tone.Gain(1).connect(dryBus),
       corr: 0,                                     // 自動ミックスの現在の補正(dB)
     };
+    /* 案J：ROLEごとの書き出し（stem）。duck/dry の両方を合流させて
+       専用の Recorder へ流す。持ち場（duckBus/dryBus）への配線は
+       そのまま残るので、聞こえ方には一切影響しない。
+       注：reverb/delay の送りはパートごとに共有バスへ直結しているため、
+       この stem には乗らない（＝残響のぶんだけドライに聞こえる）。   */
+    try {
+      const stemSum = new Tone.Gain(1);
+      roleBus[rk].duck.connect(stemSum);
+      roleBus[rk].dry.connect(stemSum);
+      roleBus[rk].rec = new Tone.Recorder();
+      stemSum.connect(roleBus[rk].rec);
+    } catch (e) { roleBus[rk].rec = null; }
   });
 
   /* 自動ミックスの目：master を4つの帯域に分けて音量を見る */
@@ -1209,6 +1221,8 @@ async function startGame(bpm) {
 
   Tone.Transport.start('+0.12');
   if (recorder) { try { recorder.start(); } catch (e) {} }
+  /* 案J：ROLEごとの4トラックも同時に回す */
+  ROLE_ORDER.forEach(rk => { const r = roleBus[rk] && roleBus[rk].rec; if (r) { try { r.start(); } catch (e) {} } });
   State.playing = true;
   State.paused = false;
   UI.startViz();
@@ -1301,7 +1315,15 @@ async function endGame(opts) {
     if (recorder && recorder.state === 'started') {
       try { url = URL.createObjectURL(await recorder.stop()); } catch (e) { url = null; }
     }
-    UI.showFinish(url);
+    /* 案J：ROLEごとの4トラックも一緒に書き出す */
+    const stemUrls = {};
+    for (const rk of ROLE_ORDER) {
+      const r = roleBus[rk] && roleBus[rk].rec;
+      if (r && r.state === 'started') {
+        try { stemUrls[rk] = URL.createObjectURL(await r.stop()); } catch (e) {}
+      }
+    }
+    UI.showFinish(url, stemUrls);
   }, 3300);
 }
 
@@ -1682,7 +1704,7 @@ const UI = {
     draw();
   },
 
-  showFinish(url) {
+  showFinish(url, stemUrls) {
     const f = document.getElementById('finish');
     const audio = document.getElementById('playback');
     const dl = document.getElementById('dl');
@@ -1694,6 +1716,16 @@ const UI = {
       document.getElementById('finishmsg').textContent =
         'おつかれさまでした。（このブラウザでは録音を保存できませんでした）';
     }
+    /* 案J：ROLEごとのリンクは、実際に録れたものだけ出す */
+    const stemsBox = document.getElementById('stems');
+    let any = false;
+    (ROLE_ORDER || []).forEach(rk => {
+      const a = document.getElementById('dl-' + rk);
+      if (!a) return;
+      if (stemUrls && stemUrls[rk]) { a.href = stemUrls[rk]; a.style.display = ''; any = true; }
+      else a.style.display = 'none';
+    });
+    if (stemsBox) stemsBox.style.display = any ? '' : 'none';
     f.classList.add('show');
   },
 };

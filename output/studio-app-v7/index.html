@@ -301,6 +301,16 @@
     background:var(--panel2); color:var(--fg); font-size:13px; cursor:pointer; text-decoration:none; text-align:center;
   }
   .finish-actions .primary{background:linear-gradient(180deg,#31c39c,#1c8a72); border:0; color:#04140f; font-weight:700}
+  /* 案J：ROLEごとの4トラック書き出し */
+  #stems{margin-top:16px; padding-top:16px; border-top:1px solid var(--line)}
+  .stemnote{font-size:11.5px; color:var(--fg-dim); margin:0 0 10px; line-height:1.7}
+  .stemlinks{display:flex; gap:8px; flex-wrap:wrap}
+  .stemlinks a{
+    flex:1; min-width:80px; padding:9px; border-radius:9px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--fg); font-size:11.5px; cursor:pointer;
+    text-decoration:none; text-align:center; letter-spacing:.04em;
+  }
+  .stemlinks a:hover{background:#28303f}
 
   /* 横幅が足りないときは「役割ごとに5枚ずつ2段」に折り返す */
   @media (max-width:1560px){
@@ -478,6 +488,16 @@
       <a id="dl" class="minibtn" download="studio-pulse.webm" style="display:none">録音を保存</a>
       <button class="primary" id="againbtn">もう1回やる</button>
     </div>
+    <!-- 案J：ROLEごとの4トラック（stem）を個別に保存できる。DAWで続きを作れる -->
+    <div id="stems" style="display:none">
+      <p class="stemnote">パートごと（4トラック）でも保存できます。DAWに読み込めば続きを作れます。</p>
+      <div class="stemlinks">
+        <a id="dl-melody" class="minibtn" download="studio-pulse-melody.webm" style="display:none">MELODY</a>
+        <a id="dl-chord"  class="minibtn" download="studio-pulse-chord.webm"  style="display:none">CHORD</a>
+        <a id="dl-bass"   class="minibtn" download="studio-pulse-bass.webm"   style="display:none">BASS</a>
+        <a id="dl-rhythm" class="minibtn" download="studio-pulse-rhythm.webm" style="display:none">RHYTHM</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -486,9 +506,9 @@
 <script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
 <!-- ?v= はブラウザのキャッシュ対策。中身を直したらこの数字を上げること。
      これが無いと、修正しても古い版がそのまま使われ続ける -->
-<script src="samples.js?v=6.1"></script>
-<script src="music.js?v=6.1"></script>
-<script src="cards.js?v=6.1"></script>
-<script src="app.js?v=6.1"></script>
+<script src="samples.js?v=7.4"></script>
+<script src="music.js?v=7.4"></script>
+<script src="cards.js?v=7.4"></script>
+<script src="app.js?v=7.4"></script>
 </body>
 </html>

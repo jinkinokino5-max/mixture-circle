@@ -419,6 +419,17 @@ load('app.js',
     State.building = false;
   }
 
+  /* ===== 12. 案J：ROLEごとの4トラック（stem）が用意されているか ===== */
+  {
+    ROLE_ORDER.forEach(rk => {
+      if (!ctx.roleBus[rk] || !ctx.roleBus[rk].rec) errors.push(`${rk}: stem 用の Recorder が無い`);
+    });
+    /* start/stop を呼んでも例外が出ないこと（実ブラウザでは録音データを返す） */
+    try {
+      ROLE_ORDER.forEach(rk => ctx.roleBus[rk].rec.start());
+    } catch (e) { errors.push('stem の start で例外: ' + e.message); }
+  }
+
   /* ---------- 出力 ---------- */
   const pad = (s, n) => String(s).padEnd(n);
   const byInst = new Map();
