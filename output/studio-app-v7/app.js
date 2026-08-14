@@ -871,6 +871,7 @@ const State = {
   queue: [],               // 開始前に押されたカードの控え
   kickOwner: null,
   building: false,
+  breaking: false,                               // 案I：ブレイク中か
   bar: 0, step: 0,
 
   /* --- v6 で足した状態 --- */
@@ -1110,6 +1111,57 @@ function triggerBuild() {
       UI.syncEnergy();
     }, time);
   }, dropTicks + 'i');
+}
+
+/* =====================================================================
+   案I：ブレイク（サイクル3・v7で追加）
+   ---------------------------------------------------------------------
+   これまで演奏中に起きる「事件」はビルド→ドロップの1種類しか無かった。
+   ブレイクはその逆：**盛り上げず、抜いて溜める**。
+   1小節、ドラム以外を静める。ドラムも4拍目の裏にスネア1発だけを残して
+   「止まっていることを分からせる目印」にする。戻りはクラッシュを使わず
+   キック1発だけで静かに再開する（ビルドの戻り方と対にして単調を避ける）。
+   triggerBuild と同じ partsBus 操作の型を流用しているので、
+   信号の道すじは増えない。                                           */
+function triggerBreak() {
+  if (!State.playing || State.paused || State.building || State.breaking) return;
+  State.breaking = true;
+
+  const ppq = Tone.Transport.PPQ;
+  const barTicks = ppq * 4;
+  const startTicks = Math.ceil((Tone.Transport.ticks + ppq * 0.2) / barTicks) * barTicks;
+  const endTicks = startTicks + barTicks;
+
+  UI.toast('ブレイク！ 1小節、抜きます');
+  UI.setBreak(true);
+
+  /* --- 抜く瞬間 --- */
+  Tone.Transport.scheduleOnce((time) => {
+    try {
+      partsBus.gain.cancelScheduledValues(time);
+      partsBus.gain.setValueAtTime(partsBusLevel(), time);
+      partsBus.gain.linearRampToValueAtTime(partsBusLevel() * 0.12, time + 0.05);
+    } catch (e) {}
+  }, startTicks + 'i');
+
+  /* --- 4拍目の裏：止まっている合図のスネア --- */
+  Tone.Transport.scheduleOnce((time) => {
+    const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
+    try { kit.snare(time, 0.5); } catch (e) {}
+  }, startTicks + Math.round(ppq * 3.5) + 'i');
+
+  /* --- 静かに戻す --- */
+  Tone.Transport.scheduleOnce((time) => {
+    try {
+      partsBus.gain.cancelScheduledValues(time);
+      partsBus.gain.setValueAtTime(partsBusLevel() * 0.12, time);
+      partsBus.gain.linearRampToValueAtTime(partsBusLevel(), time + 0.08);
+    } catch (e) {}
+    const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
+    try { kit.kick(time, 0.9); } catch (e) {}
+    State.breaking = false;
+    Tone.Draw.schedule(() => { UI.setBreak(false); }, time);
+  }, endTicks + 'i');
 }
 
 /* ============ 8. 開始・停止 ============ */
@@ -1532,6 +1584,7 @@ const UI = {
   },
 
   setBuild(on) { document.body.classList.toggle('building', on); },
+  setBreak(on) { document.body.classList.toggle('breaking', on); },
   dropFlash() {
     const f = document.getElementById('dropflash');
     f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
@@ -1695,7 +1748,9 @@ document.addEventListener('keydown', (e) => {
 
   /* Esc は終止つきで終わる。すぐ止めたいときは Shift+Esc */
   if (e.key === 'Escape') { endGame({ immediate: e.shiftKey }); return; }
-  if (e.key === ' ') { e.preventDefault(); triggerBuild(); return; }
+  /* スペースはビルド、Shift+スペースはその逆＝ブレイク。
+     B はすでに RHYTHM 楽器（rhythm-linn）のキーなので使えない。 */
+  if (e.key === ' ') { e.preventDefault(); if (e.shiftKey) triggerBreak(); else triggerBuild(); return; }
   if (e.key === 'Backspace') {
     e.preventDefault();
     const last = State.order[State.order.length - 1];

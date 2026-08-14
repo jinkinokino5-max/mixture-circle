@@ -26,6 +26,9 @@
     display:flex; flex-direction:column; min-height:100%; overflow-x:hidden;
   }
   body.building{animation:tension .6s ease-in-out infinite alternate}
+  /* 案I：ブレイク＝抜いて溜める。ビルドの高揚とは逆に、静かに沈める */
+  body.breaking{animation:hush 1s ease-in-out infinite alternate}
+  @keyframes hush{from{filter:none}to{filter:brightness(.82) saturate(.55)}}
   @keyframes tension{from{filter:none}to{filter:brightness(1.12) saturate(1.2)}}
 
   /* ===== 開始オーバーレイ ===== */
@@ -363,7 +366,8 @@
       音が出ます。スピーカーの音量を確認してください。<br>
       MELODY 2枚・CHORD 2枚・BASS 1枚・RHYTHM 3枚まで同時に鳴らせます。上限を超えると、その役割のいちばん古い音と交代します。<br>
       RHYTHM の後ろ4枚（木琴・シェイカー・ボンゴ・ライド）はキックを持たない「薄い層」です。どのドラムの上にも安全に重ねられます。<br>
-      <kbd>スペース</kbd> でビルドアップ＆ドロップ。ここがいちばん気持ちいいところです。
+      <kbd>スペース</kbd> でビルドアップ＆ドロップ。ここがいちばん気持ちいいところです。<br>
+      <kbd>Shift</kbd>+<kbd>スペース</kbd> でブレイク。1小節だけ抜いて溜めてから静かに戻ります。ドロップとは逆の「事件」です。
     </p>
   </div>
 </div>
@@ -438,7 +442,7 @@
       <div class="hint">
         行＝ROLE（役割）／列＝INSTRUMENT（楽器）。キーボードの並びがそのままグリッドです。<br>
         <b>同じキーを押すたびに 変化1 → 2 → 3 → 止まる</b>と巡回します。数字ボタンを直接クリックしてもかまいません。<br>
-        <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 提案を採用　<kbd>スペース</kbd> ドロップ　<kbd>↑</kbd>/<kbd>Shift+↓</kbd> ENERGY　<kbd>Tab</kbd> コード進行　<kbd>Backspace</kbd> 1枚戻す　<kbd>Esc</kbd> 終了
+        <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 提案を採用　<kbd>スペース</kbd> ドロップ　<kbd>Shift+スペース</kbd> ブレイク　<kbd>↑</kbd>/<kbd>Shift+↓</kbd> ENERGY　<kbd>Tab</kbd> コード進行　<kbd>Backspace</kbd> 1枚戻す　<kbd>Esc</kbd> 終了
       </div>
     </div>
   </div>

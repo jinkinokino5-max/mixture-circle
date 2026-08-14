@@ -129,7 +129,7 @@ load('app.js',
   '\n;["Part","State","buildMaster","CARDS","CARD_ORDER","ROLE_ORDER","ROLES","INSTRUMENTS",'
   + '"INSTRUMENT_ORDER","VARIATIONS","pressInstrument","insertCard","removeCard","KEYMAP",'
   + '"ensureBar","updateArrangement","updateAutoMix","currentSection","roleBus","SECTIONS",'
-  + '"generateBar","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness"]'
+  + '"generateBar","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness","triggerBreak","partsBusLevel"]'
   + '.forEach(n=>{ try{ globalThis[n]=eval(n); }catch(e){} });');
 
 /* ---------- 実行 ---------- */
@@ -397,6 +397,26 @@ load('app.js',
     const quiet = ctx.suggestCards().map(id => CARDS[id].n);
     console.log(`寂しいときの提案の変化番号 : ${quiet.join(',')}（3=刻み が多いはず）`);
     State.parts.clear(); State.order = [];
+  }
+
+  /* ===== 11. 案I：ブレイクが仕込まれるか ===== */
+  {
+    const booked = [];
+    ctx.Tone.Transport.scheduleOnce = (cb, at) => { booked.push({ cb, at }); };
+    State.playing = true; State.paused = false; State.building = false; State.breaking = false;
+    ctx.triggerBreak();
+    console.log(`ブレイク : ${booked.length} 個の仕込み（抜く・スネアの目印・戻す）`);
+    if (booked.length < 3) errors.push(`ブレイクの仕込みが ${booked.length} 個しかない（3つ必要）`);
+    if (!State.breaking) errors.push('triggerBreak 直後に State.breaking が立っていない');
+    /* 全部実行しても例外を出さず、最後に breaking が下りること */
+    booked.forEach((b, i) => { try { b.cb(0); } catch (e) { errors.push(`ブレイク${i + 1}: ${e.message}`); } });
+    if (State.breaking) errors.push('ブレイクが終わっても State.breaking が下りていない');
+    /* ビルド中／既にブレイク中は多重に仕込まれないこと */
+    booked.length = 0;
+    State.building = true;
+    ctx.triggerBreak();
+    if (booked.length) errors.push('ビルド中なのにブレイクが割り込んだ');
+    State.building = false;
   }
 
   /* ---------- 出力 ---------- */
