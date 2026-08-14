@@ -479,9 +479,11 @@
 <script src="vendor/Tone.js"></script>
 <!-- 音源の一覧。音源をダウンロード.bat が作る。無くても動く（全部合成音になる） -->
 <script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
-<script src="samples.js"></script>
-<script src="music.js"></script>
-<script src="cards.js"></script>
-<script src="app.js"></script>
+<!-- ?v= はブラウザのキャッシュ対策。中身を直したらこの数字を上げること。
+     これが無いと、修正しても古い版がそのまま使われ続ける -->
+<script src="samples.js?v=6.1"></script>
+<script src="music.js?v=6.1"></script>
+<script src="cards.js?v=6.1"></script>
+<script src="app.js?v=6.1"></script>
 </body>
 </html>

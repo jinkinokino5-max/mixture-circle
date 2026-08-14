@@ -50,6 +50,12 @@ class NoiseSynth extends Node { triggerAttackRelease(d, t, v) { rec('noise', 'x'
 class MetalSynth extends Node { triggerAttackRelease(d, t, v) { rec('metal', 'x', v, t); } }
 class PluckSynth extends Node { triggerAttack(n, t) { rec('pluck', n, 1, t); } }
 class Limiter extends Node {} class Compressor extends Node {}
+/* v6.1：最終段のソフトクリッパ。写像関数を実際に呼んで、
+   どんな入力でも出力が ±1 を超えないことをここで確かめられるようにする */
+class WaveShaper extends Node {
+  constructor(map, len) { super(); this.__map = map; this.__len = len; }
+  probe(x) { return this.__map(x); }
+}
 class Panner extends Node { constructor(p){super(); this.__pan=p;} }
 class Analyser extends Node { getValue() { return new Float32Array(8); } }
 class Meter extends Node { constructor(){super(); this.__b=Meter.__n++;} getValue() { return [-18,-26,-30,-40][this.__b%4] + (Math.random()-.5)*2; } }
@@ -63,7 +69,7 @@ const repeats = [];
 const Tone = {
   Gain, Filter, Distortion, Sampler, PolySynth, Synth, MonoSynth, MembraneSynth,
   NoiseSynth, MetalSynth, PluckSynth, Limiter, Compressor, Analyser, Meter, Reverb,
-  PingPongDelay, Recorder, Sequence, Panner, Noise: Node,
+  PingPongDelay, Recorder, Sequence, Panner, Noise: Node, WaveShaper,
   dbToGain: (db) => Math.pow(10, db / 20),
   ToneAudioBuffer: {
     fromUrl: async (url) => {
@@ -106,6 +112,8 @@ const document = {
 const ctx = {
   Tone, document, console, window: {}, performance: { now: () => Date.now() },
   setTimeout, clearTimeout, requestAnimationFrame: () => 0, location: { protocol: 'http:' },
+  /* 見張り番のタイマーは検証を非決定的にするので空回しにする */
+  setInterval: () => 0, clearInterval: () => {},
   Math, Float32Array, JSON,
 };
 ctx.globalThis = ctx;

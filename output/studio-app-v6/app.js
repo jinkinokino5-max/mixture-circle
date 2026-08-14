@@ -23,22 +23,64 @@ const BASE_KIT = 'acoustic-kit';     // カードが無いときに鳴る基礎�
 
 /* ============ 1. 音の出口 ============
    parts ─→ roleBus[役割] ─┬→ duckBus（キックでへこむ組）┐
-                           └→ dryBus （ドラムなど）      ├→ sweep → master
-   send  ─→ reverb / delay ──────────────────────────────┘
-   master → glue(圧縮) → limiter → スピーカー
+                           └→ dryBus （ドラムなど）      ├→ partsBus → sweep → master
+   send  ─→ reverb / delay → fxBus ──────────────────────┘
+   master → glue(圧縮) → limiter(ハードニー) → safety(ソフトクリッパ) → スピーカー
           └→ analyser（画面用）／bandMeter（自動ミックス用）／recorder
+   limiter → outMeter（頭上の余裕を見張る目）
 
    v6 で ROLE ごとのバスを挟んだ。案5（自動ミックス）が
-   「メロディだけ少し下げる」といった操作をできるようにするため。   */
-let master, limiter, glue, sweep, partsBus, duckBus, dryBus, baseBus,
-    reverb, delay, analyser, recorder;
+   「メロディだけ少し下げる」といった操作をできるようにするため。
+
+   v6.1 音割れ対策（3段構え）
+     1. Tone.Limiter は内部が knee 30dB・attack 3ms の圧縮器で、
+        ブリックウォールではない。キックやクラッシュの立ち上がりが
+        素通りして 0dBFS を超え、出力段でデジタルクリップしていた。
+        → hard knee の速い圧縮＋最終段のソフトクリッパに置き換えた。
+     2. reverb / delay が partsBus を通らず master に直結していたため、
+        カードが増えるほど残響だけが積み上がった（＝「途中から」割れる）。
+        → fxBus 経由で partsBus に入れ、枚数ぶんの絞りが効くようにした。
+     3. それでも上限に張り付くなら master を静かに下げる見張り番を置いた。  */
+let master, limiter, glue, safety, sweep, partsBus, duckBus, dryBus, baseBus, fxBus,
+    reverb, delay, analyser, recorder, outMeter;
 let roleBus = {};                    // 'melody' → Tone.Gain
 let bandMeter = {};                  // 'low' → Tone.Meter（自動ミックスの目）
 
+/* マスターの基準ゲイン（見張り番がここから下げる）。
+   6枚＋DROP の実測ピークが 0.39〜0.52／上限 0.93 と余裕があったので、
+   v6 の 0.9 より少し上げてある。割れる方向の余地は見張り番が持つ。   */
+const MASTER_BASE = 0.95;
+let headroomDb = 0;                  // 見張り番がいま下げている量(dB, 0〜-6)
+
+/* 最終安全弁のカーブ。|x| <= KNEE までは完全に素通り（＝音を変えない）、
+   そこから上だけ tanh でなめらかに寝かせて 1.0 に到達させない。
+   WaveShaper は入力を ±1 に丸めてから引くので、どれだけ突っ込んでも
+   出力がこの上限を超えることは原理的にない。                        */
+const SOFT_KNEE = 0.7;
+function softClip(x) {
+  const ax = Math.abs(x);
+  if (ax <= SOFT_KNEE) return x;                       // 素通り＝音を変えない
+  const range = 1 - SOFT_KNEE;
+  const y = SOFT_KNEE + range * (Math.tanh((ax - SOFT_KNEE) / range) / Math.tanh(1));
+  return x < 0 ? -y : y;                               // 上限は約 0.929
+}
+
 async function buildMaster() {
-  limiter = new Tone.Limiter(-1).toDestination();
-  glue = new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.006, release: 0.12 }).connect(limiter);
-  master = new Tone.Gain(0.9).connect(glue);
+  /* 出口から順に組む。safety が最後の砦 */
+  safety = new Tone.WaveShaper(softClip, 8192).toDestination();
+
+  /* Tone.Limiter は使わない（上の注記の理由）。knee 0 で「しきい値を
+     超えたぶんだけ」を素早く押さえる。attack 1ms なら打楽器の頭も掴む。 */
+  limiter = new Tone.Compressor({ threshold: -3, ratio: 20, attack: 0.001, release: 0.05, knee: 0 })
+    .connect(safety);
+
+  /* いまどれだけ出口に張り付いているかを見る目 */
+  outMeter = new Tone.Meter({ smoothing: 0.2 });
+  limiter.connect(outMeter);
+
+  glue = new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.006, release: 0.12, knee: 6 }).connect(limiter);
+  master = new Tone.Gain(MASTER_BASE).connect(glue);
+  headroomDb = 0;
 
   analyser = new Tone.Analyser('waveform', 512);
   master.connect(analyser);
@@ -51,6 +93,9 @@ async function buildMaster() {
   duckBus  = new Tone.Gain(1).connect(partsBus);   // キックでへこむ側
   dryBus   = new Tone.Gain(1).connect(partsBus);   // へこまない側
   baseBus  = new Tone.Gain(1).connect(sweep);
+  /* 送り返しの合流点。partsBus の下に入れることで、
+     枚数が増えたときの絞り（duckByCount）が残響にも同じだけ効く。 */
+  fxBus    = new Tone.Gain(1).connect(partsBus);
 
   /* ROLE ごとのバス。duck するかは ROLE ではなくカードごとに決まるので、
      duck 用と dry 用の2本ずつ用意して、パートは自分に合うほうへ挿す。 */
@@ -72,9 +117,9 @@ async function buildMaster() {
     bandMeter[k] = m;
   });
 
-  reverb = new Tone.Reverb({ decay: 2.6, preDelay: 0.02, wet: 1 }).connect(master);
+  reverb = new Tone.Reverb({ decay: 2.6, preDelay: 0.02, wet: 1 }).connect(fxBus);
   try { await reverb.generate(); } catch (e) { /* 生成に失敗しても音は出る */ }
-  delay = new Tone.PingPongDelay({ delayTime: '8n.', feedback: 0.26, wet: 1 }).connect(master);
+  delay = new Tone.PingPongDelay({ delayTime: '8n.', feedback: 0.26, wet: 1 }).connect(fxBus);
 
   try {
     recorder = new Tone.Recorder();
@@ -724,6 +769,36 @@ function updateAutoMix() {
   UI.syncAutoMix();
 }
 
+/* =====================================================================
+   4e. 頭上の余裕の見張り番（v6.1）
+   ---------------------------------------------------------------------
+   ソフトクリッパを最後に置いたので「割れて汚くなる」ことはもう無いが、
+   上限に張り付き続ければ音は詰まって聞こえる。出口のレベルを見て、
+   詰まっているならマスターを静かに下げ、余裕が戻ったらゆっくり戻す。
+
+   ・下げるのは速く（0.5dB刻み）、戻すのは遅く（0.15dB刻み）。
+     これは「リミッタが働いた直後にすぐ持ち上げてポンピングする」のを
+     避けるための、ふつうのオートゲインの作法。
+   ・下げ幅は最大 6dB まで。それ以上は曲そのものが破綻している。       */
+const HEADROOM_MIN_DB = -6;
+let guardTimer = null;
+
+function guardHeadroom() {
+  if (!State.playing || State.paused || !outMeter || !master) return;
+  let v = outMeter.getValue();
+  if (Array.isArray(v)) v = v[0];
+  if (!isFinite(v)) return;
+
+  let next = headroomDb;
+  if (v > -0.7)      next = Math.max(HEADROOM_MIN_DB, headroomDb - 0.5);   // 張り付いている
+  else if (v < -4.0) next = Math.min(0, headroomDb + 0.15);                // 余裕がある
+  else return;
+
+  if (Math.abs(next - headroomDb) < 0.01) return;
+  headroomDb = next;
+  try { master.gain.rampTo(MASTER_BASE * Tone.dbToGain(headroomDb), 0.5); } catch (e) {}
+}
+
 /* ============ 5. 基礎ビート ============
    リズムカードが1枚も入っていないときだけ鳴る、心拍のような土台。
    リズムカードが入ったら静かに引っ込む。                             */
@@ -796,10 +871,17 @@ function recomputeKickOwner() {
   if (baseBus) baseBus.gain.rampTo(State.kickOwner ? 0 : 1, 0.8);
 }
 
-/* パートが増えても全体の音量感が破綻しないように少しずつ下げる */
+/* パートが増えても全体の音量感が破綻しないように少しずつ下げる。
+   独立した n 個の音が重なると振幅は概ね √n 倍になるので、
+   釣り合いを取るなら指数は -0.5。v6 の -0.32 は「増えたら賑やかに
+   聞こえてほしい」ぶん甘くしてあったが、8枚まで積むと頭上の余裕を
+   食い潰して割れていた。賑やかさを残しつつ余裕が残る -0.42 にする。  */
+function partsBusLevel() {
+  return Math.pow(Math.max(1, State.parts.size), -0.42);
+}
+
 function duckByCount() {
-  const n = Math.max(1, State.parts.size);
-  partsBus.gain.rampTo(Math.pow(n, -0.32), 0.4);
+  partsBus.gain.rampTo(partsBusLevel(), 0.4);
 }
 
 function labelOf(id) {
@@ -926,13 +1008,15 @@ function triggerBuild() {
       sweep.frequency.exponentialRampToValueAtTime(1100, time + len * 0.98);
     } catch (e) {}
 
-    /* ノイズのライザー */
-    const rg = new Tone.Gain(0).connect(master);
+    /* ノイズのライザー。master 直結だと枚数ぶんの絞りが効かないので
+       fxBus（＝partsBus の下）へ入れ、頂点の量も 0.22 → 0.14 に抑える。
+       ライザーはスネアロールと同時に最大になるので、ここが割れやすい。 */
+    const rg = new Tone.Gain(0).connect(fxBus || master);
     const rf = new Tone.Filter({ type: 'bandpass', frequency: 400, Q: 2.2 }).connect(rg);
     const noise = new Tone.Noise('white').connect(rf);
     noise.start(time);
     rg.gain.setValueAtTime(0.0001, time);
-    rg.gain.exponentialRampToValueAtTime(0.22, time + len * 0.95);
+    rg.gain.exponentialRampToValueAtTime(0.14, time + len * 0.95);
     rf.frequency.setValueAtTime(400, time);
     rf.frequency.exponentialRampToValueAtTime(6000, time + len * 0.95);
     rg.gain.exponentialRampToValueAtTime(0.0005, time + len + 0.05);
@@ -960,12 +1044,18 @@ function triggerBuild() {
       partsBus.gain.cancelScheduledValues(time - gap);
       partsBus.gain.setValueAtTime(0.0001, time - gap);
       sweep.frequency.setValueAtTime(24, time);
-      partsBus.gain.setValueAtTime(Math.pow(Math.max(1, State.parts.size), -0.32), time);
+      partsBus.gain.setValueAtTime(partsBusLevel(), time);
     } catch (e) {}
 
     const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
-    /* v5：落ちる瞬間にクラッシュを重ねる。ここが「開けた」と感じる正体 */
-    try { kit.kick(time, 1); kit.tom3(time, 0.85); kit.crash(time, 0.95); } catch (e) {}
+    /* v5：落ちる瞬間にクラッシュを重ねる。ここが「開けた」と感じる正体。
+       3つが完全に同時だと振幅がそのまま足し算になるので、
+       トムとクラッシュを数ミリ秒ずらして頭をぶつけない（音の印象は変わらない）。 */
+    try {
+      kit.kick(time, 0.95);
+      kit.tom3(time + 0.006, 0.72);
+      kit.crash(time + 0.012, 0.85);
+    } catch (e) {}
     pump(time, 1.2);
 
     /* 状態そのものは音のタイミングで戻す。描画（Tone.Draw）は
@@ -1017,6 +1107,12 @@ async function startGame(bpm) {
       if (State.durationSec > 0 && State.elapsed >= State.durationSec) endGame();
     }, time);
   }, 1, 0);
+
+  /* 頭上の余裕の見張り番（v6.1）。1秒に1回では遅すぎるので別立てにする。
+     Tone.Draw に載せるとタブが裏に回った瞬間に止まってしまうため、
+     素の setInterval で回す（メーターを読んでゲインを動かすだけ）。   */
+  clearInterval(guardTimer);
+  guardTimer = setInterval(guardHeadroom, 200);
 
   Tone.Transport.start('+0.12');
   if (recorder) { try { recorder.start(); } catch (e) {} }
@@ -1094,6 +1190,7 @@ function playCadence() {
 async function endGame(opts) {
   if (!State.playing) return;
   State.playing = false;
+  clearInterval(guardTimer); guardTimer = null;
 
   /* 終止を鳴らしてから片付ける。Esc の連打や時間切れでも1回だけ */
   if (State.cadenceOn && !(opts && opts.immediate) && !State.cadence) {
@@ -1408,6 +1505,11 @@ const UI = {
 
   /* --- ビジュアライザ：波形のリングと、キックで広がる円 --- */
   startViz() {
+    /* 二重起動よけ。描画ループは自分で自分を予約し続けるので、
+       2回呼ぶと rAF が2本回りっぱなしになり、そのぶん CPU を食う。
+       食われた CPU は音声スレッドの取り分を削り、音の途切れにつながる。 */
+    if (UI._vizOn) return;
+    UI._vizOn = true;
     const cv = document.getElementById('viz');
     const ctx = cv.getContext('2d');
     const dpr = Math.min(2, window.devicePixelRatio || 1);

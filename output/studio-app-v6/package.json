@@ -4,7 +4,7 @@
   "private": true,
   "description": "STUDIO PULSE III — ROLE × INSTRUMENT × VARIATION で音楽を積み上げるアプリ",
   "scripts": {
-    "check": "node tools/check-music.js && node tools/check-engine.js",
+    "check": "node tools/check-music.js && node tools/check-engine.js && node tools/check-leak.js",
     "check:music": "node tools/check-music.js",
     "check:engine": "node tools/check-engine.js",
     "measure": "node tools/measure-loudness.mjs",
@@ -12,7 +12,9 @@
     "samples": "node fetch-samples.js",
     "start": "node server.js 8771",
     "gain": "node tools/apply-gain.mjs",
-    "balance": "npm run measure && npm run gain && npm run measure && npm run trim"
+    "balance": "npm run measure && npm run gain && npm run measure && npm run trim",
+    "check:leak": "node tools/check-leak.js",
+    "check:memory": "node tools/check-memory.mjs"
   },
   "devDependencies": {
     "node-web-audio-api": "^2.2.0"

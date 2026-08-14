@@ -47,6 +47,57 @@ function manifest() {
 /* ファイル名 'Ds4' → 音名 'D#4'（音名にsは出てこないので単純置換でよい） */
 function fileToNote(f) { return f.replace('s', '#'); }
 
+/* =====================================================================
+   v6.1 音の途切れ（プツプツ）対策 ── デコード後の常駐メモリを削る
+   ---------------------------------------------------------------------
+   mp3 はディスク上では 42MB だが、Web Audio は再生のために Float32 の
+   生波形へ展開して丸ごと抱え込む。実測すると **437MB**（10.5倍）。
+   ピアノは1音が 15 秒もあり、304本の合計は 35 分ぶんにもなっていた。
+
+   これだけ抱えるとメモリの圧迫でごみ集めが頻繁に走り、音声スレッドが
+   締め切りに間に合わなくなる。これが「時間がたつとプツプツ切れる」の正体。
+   （音割れ＝波形が潰れる現象ではなく、音が欠落する現象）
+
+   そこでデコード直後に2つだけ削る：
+     1. 頭から MAX_SEC 秒だけ残す
+        100BPM の全音符が 2.4 秒なので、3.5 秒あれば余韻まで足りる。
+        切り口でプツッと鳴らないよう、末尾 60ms をフェードアウトさせる。
+     2. モノラルにまとめる
+        どれも単一楽器の録音で、定位はアプリ側の Panner が作っている。
+        元の広がりは使っていないので、捨てても鳴り方は変わらない。
+
+   実測 437.7MB → 150.9MB（66%減）。               */
+const MAX_SEC = 3.5;
+const FADE_SEC = 0.06;
+
+function compactBuffer(toneBuf) {
+  const src = toneBuf.get ? toneBuf.get() : toneBuf;      // 素の AudioBuffer
+  if (!src || !src.length) return toneBuf;
+  const sr = src.sampleRate;
+  const len = Math.min(src.length, Math.ceil(MAX_SEC * sr));
+  const ch = src.numberOfChannels;
+
+  let ac;
+  try { ac = Tone.getContext(); } catch (e) { ac = null; }
+  if (!ac || !ac.createBuffer) return toneBuf;            // 作れないならそのまま使う
+
+  const out = ac.createBuffer(1, len, sr);
+  const dst = out.getChannelData(0);
+
+  /* チャンネルを平均してモノラルにする */
+  for (let c = 0; c < ch; c++) {
+    const s = src.getChannelData(c);
+    for (let i = 0; i < len; i++) dst[i] += s[i] / ch;
+  }
+
+  /* 途中で切った場合だけ、末尾をなめらかに落とす（切り口のプツッ音よけ）*/
+  if (len < src.length) {
+    const fade = Math.min(len, Math.round(FADE_SEC * sr));
+    for (let i = 0; i < fade; i++) dst[len - fade + i] *= 1 - i / fade;
+  }
+  return new Tone.ToneAudioBuffer(out);
+}
+
 /* ---- 起動時に全部まとめて読む ---- */
 async function preloadSamples(onProgress) {
   const m = manifest();
@@ -63,15 +114,23 @@ async function preloadSamples(onProgress) {
   onProgress(0, total);
   if (total === 0) return { total: 0, loaded: 0 };
 
-  await Promise.all(jobs.map(async ([dir, name]) => {
-    try {
-      const buf = await Tone.ToneAudioBuffer.fromUrl(`${SAMPLE_ROOT}${dir}/${name}.mp3`);
-      BUFFERS.set(dir + '/' + name, buf);
-    } catch (e) {
-      /* 1つ落ちても止めない。足りない楽器は合成音になるだけ */
+  /* 304本を Promise.all で一斉にデコードすると、その間ブラウザが
+     数十秒固まる（デコードは重い同期処理）。少しずつ流す。         */
+  const LANES = 6;
+  const queue = jobs.slice();
+  const worker = async () => {
+    while (queue.length) {
+      const [dir, name] = queue.shift();
+      try {
+        const raw = await Tone.ToneAudioBuffer.fromUrl(`${SAMPLE_ROOT}${dir}/${name}.mp3`);
+        BUFFERS.set(dir + '/' + name, compactBuffer(raw));
+      } catch (e) {
+        /* 1つ落ちても止めない。足りない楽器は合成音になるだけ */
+      }
+      onProgress(++done, total);
     }
-    onProgress(++done, total);
-  }));
+  };
+  await Promise.all(Array.from({ length: LANES }, worker));
 
   /* 読み終わってから、全音源のラウドネスを実測して補正表を作る */
   analyzeLoudness();
