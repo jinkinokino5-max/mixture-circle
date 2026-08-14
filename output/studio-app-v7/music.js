@@ -426,10 +426,10 @@ const INSTRUMENTS = {
   'melody-piano': {
     label: 'ピアノ', groove: 'key',
     sound: { kind: 'sampler', set: 'piano', fb: 'poly', oct: 4, hp: 180, lp: 12000,
-             gain: -5, rev: .16, dly: .10, duck: true, env: { attack: 0, release: 1.2 } },
+             gain: -4.5, rev: .16, dly: .10, duck: true, env: { attack: 0, release: 1.2 } },
     variants: [
       { tag: '粒だつ・輪郭が立つ', trim: -1.5, shape: { d: 8, pref: [0, 4, 8, 12], syn: .25, cont: 'wave', rng: [1, 5], len: '8n', vel: .78 } },
-      { tag: '余白・一音ずつ置く', shape: { d: 3, syn: .1, cont: 'arch', rng: [2, 6], len: '2n', vel: .76, glue: .7 } },
+      { tag: '余白・一音ずつ置く', trim: 1, shape: { d: 3, syn: .1, cont: 'arch', rng: [2, 6], len: '2n', vel: .76, glue: .7 } },
       { tag: '刻み・転がる16分', trim: 2.5,   shape: { d: 13, syn: .35, cont: 'wave', rng: [0, 6], len: '16n', vel: .55 } },
     ],
   },
@@ -849,7 +849,7 @@ const INSTRUMENTS = {
              gain: -7.5, rev: .16, dly: .16, duck: true, env: { attack: 0, release: .4 } },
     variants: [
       { tag: '音程のあるリズム・跳ねる', trim: -1, shape: { d: 8, syn: .35, cont: 'wave', rng: [0, 5], len: '16n', vel: .58 } },
-      { tag: '余白・ぽーん、ぽーん', trim: 0.5,     shape: { d: 2, syn: .1, cont: 'arch', rng: [0, 4], len: '8n', vel: .60, glue: .7 } },
+      { tag: '余白・ぽーん、ぽーん',     shape: { d: 2, syn: .1, cont: 'arch', rng: [0, 4], len: '8n', vel: .60, glue: .7 } },
       { tag: '刻み・転がり続ける',       shape: { d: 13, syn: .4, cont: 'wave', rng: [0, 6], len: '16n', vel: .44 } },
     ],
   },
@@ -892,7 +892,7 @@ const INSTRUMENTS = {
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 6, 8, 12, 14], rv: .55, hasKick: false } },
       { tag: '余白・4分で鳴らす', trim: -1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 8, 12], rv: .60, hasKick: false } },
-      { tag: '刻み・全8分＋アクセント', trim: 0.5,
+      { tag: '刻み・全8分＋アクセント', trim: 1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 2, 4, 6, 8, 10, 12, 14], rv: .42,
                 oh: [7, 15], hasKick: false } },
     ],
@@ -1062,9 +1062,20 @@ function generateBar(card, bar, energy, occ, thin) {
   const seedBar = Math.floor(bar / period);
   const rnd = makeRng(hashSeed(card.id, seedBar, 0));
 
-  /* 密度：ENERGY と間引きで増減する */
+  /* --- 案G：周期の多様化 ----------------------------------------------
+     v6.1までは、どのカードも「1小節でひと回り」だった。
+     period（glueから決まる、種を変える間隔）が1より大きいカードは、
+     せっかく数小節も同じ種のまま鳴らすのに、小節ごとの表情は変わらず
+     ずっと平坦だった。ここでは period 分を「1つのフレーズ」とみなし、
+     phase（0→1、フレーズの中の進み具合）で輪郭と密度に緩やかな
+     弧を作る。period=1（ほとんどのカード）は phase=0 のままなので、
+     この案の影響を一切受けない。                                     */
+  const phase = period > 1 ? (bar % period) / period : 0;
+
+  /* 密度：ENERGY と間引きで増減する。フレーズの後半ほど僅かに満ちる */
   const e = [0.72, 1.0, 1.22][(energy || 2) - 1];
-  let n = Math.round((shape.d || 6) * e * (thin == null ? 1 : thin));
+  const phaseArc = period > 1 ? (0.86 + 0.28 * phase) : 1;
+  let n = Math.round((shape.d || 6) * e * phaseArc * (thin == null ? 1 : thin));
   n = Math.max(1, Math.min(16, n));
 
   const steps = pickSteps(stepWeights(shape, occ), n, rnd);
@@ -1091,13 +1102,17 @@ function generateBar(card, bar, energy, occ, thin) {
   const out = [];
   steps.forEach((st, k) => {
     const t = steps.length > 1 ? k / (steps.length - 1) : 0.5;
+    /* 案G：フレーズが複数小節にまたがるカードは、輪郭もその
+       小節ぶんの位置（phase）ぶんだけ進ませる。arch や wave のような
+       輪郭が、1小節では見えない「数小節がかりの弧」を描くようになる。 */
+    const tPhrase = period > 1 ? Math.max(0, Math.min(1, phase + t / period)) : t;
 
     /* --- 音の高さ --- */
     let d;
     if (isBass) {
       d = bassCode(st, shape.walk || 'move', rnd);
     } else {
-      const u = contourAt(shape.cont, t, rnd);
+      const u = contourAt(shape.cont, tPhrase, rnd);
       let deg = Math.round(lo + u * (hi - lo));
       if (rnd() < 0.22) deg += rnd() < 0.5 ? -1 : 1;      // ほんの少し崩す
       deg = Math.max(lo - 1, Math.min(hi + 1, deg));

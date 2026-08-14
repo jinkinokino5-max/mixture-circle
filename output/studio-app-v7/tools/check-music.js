@@ -283,6 +283,35 @@ for (const [iid, inst] of Object.entries(INSTRUMENTS)) {
   Object.values(CARDS).forEach(c => { if (!c.expr) err.push(`${c.id}: expr が無い`); });
 }
 
+/* ---- 7e. 案G：複数小節フレーズが実際に弧を描いているか ----
+   glue が高く period > 1 のカードのうち、輪郭が単調（up/down/arch）な
+   ものを1枚選び、そのフレーズ（period 小節ぶん）を生成して、
+   最初の小節より最後の小節のほうが輪郭の言うとおりに動いているかを見る。
+   これが動いていないと、案Gは「効いているつもり」で終わってしまう。 */
+{
+  const period = (glue) => glue >= .9 ? 8 : glue >= .7 ? 4 : glue >= .5 ? 2 : 1;
+  let checked = 0, arcedOk = 0, densityOk = 0;
+  Object.values(CARDS).forEach(c => {
+    const shape = c.shape;
+    if (!shape || c.role === 'bass') return;
+    const p = period(shape.glue || 0);
+    if (p <= 1) return;
+    if (!['up', 'down', 'arch', 'wave'].includes(shape.cont)) return;
+    checked++;
+    const first = generateBar(c, 0, 2, null, 1);
+    const last = generateBar(c, p - 1, 2, null, 1);
+    const avg = (evs) => evs.length ? evs.reduce((s, e) => s + (Array.isArray(e.d) ? e.d[0] : e.d), 0) / evs.length : 0;
+    const a0 = avg(first), a1 = avg(last);
+    if (shape.cont === 'up' ? a1 >= a0 : shape.cont === 'down' ? a1 <= a0 : true) arcedOk++;
+    if (last.length >= first.length) densityOk++;
+  });
+  if (checked === 0) warn.push('案G：フレーズが弧を描くはずのカードが見つからなかった（対象0枚）');
+  else {
+    if (arcedOk < checked) warn.push(`案G：輪郭の弧が向きどおりでないカードあり（${checked - arcedOk}/${checked}）`);
+    if (densityOk < checked * 0.7) warn.push(`案G：フレーズ後半で密度が増えていないカードが多い（${checked - densityOk}/${checked}）`);
+  }
+}
+
 /* ---- 8. 章立て ---- */
 {
   let last = -1;
