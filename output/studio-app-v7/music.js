@@ -185,13 +185,48 @@ function shiftChord(chord, semi) {
 }
 
 /* ============ 3. 構成音 → 実際の音名 ============ */
-function toneName(chord, idx, oct) {
+function toneMidi(chord, idx, oct) {
   const n = chord.voiced.length;
   const k = ((idx % n) + n) % n;
   const up = Math.floor(idx / n);
-  return midiToName(midiOf(oct, chord.voiced[k] + 12 * up));
+  return midiOf(oct, chord.voiced[k] + 12 * up);
 }
+function toneName(chord, idx, oct) { return midiToName(toneMidi(chord, idx, oct)); }
 function scaleName(chord, deg, oct) { return midiToName(midiOf(oct, scaleSemi(deg))); }
+
+/* =====================================================================
+   3b. 和音の積み方 ── 臨界帯域（ERB）で決まる最小間隔（案1）
+   ---------------------------------------------------------------------
+   なぜ必要か。2つの音が内耳の同じフィルタ（臨界帯域）に入ると、
+   音程比とは無関係に必ず濁る。臨界帯域は低音ほど音楽的な音程で見て
+   広いので、**同じ長3度でも中音域では澄み、低音域では濁る**。
+   （Huron 2001「最小マスキング原理」／Plomp & Levelt 1965
+     → reference/音の重ね方リサーチ.md §2）
+
+   本アプリはここを踏み外していた。CHORD 10楽器のうち7楽器が oct:3 で、
+   generateBar は構成音の**連続インデックス**（deg, deg+1, deg+2）を
+   積む＝密集配置。実際に Cm7 を oct:3 で積むと
+
+       G2(98.0Hz) → A#2(116.5Hz) → C3(130.8Hz)
+
+   となり、隣どうしの差は 18.5Hz と 14.3Hz。その帯域の ERB は約 36Hz
+   なので、**3つとも同じ臨界帯域の中**に入っている。これでは音量を
+   いくら上げても濁って聞こえるだけになる。
+
+   直し方：構成音を下から積むとき、直前の音から 1 ERB 以上あくまで
+   構成音を1つずつ上へ読み飛ばす。「下は広く、上は詰めて」が自動的に
+   実現され、必要な場所だけが動く（十分あいている音は動かない）。
+
+     ERB(f) = 24.7 × (4.37 × f/1000 + 1)   [Hz]  (Glasberg & Moore 1990)
+   ===================================================================== */
+function erbHz(f) { return 24.7 * (4.37 * f / 1000 + 1); }
+function midiToHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+/* この音の上に音を置くとき、濁らないために必要な最小間隔（半音） */
+function minSpacingSemis(midi) {
+  const f = midiToHz(midi);
+  return 12 * Math.log2((f + erbHz(f)) / f);
+}
 
 /* 低音：0=ルート 1=5度 2=オクターブ上 3=3度 4=7度 5=4度（経過音） */
 const BASS_OFFSET = [0, 7, 12, null, null, 5];
@@ -530,29 +565,29 @@ const INSTRUMENTS = {
   'chord-piano': {
     label: 'ピアノ', groove: 'key',
     sound: { kind: 'sampler', set: 'piano', fb: 'poly', oct: 3, hp: 160, lp: 8000,
-             gain: -4.5, rev: .18, dly: .04, duck: true, env: { attack: 0, release: .9 } },
+             gain: -3.5, rev: .18, dly: .04, duck: true, env: { attack: 0, release: .9 } },
     variants: [
       { tag: '裏で刻む・軽い和音', trim: -0.5, shape: { d: 5, pref: [2, 6, 10, 14], syn: .55, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .48 } },
       { tag: '余白・頭で1回だけ', trim: 2.5,   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 4, vel: .48, glue: .9 } },
-      { tag: '刻み・16分で散らす', shape: { d: 11, syn: .45, cont: 'static', rng: [0, 3], len: '16n', poly: 3, vel: .34 } },
+      { tag: '刻み・16分で散らす', trim: 0.5, shape: { d: 11, syn: .45, cont: 'static', rng: [0, 3], len: '16n', poly: 3, vel: .34 } },
     ],
   },
   'chord-aguitar': {
     label: 'アコギ', groove: 'pluck',
     sound: { kind: 'sampler', set: 'guitar-acoustic', fb: 'pluck', oct: 3, hp: 140, lp: 7500,
-             gain: -9, rev: .16, dly: .05, duck: true, env: { attack: .002, release: .6 } },
+             gain: -6, rev: .16, dly: .05, duck: true, env: { attack: .002, release: .6 } },
     variants: [
-      { tag: 'かき鳴らす・体温', trim: -2,   shape: { d: 8, pref: [0, 4, 8, 12], syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .55 } },
-      { tag: '余白・ゆっくり分散', shape: { d: 4, syn: .1, cont: 'up', rng: [0, 3], len: '4n', poly: 2, vel: .66, glue: .7 } },
+      { tag: 'かき鳴らす・体温', trim: -1.5,   shape: { d: 8, pref: [0, 4, 8, 12], syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .55 } },
+      { tag: '余白・ゆっくり分散', trim: -2.5, shape: { d: 4, syn: .1, cont: 'up', rng: [0, 3], len: '4n', poly: 2, vel: .66, glue: .7 } },
       { tag: '刻み・8分の空ピック混じり', shape: { d: 12, syn: .4, cont: 'static', rng: [0, 3], len: '16n', poly: 3, vel: .36 } },
     ],
   },
   'chord-cutting': {
     label: 'カッティング', groove: 'pluck',
     sound: { kind: 'sampler', set: 'guitar-electric', fb: 'pluck', oct: 3, hp: 320, lp: 6500,
-             gain: -4.5, rev: .10, dly: .08, drive: .12, duck: true, env: { attack: .002, release: .12 } },
+             gain: -6, rev: .10, dly: .08, drive: .12, duck: true, env: { attack: .002, release: .12 } },
     variants: [
-      { tag: '16分で切る・跳ねる', shape: { d: 8, pref: [1, 3, 5, 9, 11, 13, 15], syn: .8, cont: 'static', rng: [1, 3], len: '16n', poly: 3, vel: .46 } },
+      { tag: '16分で切る・跳ねる', trim: 0.5, shape: { d: 8, pref: [1, 3, 5, 9, 11, 13, 15], syn: .8, cont: 'static', rng: [1, 3], len: '16n', poly: 3, vel: .46 } },
       { tag: '余白・裏だけ入れる', shape: { d: 3, pref: [6, 14], syn: .9, cont: 'static', rng: [1, 3], len: '16n', poly: 3, vel: .58 } },
       { tag: '刻み・全16分', trim: 2,       shape: { d: 14, syn: .5, cont: 'static', rng: [1, 4], len: '16n', poly: 3, vel: .32 } },
     ],
@@ -564,16 +599,16 @@ const INSTRUMENTS = {
     variants: [
       { tag: '面で支える・持続', shape: { d: 2, syn: 0, cont: 'static', rng: [0, 1], len: '2n', poly: 4, vel: .38 } },
       { tag: '余白・1小節ずっと', trim: 2.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 4, vel: .36, glue: .95 } },
-      { tag: '刻み・8分で押す', trim: -2,   shape: { d: 8, syn: .25, cont: 'static', rng: [0, 3], len: '8n', poly: 3, vel: .30 } },
+      { tag: '刻み・8分で押す', trim: -0.5,   shape: { d: 8, syn: .25, cont: 'static', rng: [0, 3], len: '8n', poly: 3, vel: .30 } },
     ],
   },
   'chord-harmonium': {
     label: 'ハルモニウム', groove: 'pad',
     sound: { kind: 'sampler', set: 'harmonium', fb: 'pad', oct: 3, hp: 190, lp: 5200,
-             gain: -14, rev: .26, dly: .04, duck: true, env: { attack: .10, release: .9 } },
+             gain: -15, rev: .26, dly: .04, duck: true, env: { attack: .10, release: .9 } },
     variants: [
       { tag: '息のあるオルガン・にじむ', trim: 1, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .40 } },
-      { tag: '余白・2音だけで支える',   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 2, vel: .42, glue: .95 } },
+      { tag: '余白・2音だけで支える', trim: 1,   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 2, vel: .42, glue: .95 } },
       { tag: '刻み・ふいごを煽る',     shape: { d: 6, syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .32 } },
     ],
   },
@@ -605,7 +640,7 @@ const INSTRUMENTS = {
              gain: -12, rev: .18, dly: .06, duck: true, env: { attack: .012, release: .30 } },
     variants: [
       { tag: '一撃・合いの手',   shape: { d: 3, pref: [4, 10, 12], syn: .4, cont: 'static', rng: [2, 4], len: '8n', poly: 3, vel: .60 } },
-      { tag: '余白・頭で一発だけ', trim: -0.5, shape: { d: 1, syn: 0, cont: 'static', rng: [2, 3], len: '4n', poly: 3, vel: .66, glue: .8 } },
+      { tag: '余白・頭で一発だけ', shape: { d: 1, syn: 0, cont: 'static', rng: [2, 3], len: '4n', poly: 3, vel: .66, glue: .8 } },
       { tag: '刻み・スタブの連打', trim: 1.5, shape: { d: 9, syn: .45, cont: 'static', rng: [2, 5], len: '16n', poly: 3, vel: .42 } },
     ],
   },
@@ -613,13 +648,13 @@ const INSTRUMENTS = {
     label: 'ホルン', groove: 'pad',
     /* 音源は C4 と D5 の間が 14 半音あいている。rng は 3 までに抑える */
     sound: { kind: 'sampler', set: 'french-horn', fb: 'pad', oct: 3, hp: 150, lp: 4800,
-             gain: -9, rev: .30, dly: 0, duck: true, env: { attack: .12, release: 1.0 } },
+             gain: -9.5, rev: .30, dly: 0, duck: true, env: { attack: .12, release: 1.0 } },
     variants: [
       { tag: '丸い面・遠くで鳴る', shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .42 } },
-      { tag: '余白・低く長く', trim: 5.5,     shape: { d: 1, syn: 0, cont: 'static', rng: [0, 0], len: '1n', poly: 2, vel: .44, glue: .95 } },
+      { tag: '余白・低く長く', trim: 1.5,     shape: { d: 1, syn: 0, cont: 'static', rng: [0, 0], len: '1n', poly: 2, vel: .44, glue: .95 } },
       /* ホルンは音源が太く、3和音で刻むと trim の下限でも足りなかったので
          vel 側も下げてある（tools/measure-loudness.mjs の実測による）    */
-      { tag: '刻み・呼びかける', trim: -3.5,   shape: { d: 5, syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .28 } },
+      { tag: '刻み・呼びかける', trim: -2.5,   shape: { d: 5, syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .28 } },
     ],
   },
   'chord-pad': {
@@ -628,8 +663,8 @@ const INSTRUMENTS = {
              gain: -20.5, rev: .34, dly: .08, duck: true },
     variants: [
       { tag: '奥行き・にじむ',   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .42 } },
-      { tag: '余白・霧のように', trim: 2.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 0], len: '1n', poly: 2, vel: .40, glue: .95 } },
-      { tag: '刻み・脈打つ', trim: -0.5,     shape: { d: 5, syn: .2, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .34 } },
+      { tag: '余白・霧のように', trim: 1.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 0], len: '1n', poly: 2, vel: .40, glue: .95 } },
+      { tag: '刻み・脈打つ',     shape: { d: 5, syn: .2, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .34 } },
     ],
   },
 
@@ -886,13 +921,13 @@ const INSTRUMENTS = {
   'rhythm-ride': {
     label: 'ライド', groove: 'hat',
     /* シンバルは合成（samples.js の makeCymbals）。キットは音を借りるだけ */
-    sound: { kind: 'kit', set: 'acoustic-kit', gain: 11, hp: 300, lp: 16000, rev: .18 },
+    sound: { kind: 'kit', set: 'acoustic-kit', gain: 11.5, hp: 300, lp: 16000, rev: .18 },
     variants: [
       { tag: '金物で刻む・濁らない', trim: -0.5,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 6, 8, 12, 14], rv: .55, hasKick: false } },
       { tag: '余白・4分で鳴らす', trim: -1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 8, 12], rv: .60, hasKick: false } },
-      { tag: '刻み・全8分＋アクセント', trim: 0.5,
+      { tag: '刻み・全8分＋アクセント', trim: 1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 2, 4, 6, 8, 10, 12, 14], rv: .42,
                 oh: [7, 15], hasKick: false } },
     ],
@@ -1183,9 +1218,38 @@ function sectionAt(pct) {
 /* ============ 11. 音名の解決（v5 と同じ）============ */
 function resolveNotes(role, chord, ev, oct, lift) {
   const list = Array.isArray(ev.d) ? ev.d : [ev.d];
-  return list.map(d => {
-    if (d && typeof d === 'object' && 'sd' in d) return scaleName(chord, d.sd + lift, oct + (ev.o || 0));
-    if (role === 'bass') return bassName(chord, d, oct + (ev.o || 0));
-    return toneName(chord, d + lift, oct + (ev.o || 0));
-  });
+  const o = oct + (ev.o || 0);
+
+  const one = (d) => {
+    if (d && typeof d === 'object' && 'sd' in d) return scaleName(chord, d.sd + lift, o);
+    if (role === 'bass') return bassName(chord, d, o);
+    return toneName(chord, d + lift, o);
+  };
+
+  /* 単音／ベース／音階指定はこれまでどおり。
+     ベースを外すのは、BASS が max:1 で他の低音と同時に鳴らない設計であり、
+     オクターブ（walk:'oct'＝12半音）は元から十分あいているため。       */
+  if (list.length < 2 || role === 'bass' || (list[0] && typeof list[0] === 'object')) {
+    return list.map(one);
+  }
+
+  /* --- 同時に鳴る和音：下から順に、1 ERB 以上あけて積む（案1）-------
+     idx は「構成音の何番目か」。近すぎるときだけ1つ上へ読み飛ばす。
+     もともと十分あいている高音域では1回も飛ばさないので、
+     中〜高音の和音の響きは変わらない。                              */
+  const out = [];
+  let idx = list[0] + lift;
+  let prev = -Infinity;
+  for (let i = 0; i < list.length; i++) {
+    if (i > 0) {
+      const need = minSpacingSemis(prev);
+      /* guard：構成音は4つなので、2周（8つ）も上がれば必ず条件を満たす */
+      for (let g = 0; g < 8 && toneMidi(chord, idx, o) < prev + need; g++) idx++;
+    }
+    const m = toneMidi(chord, idx, o);
+    out.push(midiToName(m));
+    prev = m;
+    idx++;
+  }
+  return out;
 }
