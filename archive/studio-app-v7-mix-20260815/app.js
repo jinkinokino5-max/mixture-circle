@@ -139,21 +139,11 @@ async function buildMaster() {
   } catch (e) { recorder = null; }
 }
 
-/* キックが鳴るたびに、上ものを一瞬へこませて戻す＝グルーヴの脈
-   ---------------------------------------------------------------------
-   v7.1：へこませ量を 0.42（-4.7dB）から 0.30（-3.1dB）へ浅くした。
-   duck するのは「kit 以外で duck:true のカード」＝メロディ・コード・
-   ベースのほぼ全部で、**ドラムだけは沈まない**。つまりキックが鳴るたび
-   ドラム以外だけが 4.7dB 下がっていた。8ビートならキックは1小節に3回、
-   戻りきる前に次が来るので、実質ずっと沈みっぱなしに近い。
-   ROLE の音量差（別途 apply-gain.mjs で修正）と合わせて、
-   「ドラムばかり鳴って他が聞こえない」を作っていた片側がこれ。
-   3dB あれば脈は十分感じられるので、グルーヴは残したまま浅くする。   */
-const PUMP_DEPTH = 0.30;
+/* キックが鳴るたびに、上ものを一瞬へこませて戻す＝グルーヴの脈 */
 function pump(time, strength = 1) {
   if (!duckBus) return;
   const beat = 60 / Tone.Transport.bpm.value;
-  const depth = 1 - PUMP_DEPTH * strength * (State.pumpOn ? 1 : 0);
+  const depth = 1 - 0.42 * strength * (State.pumpOn ? 1 : 0);
   try {
     duckBus.gain.cancelScheduledValues(time);
     duckBus.gain.setValueAtTime(depth, time);

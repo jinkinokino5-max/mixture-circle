@@ -9,9 +9,30 @@
      apply-gain  … 楽器どうしをそろえる。music.js の sound.gain を書く
      apply-trim  … ひとつの楽器の変化1/2/3 をそろえる。variant.trim を書く
 
-   ここは前者。ROLE ごとの基準値（＝その役割の主要カードの中央値）に
-   各楽器を合わせる。薄い層（木琴・シェイカー・ボンゴ・ライド）だけは
-   重ねる前提の層なので、意図的に基準より 6dB 低いところを狙う。
+   ここは前者。薄い層（木琴・シェイカー・ボンゴ・ライド）だけは
+   重ねる前提の層なので、意図的に基準より低いところを狙う。
+   ---------------------------------------------------------------------
+   v7.1 で基準の決め方を変えた（ここが今回いちばん大事な変更）。
+
+   v7 までの基準は「その ROLE の中央値」だった。つまり
+     ・メロディはメロディの中でそろう
+     ・コードはコードの中でそろう
+   までしか保証しておらず、**ROLE どうしの釣り合いは誰も見ていなかった**。
+   結果、実測で
+
+       BASS -24.4 ／ RHYTHM -26.8 ／ MELODY -29.2 ／ CHORD -37.2 (LUFS)
+
+   まで開いていた。コードはリズムより 10dB 以上下＝重ねてもほぼ聞こえない。
+   「ドラムばかり鳴って他が聞こえない」の正体はこれ。
+
+   そこで基準を **絶対値（ROLE_TARGET）** にする。合奏したときの
+   立ち位置を数字で決め打ちし、実測がそこへ来るまで gain を動かす。
+     ・リズムを基準(0)に置く
+     ・ベースはリズムとほぼ同じ（少しだけ下）
+     ・メロディは「曲の顔」なので気持ち前
+     ・コードは土台なので 3.5dB 後ろ。ただし“後ろ”であって“不在”ではない
+   4役 1枚ずつのときの合計ラウドネスは変更前とほぼ同じ(-21.5 LUFS)なので、
+   これは音量を上げる変更ではなく、**配分を組み替える**変更。
    ===================================================================== */
 import fs from 'fs';
 import path from 'path';
@@ -30,20 +51,30 @@ const rows = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'levels.json'),
 const med = a => { const b = [...a].sort((x, y) => x - y); const m = b.length >> 1;
                    return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
 
-/* 重ねる前提の「薄い層」は主役より 6dB 低いのが正しい */
+/* 重ねる前提の「薄い層」は主役より低いのが正しい。
+   ただし v7 の -6dB はやり過ぎで、木琴・ボンゴ・ライドは
+   単体で入れても存在が分からない状態だった（実測で ROLE 中央値 -6dB）。
+   「重ねたとき濁らない」ために必要なのはせいぜい 3dB。            */
 const THIN = new Set(['rhythm-xylo', 'rhythm-shaker', 'rhythm-bongo', 'rhythm-ride']);
-const THIN_OFFSET = -6;
+const THIN_OFFSET = -3;
+
+/* ---- 合奏したときの ROLE ごとの立ち位置（LUFS の絶対目標）--------------
+   数字は「1枚だけ鳴らして measure-loudness.mjs で測ったときの値」。
+   リズムを基準に、ベース -0.5 / メロディ +0.5 / コード -3.0。       */
+const ROLE_TARGET = {
+  rhythm: -27.0,   // 基準
+  bass:   -27.5,   // 足元。リズムとほぼ同じ高さで組む
+  melody: -26.5,   // 曲の「顔」。わずかに前へ
+  chord:  -30.0,   // 空間の土台。後ろだが、消えてはいけない
+};
+
 /* 1回で動かす上限。行き過ぎて発散しないように */
 const MAX_STEP = 8;
 
 const byInst = {};
 rows.forEach(r => { (byInst[r.inst] ||= []).push(r.lufs); });
 
-/* ROLE の基準は「薄い層を除いた」中央値 */
-const roleTarget = {};
-['melody', 'chord', 'bass', 'rhythm'].forEach(rk => {
-  roleTarget[rk] = med(rows.filter(r => r.role === rk && !THIN.has(r.inst)).map(r => r.lufs));
-});
+const roleTarget = Object.assign({}, ROLE_TARGET);
 
 let src = fs.readFileSync(MJS, 'utf8');
 const log = [];
@@ -62,9 +93,20 @@ for (const [iid, inst] of Object.entries(INSTRUMENTS)) {
   const old = inst.sound.gain;
   const ng = Math.round((old + corr) * 2) / 2;          // 0.5dB 刻み
 
-  /* 楽器キーの直後にある最初の gain: を書き換える */
-  const key = `'${iid}': {`;
-  const at = src.indexOf(key);
+  /* 楽器キーの直後にある最初の gain: を書き換える。
+     ---------------------------------------------------------------
+     v7.1 修正：ここは単なる indexOf だった。ところが music.js には
+     INSTRUMENTS より前に定位テーブル
+         'melody-eguitar': { pan: -0.36 },
+     があり、同じキー文字列が先に出てくる。そちらを掴んでしまうため、
+     eguitar / nylon / flute / trumpet / trombone / aguitar / cutting /
+     harmonium / harp / strings / pad / shaker / bongo の 13楽器は
+     「gain が一致しない」と言って**ずっと無視されていた**。
+     音量がそろわない楽器が残っていた直接の原因のひとつ。
+     定位テーブルも行頭2スペース始まりなので、インデントだけでは足りない。
+     INSTRUMENTS の定義開始位置から後ろだけを探す。                  */
+  const key = `\n  '${iid}': {`;
+  const at = src.indexOf(key, src.indexOf('const INSTRUMENTS = {'));
   if (at < 0) { log.push(`!! ${iid} が見つからない`); continue; }
   const end = src.indexOf("\n  '", at + 5);
   const seg = src.slice(at, end < 0 ? src.length : end);

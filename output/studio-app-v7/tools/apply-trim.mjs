@@ -19,7 +19,11 @@ for(const [iid,inst] of Object.entries(INSTRUMENTS)){
   const vals=ids.map(id=>lv[id]);
   if(vals.some(v=>!isFinite(v))) continue;
   const target=med(vals);
-  const instAt=src.indexOf(`'${iid}': {`);
+  /* apply-gain.mjs と同じ修正。music.js は INSTRUMENTS より前に
+     定位テーブル 'melody-eguitar': { pan: -0.36 } を持っているので、
+     ただの indexOf だとそちらを掴んで 13楽器が黙って飛ばされていた。
+     定位テーブルも行頭2スペースなので、INSTRUMENTS 以降だけを探す。 */
+  const instAt=src.indexOf(`\n  '${iid}': {`,src.indexOf('const INSTRUMENTS = {'));
   if(instAt<0) continue;
   const end=src.indexOf("\n  '",instAt+5);
   let seg=src.slice(instAt,end<0?src.length:end);

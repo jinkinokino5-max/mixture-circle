@@ -426,7 +426,7 @@ const INSTRUMENTS = {
   'melody-piano': {
     label: 'ピアノ', groove: 'key',
     sound: { kind: 'sampler', set: 'piano', fb: 'poly', oct: 4, hp: 180, lp: 12000,
-             gain: -2, rev: .16, dly: .10, duck: true, env: { attack: 0, release: 1.2 } },
+             gain: -4.5, rev: .16, dly: .10, duck: true, env: { attack: 0, release: 1.2 } },
     variants: [
       { tag: '粒だつ・輪郭が立つ', trim: -1.5, shape: { d: 8, pref: [0, 4, 8, 12], syn: .25, cont: 'wave', rng: [1, 5], len: '8n', vel: .78 } },
       { tag: '余白・一音ずつ置く', trim: 1, shape: { d: 3, syn: .1, cont: 'arch', rng: [2, 6], len: '2n', vel: .76, glue: .7 } },
@@ -437,27 +437,27 @@ const INSTRUMENTS = {
     label: 'エレキギター', groove: 'pluck',
     /* 音源が C5 まで。rng の上を 5 くらいに抑えないと移調で痩せる */
     sound: { kind: 'sampler', set: 'guitar-electric', fb: 'pluck', oct: 4, hp: 150, lp: 7000,
-             gain: -4, rev: .12, dly: .14, drive: .28, duck: true, env: { attack: .002, release: .5 } },
+             gain: -6.5, rev: .12, dly: .14, drive: .28, duck: true, env: { attack: .002, release: .5 } },
     variants: [
       { tag: '前に出る・叫ぶ', trim: -1,   shape: { d: 8, pref: [0, 3, 6, 8, 11], syn: .35, cont: 'arch', rng: [0, 4], len: '8n', vel: .82 } },
-      { tag: '余白・伸ばして泣く', trim: 2, shape: { d: 2, syn: 0, cont: 'up', rng: [3, 5], len: '2n', vel: .82, glue: .8 } },
+      { tag: '余白・伸ばして泣く', trim: 1, shape: { d: 2, syn: 0, cont: 'up', rng: [3, 5], len: '2n', vel: .82, glue: .8 } },
       { tag: '刻み・単音リフ',   shape: { d: 12, pref: [0, 4, 8, 12], syn: .3, cont: 'static', rng: [0, 3], len: '16n', vel: .58 } },
     ],
   },
   'melody-nylon': {
     label: 'ナイロンギター', groove: 'pluck',
     sound: { kind: 'sampler', set: 'guitar-nylon', fb: 'pluck', oct: 4, hp: 160, lp: 6500,
-             gain: 1, rev: .20, dly: .08, duck: true, env: { attack: .002, release: .8 } },
+             gain: -2, rev: .20, dly: .08, duck: true, env: { attack: .002, release: .8 } },
     variants: [
       { tag: '爪弾く・角が丸い', trim: -1,   shape: { d: 7, syn: .2, cont: 'wave', rng: [2, 6], len: '8n', vel: .68 } },
-      { tag: '余白・ぽつりと置く', trim: 2.5, shape: { d: 2, syn: .1, cont: 'down', rng: [3, 6], len: '2n', vel: .70, glue: .75 } },
-      { tag: '刻み・アルペジオ', trim: -0.5,   shape: { d: 13, syn: .15, cont: 'up', rng: [0, 7], len: '16n', vel: .50 } },
+      { tag: '余白・ぽつりと置く', shape: { d: 2, syn: .1, cont: 'down', rng: [3, 6], len: '2n', vel: .70, glue: .75 } },
+      { tag: '刻み・アルペジオ',   shape: { d: 13, syn: .15, cont: 'up', rng: [0, 7], len: '16n', vel: .50 } },
     ],
   },
   'melody-sax': {
     label: 'サックス', groove: 'wind',
     sound: { kind: 'sampler', set: 'saxophone', fb: 'brass', oct: 4, hp: 200, lp: 8500,
-             gain: -10, rev: .22, dly: .12, duck: true, env: { attack: .02, release: .5 } },
+             gain: -12.5, rev: .22, dly: .12, duck: true, env: { attack: .02, release: .5 } },
     variants: [
       { tag: '息づかい・後ノリ', trim: -1,   shape: { d: 6, pref: [2, 6, 10, 14], syn: .45, cont: 'arch', rng: [2, 6], len: '4n', vel: .66 } },
       { tag: '余白・ロングトーン', shape: { d: 2, syn: .2, cont: 'up', rng: [4, 7], len: '2n', vel: .70, glue: .8 } },
@@ -467,7 +467,7 @@ const INSTRUMENTS = {
   'melody-clarinet': {
     label: 'クラリネット', groove: 'wind',
     sound: { kind: 'sampler', set: 'clarinet', fb: 'brass', oct: 4, hp: 180, lp: 7000,
-             gain: -13.5, rev: .22, dly: .08, duck: true, env: { attack: .03, release: .6 } },
+             gain: -16.5, rev: .22, dly: .08, duck: true, env: { attack: .03, release: .6 } },
     variants: [
       { tag: '木の温度・語る', trim: -1.5,   shape: { d: 6, syn: .2, cont: 'arch', rng: [1, 5], len: '4n', vel: .64 } },
       { tag: '余白・低く伸ばす', trim: 0.5, shape: { d: 2, syn: 0, cont: 'static', rng: [0, 2], len: '2n', vel: .92, glue: .85 } },
@@ -478,17 +478,17 @@ const INSTRUMENTS = {
     label: 'フルート', groove: 'wind',
     /* 音源は C4..E6。oct5 なので rng の上は 5 くらいまで */
     sound: { kind: 'sampler', set: 'flute', fb: 'bell', oct: 5, hp: 400, lp: 11000,
-             gain: -11, rev: .26, dly: .18, duck: true, env: { attack: .03, release: .5 } },
+             gain: -13.5, rev: .26, dly: .18, duck: true, env: { attack: .03, release: .5 } },
     variants: [
       { tag: '軽い・舞う', trim: -1.5,       shape: { d: 7, pref: [4, 5, 6, 7, 12], syn: .3, cont: 'up', rng: [2, 5], len: '16n', vel: .52 } },
-      { tag: '余白・遠くで鳴る', trim: -1.5, shape: { d: 2, syn: .1, cont: 'arch', rng: [2, 5], len: '2n', vel: .56, glue: .8 } },
+      { tag: '余白・遠くで鳴る', shape: { d: 2, syn: .1, cont: 'arch', rng: [2, 5], len: '2n', vel: .56, glue: .8 } },
       { tag: '刻み・さえずる', trim: 0.5,   shape: { d: 13, syn: .35, cont: 'wave', rng: [1, 5], len: '16n', vel: .40 } },
     ],
   },
   'melody-violin': {
     label: 'ヴァイオリン', groove: 'bow',
     sound: { kind: 'sampler', set: 'violin', fb: 'bow', oct: 4, hp: 240, lp: 9000,
-             gain: -14, rev: .28, dly: .06, duck: true, env: { attack: .06, release: .8 } },
+             gain: -16.5, rev: .28, dly: .06, duck: true, env: { attack: .06, release: .8 } },
     variants: [
       { tag: '伸びる・のぼる', trim: -1,     shape: { d: 4, syn: .1, cont: 'up', rng: [3, 6], len: '2n', vel: .60 } },
       { tag: '余白・1小節を1音で', trim: 2.5, shape: { d: 1, syn: 0, cont: 'static', rng: [4, 5], len: '1n', vel: .62, glue: .9 } },
@@ -498,17 +498,17 @@ const INSTRUMENTS = {
   'melody-trumpet': {
     label: 'トランペット', groove: 'wind',
     sound: { kind: 'sampler', set: 'trumpet', fb: 'brass', oct: 4, hp: 220, lp: 9000,
-             gain: -8.5, rev: .20, dly: .10, duck: true, env: { attack: .012, release: .35 } },
+             gain: -11, rev: .20, dly: .10, duck: true, env: { attack: .012, release: .35 } },
     variants: [
       { tag: '高らか・宣言する', trim: -1.5,   shape: { d: 5, pref: [0, 4, 8, 13], syn: .2, cont: 'up', rng: [4, 7], len: '4n', vel: .74 } },
-      { tag: '余白・ファンファーレ', trim: 0.5, shape: { d: 2, syn: 0, cont: 'up', rng: [5, 8], len: '2n', vel: .76, glue: .8 } },
+      { tag: '余白・ファンファーレ', shape: { d: 2, syn: 0, cont: 'up', rng: [5, 8], len: '2n', vel: .76, glue: .8 } },
       { tag: '刻み・畳みかける', trim: 1,   shape: { d: 11, syn: .35, cont: 'arch', rng: [3, 8], len: '16n', vel: .52 } },
     ],
   },
   'melody-trombone': {
     label: 'トロンボーン', groove: 'wind',
     sound: { kind: 'sampler', set: 'trombone', fb: 'brass', oct: 3, hp: 110, lp: 6000,
-             gain: -12, rev: .22, dly: .05, duck: true, env: { attack: .02, release: .5 } },
+             gain: -14.5, rev: .22, dly: .05, duck: true, env: { attack: .02, release: .5 } },
     variants: [
       { tag: '太く歌う・滑る', trim: -2.5,     shape: { d: 5, syn: .15, cont: 'arch', rng: [1, 4], len: '4n', vel: .70 } },
       { tag: '余白・地を這う持続', trim: 1.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', vel: .72, glue: .9 } },
@@ -518,7 +518,7 @@ const INSTRUMENTS = {
   'melody-lead': {
     label: 'シンセリード', groove: 'machine',
     sound: { kind: 'synth', fb: 'lead', oct: 5, hp: 420, lp: 9000,
-             gain: -14.5, rev: .10, dly: .22, duck: true },
+             gain: -17.5, rev: .10, dly: .22, duck: true },
     variants: [
       { tag: '刻む・突き刺す', trim: -1.5,     shape: { d: 11, syn: .3, cont: 'wave', rng: [0, 6], len: '16n', vel: .72 } },
       { tag: '余白・1音で引っぱる', shape: { d: 2, syn: 0, cont: 'up', rng: [4, 6], len: '2n', vel: .74, glue: .85 } },
@@ -530,7 +530,7 @@ const INSTRUMENTS = {
   'chord-piano': {
     label: 'ピアノ', groove: 'key',
     sound: { kind: 'sampler', set: 'piano', fb: 'poly', oct: 3, hp: 160, lp: 8000,
-             gain: -4.5, rev: .18, dly: .04, duck: true, env: { attack: 0, release: .9 } },
+             gain: -12, rev: .18, dly: .04, duck: true, env: { attack: 0, release: .9 } },
     variants: [
       { tag: '裏で刻む・軽い和音', trim: -0.5, shape: { d: 5, pref: [2, 6, 10, 14], syn: .55, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .48 } },
       { tag: '余白・頭で1回だけ', trim: 2.5,   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 4, vel: .48, glue: .9 } },
@@ -540,17 +540,17 @@ const INSTRUMENTS = {
   'chord-aguitar': {
     label: 'アコギ', groove: 'pluck',
     sound: { kind: 'sampler', set: 'guitar-acoustic', fb: 'pluck', oct: 3, hp: 140, lp: 7500,
-             gain: -9, rev: .16, dly: .05, duck: true, env: { attack: .002, release: .6 } },
+             gain: -16, rev: .16, dly: .05, duck: true, env: { attack: .002, release: .6 } },
     variants: [
       { tag: 'かき鳴らす・体温', trim: -2,   shape: { d: 8, pref: [0, 4, 8, 12], syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .55 } },
-      { tag: '余白・ゆっくり分散', shape: { d: 4, syn: .1, cont: 'up', rng: [0, 3], len: '4n', poly: 2, vel: .66, glue: .7 } },
+      { tag: '余白・ゆっくり分散', trim: 1, shape: { d: 4, syn: .1, cont: 'up', rng: [0, 3], len: '4n', poly: 2, vel: .66, glue: .7 } },
       { tag: '刻み・8分の空ピック混じり', shape: { d: 12, syn: .4, cont: 'static', rng: [0, 3], len: '16n', poly: 3, vel: .36 } },
     ],
   },
   'chord-cutting': {
     label: 'カッティング', groove: 'pluck',
     sound: { kind: 'sampler', set: 'guitar-electric', fb: 'pluck', oct: 3, hp: 320, lp: 6500,
-             gain: -4.5, rev: .10, dly: .08, drive: .12, duck: true, env: { attack: .002, release: .12 } },
+             gain: -11.5, rev: .10, dly: .08, drive: .12, duck: true, env: { attack: .002, release: .12 } },
     variants: [
       { tag: '16分で切る・跳ねる', shape: { d: 8, pref: [1, 3, 5, 9, 11, 13, 15], syn: .8, cont: 'static', rng: [1, 3], len: '16n', poly: 3, vel: .46 } },
       { tag: '余白・裏だけ入れる', shape: { d: 3, pref: [6, 14], syn: .9, cont: 'static', rng: [1, 3], len: '16n', poly: 3, vel: .58 } },
@@ -560,7 +560,7 @@ const INSTRUMENTS = {
   'chord-organ': {
     label: 'オルガン', groove: 'pad',
     sound: { kind: 'sampler', set: 'organ', fb: 'pad', oct: 3, hp: 170, lp: 6000,
-             gain: -16, rev: .20, dly: 0, duck: true, env: { attack: .04, release: .5 } },
+             gain: -23.5, rev: .20, dly: 0, duck: true, env: { attack: .04, release: .5 } },
     variants: [
       { tag: '面で支える・持続', shape: { d: 2, syn: 0, cont: 'static', rng: [0, 1], len: '2n', poly: 4, vel: .38 } },
       { tag: '余白・1小節ずっと', trim: 2.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 4, vel: .36, glue: .95 } },
@@ -570,9 +570,9 @@ const INSTRUMENTS = {
   'chord-harmonium': {
     label: 'ハルモニウム', groove: 'pad',
     sound: { kind: 'sampler', set: 'harmonium', fb: 'pad', oct: 3, hp: 190, lp: 5200,
-             gain: -14, rev: .26, dly: .04, duck: true, env: { attack: .10, release: .9 } },
+             gain: -21, rev: .26, dly: .04, duck: true, env: { attack: .10, release: .9 } },
     variants: [
-      { tag: '息のあるオルガン・にじむ', trim: 1, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .40 } },
+      { tag: '息のあるオルガン・にじむ', trim: 0.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .40 } },
       { tag: '余白・2音だけで支える',   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 2, vel: .42, glue: .95 } },
       { tag: '刻み・ふいごを煽る',     shape: { d: 6, syn: .3, cont: 'static', rng: [0, 2], len: '8n', poly: 3, vel: .32 } },
     ],
@@ -582,17 +582,17 @@ const INSTRUMENTS = {
     /* 音源は C3(48)..G5(79)。oct3 だと下へ9半音はみ出したので oct4 にした。
        rng の上も 5 までに抑えて、上下とも音源の中に収めている。       */
     sound: { kind: 'sampler', set: 'harp', fb: 'bell', oct: 4, hp: 220, lp: 10000,
-             gain: -2, rev: .26, dly: .12, duck: true, env: { attack: 0, release: 1.4 } },
+             gain: -9.5, rev: .26, dly: .12, duck: true, env: { attack: 0, release: 1.4 } },
     variants: [
       { tag: '滴る・分散和音', trim: -1.5,   shape: { d: 8, syn: .15, cont: 'up', rng: [0, 5], len: '8n', vel: .48 } },
       { tag: '余白・ひと撫でだけ', shape: { d: 3, pref: [0, 1, 2], syn: 0, cont: 'up', rng: [0, 4], len: '2n', vel: .50, glue: .6 } },
-      { tag: '刻み・きらめき続ける', trim: 1, shape: { d: 13, syn: .3, cont: 'wave', rng: [0, 5], len: '16n', vel: .36 } },
+      { tag: '刻み・きらめき続ける', trim: 0.5, shape: { d: 13, syn: .3, cont: 'wave', rng: [0, 5], len: '16n', vel: .36 } },
     ],
   },
   'chord-strings': {
     label: 'ストリングス', groove: 'bow',
     sound: { kind: 'sampler', set: 'violin', fb: 'bow', oct: 4, hp: 260, lp: 7000,
-             gain: -15, rev: .34, dly: 0, duck: true, env: { attack: .25, release: 1.6 } },
+             gain: -21.5, rev: .34, dly: 0, duck: true, env: { attack: .25, release: 1.6 } },
     variants: [
       { tag: '包む・ふくらむ',   shape: { d: 1, syn: 0, cont: 'static', rng: [2, 3], len: '1n', poly: 3, vel: .40 } },
       { tag: '余白・遠くでひとつ', trim: 1, shape: { d: 1, syn: 0, cont: 'static', rng: [3, 4], len: '1n', poly: 2, vel: .38, glue: .95 } },
@@ -602,7 +602,7 @@ const INSTRUMENTS = {
   'chord-brass': {
     label: 'ブラス', groove: 'wind',
     sound: { kind: 'sampler', set: 'trumpet', fb: 'brass', oct: 4, hp: 220, lp: 8000,
-             gain: -12, rev: .18, dly: .06, duck: true, env: { attack: .012, release: .30 } },
+             gain: -19, rev: .18, dly: .06, duck: true, env: { attack: .012, release: .30 } },
     variants: [
       { tag: '一撃・合いの手',   shape: { d: 3, pref: [4, 10, 12], syn: .4, cont: 'static', rng: [2, 4], len: '8n', poly: 3, vel: .60 } },
       { tag: '余白・頭で一発だけ', trim: -0.5, shape: { d: 1, syn: 0, cont: 'static', rng: [2, 3], len: '4n', poly: 3, vel: .66, glue: .8 } },
@@ -613,7 +613,7 @@ const INSTRUMENTS = {
     label: 'ホルン', groove: 'pad',
     /* 音源は C4 と D5 の間が 14 半音あいている。rng は 3 までに抑える */
     sound: { kind: 'sampler', set: 'french-horn', fb: 'pad', oct: 3, hp: 150, lp: 4800,
-             gain: -9, rev: .30, dly: 0, duck: true, env: { attack: .12, release: 1.0 } },
+             gain: -16.5, rev: .30, dly: 0, duck: true, env: { attack: .12, release: 1.0 } },
     variants: [
       { tag: '丸い面・遠くで鳴る', shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .42 } },
       { tag: '余白・低く長く', trim: 5.5,     shape: { d: 1, syn: 0, cont: 'static', rng: [0, 0], len: '1n', poly: 2, vel: .44, glue: .95 } },
@@ -625,7 +625,7 @@ const INSTRUMENTS = {
   'chord-pad': {
     label: 'シンセパッド', groove: 'pad',
     sound: { kind: 'synth', fb: 'pad', oct: 3, hp: 200, lp: 4200,
-             gain: -20.5, rev: .34, dly: .08, duck: true },
+             gain: -27.5, rev: .34, dly: .08, duck: true },
     variants: [
       { tag: '奥行き・にじむ',   shape: { d: 1, syn: 0, cont: 'static', rng: [0, 1], len: '1n', poly: 3, vel: .42 } },
       { tag: '余白・霧のように', trim: 2.5, shape: { d: 1, syn: 0, cont: 'static', rng: [0, 0], len: '1n', poly: 2, vel: .40, glue: .95 } },
@@ -637,7 +637,7 @@ const INSTRUMENTS = {
   'bass-ebass': {
     label: 'エレキベース', groove: 'bass',
     sound: { kind: 'sampler', set: 'bass-electric', fb: 'mono', oct: 2, hp: 32, lp: 1600,
-             gain: -7, rev: .03, dly: 0, duck: true, env: { attack: .002, release: .25 } },
+             gain: -3.5, rev: .03, dly: 0, duck: true, env: { attack: .002, release: .25 } },
     variants: [
       { tag: 'キックに張りつく', trim: -2, shape: { d: 7, pref: [0, 3, 6, 8, 11, 14], syn: .35, walk: 'move', len: '8n', vel: .90 } },
       { tag: '余白・ルートを踏むだけ', trim: 3, shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .92, glue: .9 } },
@@ -647,7 +647,7 @@ const INSTRUMENTS = {
   'bass-upright': {
     label: 'ウッドベース', groove: 'bass',
     sound: { kind: 'sampler', set: 'contrabass', fb: 'mono', oct: 2, hp: 30, lp: 1200,
-             gain: -13.5, rev: .06, dly: 0, duck: true, env: { attack: .01, release: .35 } },
+             gain: -10, rev: .06, dly: 0, duck: true, env: { attack: .01, release: .35 } },
     variants: [
       { tag: '歩く・呼吸する', trim: -2,     shape: { d: 5, pref: [0, 4, 8, 12], syn: .15, walk: 'walk', len: '4n', vel: .78 } },
       { tag: '余白・2分音符で構える', trim: 0.5, shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .80, glue: .85 } },
@@ -657,7 +657,7 @@ const INSTRUMENTS = {
   'bass-cello': {
     label: 'チェロ', groove: 'bow',
     sound: { kind: 'sampler', set: 'cello', fb: 'bow', oct: 2, hp: 40, lp: 2600,
-             gain: -9, rev: .18, dly: 0, duck: true, env: { attack: .08, release: .9 } },
+             gain: -5.5, rev: .18, dly: 0, duck: true, env: { attack: .08, release: .9 } },
     variants: [
       { tag: '伸ばす・沈む',   shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .62 } },
       { tag: '余白・1音で1小節', trim: 2.5, shape: { d: 1, syn: 0, walk: 'root', len: '1n', vel: .62, glue: .95 } },
@@ -667,7 +667,7 @@ const INSTRUMENTS = {
   'bass-tuba': {
     label: 'チューバ', groove: 'wind',
     sound: { kind: 'sampler', set: 'tuba', fb: 'mono', oct: 2, hp: 26, lp: 900,
-             gain: -9, rev: .08, dly: 0, duck: true, env: { attack: .03, release: .5 } },
+             gain: -6, rev: .08, dly: 0, duck: true, env: { attack: .03, release: .5 } },
     variants: [
       { tag: '生の重低音・ふくらむ', trim: -0.5, shape: { d: 4, pref: [0, 6, 8, 14], syn: .2, walk: 'root', len: '4n', vel: .84 } },
       { tag: '余白・息を長く', trim: 5.5,   shape: { d: 1, syn: 0, walk: 'root', len: '1n', vel: .84, glue: .95 } },
@@ -678,7 +678,7 @@ const INSTRUMENTS = {
     label: 'バスーン', groove: 'wind',
     /* 音源の最低音が G2 なので oct3（テノール域）で「歌うベース」にする */
     sound: { kind: 'sampler', set: 'bassoon', fb: 'mono', oct: 3, hp: 60, lp: 2000,
-             gain: -12, rev: .14, dly: 0, duck: true, env: { attack: .02, release: .45 } },
+             gain: -9, rev: .14, dly: 0, duck: true, env: { attack: .02, release: .45 } },
     variants: [
       { tag: '木の中低音・語尾がある', trim: -2.5, shape: { d: 6, syn: .25, walk: 'move', len: '8n', vel: .76 } },
       { tag: '余白・ぽつぽつ置く', trim: 0.5,   shape: { d: 2, syn: .1, walk: 'root', len: '2n', vel: .76, glue: .85 } },
@@ -688,7 +688,7 @@ const INSTRUMENTS = {
   'bass-organ': {
     label: 'オルガンベース', groove: 'pad',
     sound: { kind: 'sampler', set: 'organ', fb: 'pad', oct: 2, hp: 30, lp: 900,
-             gain: -14, rev: .05, dly: 0, duck: true, env: { attack: .03, release: .4 } },
+             gain: -11, rev: .05, dly: 0, duck: true, env: { attack: .03, release: .4 } },
     variants: [
       { tag: '途切れない・地鳴り', trim: -1, shape: { d: 3, syn: .1, walk: 'root', len: '2n', vel: .68 } },
       { tag: '余白・1小節ずっと踏む', trim: 3.5, shape: { d: 1, syn: 0, walk: 'root', len: '1n', vel: .68, glue: .95 } },
@@ -698,7 +698,7 @@ const INSTRUMENTS = {
   'bass-pianolow': {
     label: 'ピアノ（低音）', groove: 'key',
     sound: { kind: 'sampler', set: 'piano', fb: 'poly', oct: 2, hp: 40, lp: 2200,
-             gain: -3, rev: .08, dly: 0, duck: true, env: { attack: 0, release: .7 } },
+             gain: 0, rev: .08, dly: 0, duck: true, env: { attack: 0, release: .7 } },
     variants: [
       { tag: '打楽器のような低音', trim: -2, shape: { d: 5, pref: [0, 6, 8, 12], syn: .25, walk: 'oct', len: '8n', vel: .70 } },
       { tag: '余白・オクターブで置く', shape: { d: 2, syn: 0, walk: 'oct', len: '2n', vel: .70, glue: .9 } },
@@ -711,7 +711,7 @@ const INSTRUMENTS = {
   'bass-synth': {
     label: 'シンセベース', groove: 'machine',
     sound: { kind: 'synth', fb: 'mono', oct: 2, hp: 34, lp: 1800,
-             gain: -14.5, rev: .02, dly: 0, duck: true },
+             gain: -11.5, rev: .02, dly: 0, duck: true },
     variants: [
       { tag: '弾む・跳ねる', trim: -1.5,   shape: { d: 9, syn: .4, walk: 'move', len: '16n', vel: .82 } },
       { tag: '余白・低く置いておく', shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .86, glue: .9 } },
@@ -721,7 +721,7 @@ const INSTRUMENTS = {
   'bass-fuzz': {
     label: 'ファズベース', groove: 'machine',
     sound: { kind: 'synth', fb: 'fuzz', oct: 2, hp: 40, lp: 2400,
-             gain: -21, rev: .04, dly: 0, drive: .55, duck: true },
+             gain: -17.5, rev: .04, dly: 0, drive: .55, duck: true },
     variants: [
       { tag: '歪む・押し出す', trim: -2, shape: { d: 8, pref: [0, 4, 8, 12], syn: .3, walk: 'move', len: '8n', vel: .86 } },
       { tag: '余白・唸らせておく', shape: { d: 2, syn: 0, walk: 'root', len: '2n', vel: .86, glue: .9 } },
@@ -731,7 +731,7 @@ const INSTRUMENTS = {
   'bass-sub': {
     label: 'サブベース', groove: 'machine',
     sound: { kind: 'synth', fb: 'sub', oct: 2, hp: 24, lp: 260,
-             gain: -19.5, rev: 0, dly: 0, duck: true },
+             gain: -16.5, rev: 0, dly: 0, duck: true },
     variants: [
       { tag: '床が鳴る・重い', trim: -0.5,   shape: { d: 3, pref: [0, 10, 14], syn: .2, walk: 'root', len: '2n', vel: .92 } },
       { tag: '余白・1小節を1音で', shape: { d: 1, syn: 0, walk: 'root', len: '1n', vel: .94, glue: .95 } },
@@ -752,7 +752,7 @@ const INSTRUMENTS = {
      ================================================================= */
   'rhythm-kit': {
     label: '生ドラム', groove: 'kit',
-    sound: { kind: 'kit', set: 'acoustic-kit', gain: -8.5, hp: 28, lp: 16000, rev: .07 },
+    sound: { kind: 'kit', set: 'acoustic-kit', gain: -8, hp: 28, lp: 16000, rev: .07 },
     variants: [
       { tag: '王道・8ビート', trim: -2,
         drum: { k: [0, 7, 10], s: [4, 12], h: [0, 2, 4, 6, 8, 10, 12, 14], hv: .30,
@@ -767,7 +767,7 @@ const INSTRUMENTS = {
   },
   'rhythm-break': {
     label: 'ブレイクビーツ', groove: 'kit',
-    sound: { kind: 'kit', set: 'breakbeat13', gain: -10.5, hp: 40, lp: 15000, rev: .10 },
+    sound: { kind: 'kit', set: 'breakbeat13', gain: -10, hp: 40, lp: 15000, rev: .10 },
     variants: [
       { tag: '転がる・つんのめる',
         drum: { k: [0, 2, 9], s: [4, 11, 12], h: [0, 3, 6, 8, 10, 14], hv: .34,
@@ -846,7 +846,7 @@ const INSTRUMENTS = {
     label: '木琴', groove: 'pluck',
     /* 音源は G4/C5/G5/C6/G6 の5音。打楽器的に使うので移調幅は許容 */
     sound: { kind: 'sampler', set: 'xylophone', fb: 'bell', oct: 5, hp: 500, lp: 12000,
-             gain: -5, rev: .16, dly: .16, duck: true, env: { attack: 0, release: .4 } },
+             gain: -7.5, rev: .16, dly: .16, duck: true, env: { attack: 0, release: .4 } },
     variants: [
       { tag: '音程のあるリズム・跳ねる', trim: -1, shape: { d: 8, syn: .35, cont: 'wave', rng: [0, 5], len: '16n', vel: .58 } },
       { tag: '余白・ぽーん、ぽーん',     shape: { d: 2, syn: .1, cont: 'arch', rng: [0, 4], len: '8n', vel: .60, glue: .7 } },
@@ -855,7 +855,7 @@ const INSTRUMENTS = {
   },
   'rhythm-shaker': {
     label: 'シェイカー', groove: 'hat',
-    sound: { kind: 'kit', set: 'acoustic-kit', gain: -1.5, hp: 400, lp: 16000, rev: .10 },
+    sound: { kind: 'kit', set: 'acoustic-kit', gain: -3, hp: 400, lp: 16000, rev: .10 },
     variants: [
       { tag: '裏を刻む・前へ押す',
         drum: { k: [], s: [], h: [1, 3, 5, 7, 9, 11, 13, 15], hv: .30,
@@ -870,7 +870,7 @@ const INSTRUMENTS = {
   },
   'rhythm-bongo': {
     label: 'ボンゴ', groove: 'hat',
-    sound: { kind: 'kit', set: 'Bongos', gain: -8, hp: 120, lp: 16000, rev: .14 },
+    sound: { kind: 'kit', set: 'Bongos', gain: -10.5, hp: 120, lp: 16000, rev: .14 },
     variants: [
       { tag: '手で叩く・隙間を埋める',
         drum: { k: [], s: [5, 13], h: [2, 8, 11, 14], hv: .28, t: [0, 6, 9],
@@ -886,13 +886,13 @@ const INSTRUMENTS = {
   'rhythm-ride': {
     label: 'ライド', groove: 'hat',
     /* シンバルは合成（samples.js の makeCymbals）。キットは音を借りるだけ */
-    sound: { kind: 'kit', set: 'acoustic-kit', gain: 11, hp: 300, lp: 16000, rev: .18 },
+    sound: { kind: 'kit', set: 'acoustic-kit', gain: 9, hp: 300, lp: 16000, rev: .18 },
     variants: [
       { tag: '金物で刻む・濁らない', trim: -0.5,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 6, 8, 12, 14], rv: .55, hasKick: false } },
       { tag: '余白・4分で鳴らす', trim: -1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 4, 8, 12], rv: .60, hasKick: false } },
-      { tag: '刻み・全8分＋アクセント', trim: 0.5,
+      { tag: '刻み・全8分＋アクセント', trim: 1,
         drum: { k: [], s: [], h: [], hv: 0, rd: [0, 2, 4, 6, 8, 10, 12, 14], rv: .42,
                 oh: [7, 15], hasKick: false } },
     ],
