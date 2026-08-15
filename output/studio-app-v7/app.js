@@ -257,10 +257,61 @@ function makeSynthKit(dest, level) {
 /* ---- 案D：同じ ROLE の何枚目か。2枚目は左右を反転して置く -----------
    MELODY を2枚重ねたときに、両方とも同じ場所から鳴ると混ざってしまう。
    1枚目は定義どおり、2枚目は左右反転、3枚目は中央寄りにする。       */
-function seatFlipOf(cardId) {
+function seatIndexOf(cardId) {
   const role = cardId.split('-')[0];
-  const same = State.order.filter(id => id.split('-')[0] === role && id !== cardId);
-  return [1, -1, 0.35][same.length] != null ? [1, -1, 0.35][same.length] : 0;
+  return State.order.filter(id => id.split('-')[0] === role && id !== cardId).length;
+}
+function seatFlipOf(cardId) {
+  return [1, -1, 0.35][seatIndexOf(cardId)] != null ? [1, -1, 0.35][seatIndexOf(cardId)] : 0;
+}
+
+/* =====================================================================
+   案2：同時に鳴る上ものの発音を 30〜50ms ばらけさせる
+   ---------------------------------------------------------------------
+   Rasch の実験（Huron 2001 p.39 が引く）によれば、合奏で「同時」に
+   鳴らされた音の発音は実際には 30〜50ms に散らばっており、この程度の
+   ずれは音を**別々の音に割らずに「透明感」を足す**。別々の音として
+   聞こえ始めるのは 100ms を超えてから。
+   → reference/音の重ね方リサーチ.md §4-4・提案B
+
+   これは「グルーヴを出すため」の揺らぎでは**ない**（そちらは非音楽家に
+   は逆効果の可能性があり根拠も弱い → 同 §5-5）。目的は
+   「重ねたとき、自分が入れたカードの音が聞き取れること」ひとつ。
+   したがって値は 30〜50ms に厳密に収め、それ以上には広げない。
+
+   誰をずらすか：
+     ・MELODY と CHORD だけ。max 2 枚ずつ＝最大4パートが中音域で
+       ぶつかる、まさにマスキングが起きる組み合わせだから
+     ・RHYTHM は動かさない。キック／スネアは 12〜20ms の精度で
+       聞かれる「拍そのもの」で、ここを濁らせてはいけない
+       （→ reference/音源と楽器リサーチ.md §6-1）
+     ・BASS も動かさない。max:1 で他の低音と競合せず、
+       キックとの密着が土台の要だから
+
+   どうずらすか：席順で 15ms 刻みに配る。MELODY と CHORD を交互に
+   置くので、いちばんぶつかりやすい「メロディ2枚」「コード2枚」が
+   必ず 30ms 離れる。
+     melody 1枚目  0ms   chord 1枚目 15ms
+     melody 2枚目 30ms   chord 2枚目 45ms                            */
+const ONSET_SLOT_MS = { melody: 0, chord: 15 };
+const ONSET_STEP_MS = 30;
+const ONSET_MAX_MS = 45;
+
+function onsetSlotMs(cardId) {
+  const role = cardId.split('-')[0];
+  const base = ONSET_SLOT_MS[role];
+  if (base == null) return 0;                      // rhythm / bass は動かさない
+  return Math.min(ONSET_MAX_MS, base + seatIndexOf(cardId) * ONSET_STEP_MS);
+}
+
+/* テンポが速いと 45ms が16分音符の中で無視できない割合になり、
+   「透明感」ではなく「もたつき」に聞こえる。ずれの幅が16分の 40% を
+   超えないところで頭打ちにする（100BPM では 45ms がそのまま通る）。 */
+function onsetSpreadSec(slotMs) {
+  if (!slotMs) return 0;
+  const step16 = 60 / Tone.Transport.bpm.value / 4;      // 16分1つぶんの秒数
+  const span = Math.min(ONSET_MAX_MS, step16 * 1000 * 0.40);
+  return (slotMs / ONSET_MAX_MS) * span / 1000;
 }
 
 /* ============ 3. いま何小節目・どのコードか ============ */
@@ -295,6 +346,8 @@ class Part {
     /* 同じ ROLE の2枚目は左右を反転して置く。重ねたとき混ざらないように。
        いま何枚目かは投入時に決まるので、ここでは席番号だけ受け取る。   */
     const seatFlip = seatFlipOf(cardId);
+    /* 案2：この席の発音オフセット（ms）。席と同じく投入時に決まる */
+    this.onsetMs = onsetSlotMs(cardId);
     const depth = State.space ? clamp(sp.depth || 0, 0, 1) : 0;
     const pan = State.space ? clamp(sp.pan * seatFlip, -0.85, 0.85) : 0;
 
@@ -367,7 +420,8 @@ class Part {
     const g = this.card.groove || GROOVE.default;
     const r = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;   // 正規分布に寄せる
     this.wander = this.wander * g.drag + r * g.tight * (1 - g.drag);
-    return time + (g.push + this.wander) / 1000;
+    /* 案2：席ごとの固定オフセット。rhythm / bass は 0 なので影響しない */
+    return time + (g.push + this.wander) / 1000 + onsetSpreadSec(this.onsetMs);
   }
 
   /* --- 音階のあるパート ---------------------------------------------
