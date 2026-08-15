@@ -19,7 +19,7 @@
 
 const MAX_PARTS = 8;                 // 安全弁。実際は ROLE ごとの上限が先に効く
 const RETRIGGER_GUARD_MS = 420;      // 同一カードの連続読み取りを無視する時間
-const BASE_KIT = 'acoustic-kit';     // カードが無いときに鳴る基礎ビートのキット
+const BASE_KIT = 'acoustic-kit';     // 演出（フィル・DROP・終止）用の予備キット
 
 /* ============ 1. 音の出口 ============
    parts ─→ roleBus[役割] ─┬→ duckBus（キックでへこむ組）┐
@@ -861,19 +861,23 @@ function guardHeadroom() {
   try { master.gain.rampTo(MASTER_BASE * Tone.dbToGain(headroomDb), 0.5); } catch (e) {}
 }
 
-/* ============ 5. 基礎ビート ============
-   リズムカードが1枚も入っていないときだけ鳴る、心拍のような土台。
-   リズムカードが入ったら静かに引っ込む。                             */
-let baseKit, baseSeq;
-const BASE = { k: [0, 8], h: [0, 2, 4, 6, 8, 10, 12, 14] };
+/* ============ 5. 予備のドラム音源 ============
+   v7.1：カードが1枚も入っていないときに鳴っていた「基礎ビート」
+   （キック 0/8＋8分ハット）を廃止した。
+   カードを入れる前から拍が刻まれていると、
+     ・最初の1枚を入れても「自分が音を足した」感じが薄れる
+     ・リズムカードを入れないという選択（静かな編成）ができない
+   の2点で体験を損なう。無音から始めて、鳴っているのは
+   必ず「誰かが入れたカードの音だけ」という状態にする。
 
-function startBaseBeat() {
+   ただしキットそのものは残す。フィル・DROP・ブレイク・終止は
+   「リズムカードのキットを借りて」鳴らす作りで、リズムカードが
+   1枚も無いときの借り先がこの baseKit だから。
+   ここから音が出るのはそれらの演出の瞬間だけで、拍は刻まない。   */
+let baseKit;
+
+function buildBaseKit() {
   baseKit = makeSampleKit(baseBus, BASE_KIT, -9) || makeSynthKit(baseBus, -8);
-  baseSeq = new Tone.Sequence((time, step) => {
-    if (State.kickOwner) return;                   // カードのキックが優先
-    if (BASE.k.includes(step)) { baseKit.kick(time, 0.85); pump(time, 0.8); Tone.Draw.schedule(() => UI.kickPulse(), time); }
-    if (BASE.h.includes(step)) baseKit.hat(time, step % 4 === 0 ? 0.16 : 0.09);
-  }, STEPS, '16n').start(0);
 }
 
 /* ============ 6. 進行の状態 ============ */
@@ -932,7 +936,10 @@ function recomputeKickOwner() {
     const p = State.parts.get(id);
     if (p && p.hasKick) { State.kickOwner = id; break; }
   }
-  if (baseBus) baseBus.gain.rampTo(State.kickOwner ? 0 : 1, 0.8);
+  /* v7.1：基礎ビートを廃止したので、baseBus を絞る必要が無くなった。
+     ここを通るのは演出（フィル・DROP・終止）の一発だけで、
+     しかもリズムカードがあるときはそちらのキットを使うため、
+     baseBus は開けたままでよい。                                  */
 }
 
 /* パートが増えても全体の音量感が破綻しないように少しずつ下げる。
@@ -1195,7 +1202,7 @@ async function startGame(bpm) {
   Tone.Transport.swingSubdivision = '16n';
   Tone.Transport.swing = State.swing || 0;
 
-  startBaseBeat();
+  buildBaseKit();          // 拍は刻まない。演出用の予備キットを用意するだけ
 
   /* 1ステップごとに画面のステップ表示を進める */
   Tone.Transport.scheduleRepeat((time) => {
@@ -1331,7 +1338,7 @@ async function endGame(opts) {
     Tone.Transport.cancel();
     State.parts.forEach(p => p.dispose());
     State.parts.clear(); State.order = []; State.pending.clear();
-    try { baseSeq.stop(); baseSeq.dispose(); baseKit.nodes.forEach(n => n.dispose()); } catch (e) {}
+    try { baseKit.nodes.forEach(n => n.dispose()); } catch (e) {}
 
     let url = null;
     if (recorder && recorder.state === 'started') {
@@ -1523,7 +1530,7 @@ const UI = {
     box.innerHTML = '';
     UI.time();
     if (State.order.length === 0) {
-      box.innerHTML = '<div class="empty">いまは基礎ビートだけ。カードを入れて積み上げてください。</div>';
+      box.innerHTML = '<div class="empty">まだ音はありません。カードを入れて積み上げてください。</div>';
       return;
     }
     State.order.forEach(id => {
