@@ -341,9 +341,13 @@
 
     <div class="field">
       <label for="bpm">テンポ（BPM）</label>
+      <!-- 範囲と初期値は Moelants の実測にあわせた。DJ の BPM リスト
+           44本・のべ90,008曲の分布はほぼ 80〜160 に収まり、選好テンポは
+           120〜125、分布のピークは約130。体が共振する約2Hz に対応する。
+           → reference/音の重ね方リサーチ.md §5-4 -->
       <div class="row">
-        <input type="range" id="bpm" min="70" max="150" step="1" value="100">
-        <div class="bpmval"><span id="bpmv">100</span><small>BPM</small></div>
+        <input type="range" id="bpm" min="80" max="160" step="1" value="122">
+        <div class="bpmval"><span id="bpmv">122</span><small>BPM</small></div>
       </div>
     </div>
 
@@ -390,7 +394,7 @@
   <div class="stat"><b id="barnum">1</b><i>/ 8 小節</i></div>
   <div class="stat"><b id="timeleft">4:00</b><i>のこり</i></div>
   <div class="stat"><b id="partcount">0</b><i>パート</i></div>
-  <div class="stat"><b id="bpmshow">100</b><i>BPM</i></div>
+  <div class="stat"><b id="bpmshow">122</b><i>BPM</i></div>
   <div class="spacer"></div>
   <button class="minibtn dropbtn" id="dropbtn">DROP（スペース）</button>
   <button class="minibtn" id="pausebtn">一時停止</button>
@@ -506,9 +510,9 @@
 <script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
 <!-- ?v= はブラウザのキャッシュ対策。中身を直したらこの数字を上げること。
      これが無いと、修正しても古い版がそのまま使われ続ける -->
-<script src="samples.js?v=7.4"></script>
-<script src="music.js?v=7.4"></script>
-<script src="cards.js?v=7.4"></script>
-<script src="app.js?v=7.4"></script>
+<script src="samples.js?v=7.5"></script>
+<script src="music.js?v=7.5"></script>
+<script src="cards.js?v=7.5"></script>
+<script src="app.js?v=7.5"></script>
 </body>
 </html>

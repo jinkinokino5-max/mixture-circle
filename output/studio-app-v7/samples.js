@@ -323,10 +323,37 @@ function makeSampleKit(dest, kit, levelDb) {
   const cym = makeCymbals(out);
 
   const has = (p) => !!urls[DRUM_NOTES[p]];
-  const hit = (part, t, v) => {
+
+  /* --- 打楽器のばらつき（ラウンドロビンの代用）------------------------
+     本アプリの12キットは、どのパートも波形が1本ずつしかない。まともな
+     ドラム音源が同じ音を複数本持つ（ラウンドロビン）のは、**まったく
+     同じ波形の反復は聴き手に「機械だ」と気づかれる**ため。
+     → reference/音源と楽器リサーチ.md §4-3・優先度4
+
+     新しいファイルを増やさずに近いことをする。打ったびに再生速度を
+     ±0.3%（≒±0.05半音）だけ動かす。音程の変化としては知覚できない
+     大きさだが、波形は毎回わずかに違うものになる。
+     Tone.Sampler は「いちばん近い音源との差」を再生速度に直す際、
+     小数ぶん（remainder）まで含めて計算する。したがって音名のかわりに
+     少しずらした**周波数（Hz）**を渡せば、それがそのまま再生速度の
+     微調整になる。数値を渡すと Tone は Hz として解釈する。          */
+  const PITCH_CLASS = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+  function noteHz(name) {
+    const m = /^([A-G]#?)(-?\d+)$/.exec(name);
+    if (!m) return null;
+    const midi = (Number(m[2]) + 1) * 12 + PITCH_CLASS[m[1]];
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  const hit = (part, t, v, rate) => {
     const note = DRUM_NOTES[part];
     if (!note || !urls[note]) return;
-    try { smp.triggerAttack(note, t, Math.min(1, v * lin[part])); } catch (e) {}
+    let n = note;
+    if (rate && rate !== 1) {
+      const hz = noteHz(note);
+      if (hz) n = hz * rate;
+    }
+    try { smp.triggerAttack(n, t, Math.min(1, v * lin[part])); } catch (e) {}
   };
   /* 無いタムは1段上のタムで代用し、それも無ければスネアで代用する */
   const tomFall = (p) => has(p) ? p : (has('tom2') ? 'tom2' : (has('tom1') ? 'tom1' : 'snare'));
@@ -335,12 +362,12 @@ function makeSampleKit(dest, kit, levelDb) {
     sampled: true,
     nodes: [smp, ...cym.nodes, out],
     out,
-    kick:  (t, v) => hit('kick',  t, v),
-    snare: (t, v) => hit('snare', t, v),
-    hat:   (t, v) => hit('hihat', t, v),
-    tom:   (t, v) => hit(tomFall('tom1'), t, v),
-    tom2:  (t, v) => hit(tomFall('tom2'), t, v),
-    tom3:  (t, v) => hit(tomFall('tom3'), t, v),
+    kick:  (t, v, r) => hit('kick',  t, v, r),
+    snare: (t, v, r) => hit('snare', t, v, r),
+    hat:   (t, v, r) => hit('hihat', t, v, r),
+    tom:   (t, v, r) => hit(tomFall('tom1'), t, v, r),
+    tom2:  (t, v, r) => hit(tomFall('tom2'), t, v, r),
+    tom3:  (t, v, r) => hit(tomFall('tom3'), t, v, r),
     crash: cym.crash,
     ride:  cym.ride,
     open:  cym.open,

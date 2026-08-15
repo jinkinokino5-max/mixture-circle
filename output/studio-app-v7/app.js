@@ -520,8 +520,15 @@ class Part {
     const owner = State.kickOwner === this.id;
     const fill = isFillBar(bar) && owner;
     const gt = () => this.groovedTime(time);
-    /* 案C：太鼓も強打ほど明るく。ゴーストノートやハットの表裏で効く */
-    const dh = (fn, v) => { const t = gt(); this.applyTimbre(t, v); fn.call(this.kit, t, v); };
+    /* 案C：太鼓も強打ほど明るく。ゴーストノートやハットの表裏で効く。
+       あわせて、打つたびに再生速度を ±0.3% 動かす（ラウンドロビンの
+       代用。同じ波形の反復に気づかれないため → samples.js の hit）。
+       カードID・小節・ステップから決まるので、毎回同じ演奏は再現される。 */
+    const dh = (fn, v) => {
+      const t = gt();
+      this.applyTimbre(t, v);
+      fn.call(this.kit, t, v, this.drumRate(bar, step));
+    };
 
     /* フィル：8小節目の4拍目。v6 は generateFill が毎回ちがう形を作る */
     if (fill && step >= 12) {
@@ -530,7 +537,9 @@ class Part {
         if (Math.floor(f.s) !== step) return;
         const t = time + (f.s - Math.floor(f.s)) * sub;
         const fn = this.kit[f.voice] || this.kit.snare;
-        try { fn.call(this.kit, t, f.v); } catch (e) {}
+        /* フィルは同じ太鼓を短い間に何度も叩くので、反復がいちばん
+           目立つ場所。ここにも同じ揺らぎを入れる。               */
+        try { fn.call(this.kit, t, f.v, this.drumRate(bar, f.s * 4)); } catch (e) {}
       });
       this.flash(time, 0.8);
       if (step === 12) pump(time, 0.6);
@@ -567,6 +576,18 @@ class Part {
         && bar % (d.crEvery || 8) === (d.crPhase || 0))) {
       if (step === 0) { this.kit.crash(time, sectionHit ? 0.85 : 0.72); this.flash(time, 0.9); }
     }
+  }
+
+  /* --- 打楽器のばらつき（ラウンドロビンの代用）------------------------
+     まったく同じ波形の反復は「機械だ」と気づかれる。1本しか持っていない
+     サンプルの再生速度を ±0.3%（≒±0.05半音）だけ動かして、毎回わずかに
+     違う波形にする。音程の変化としては知覚できない大きさ。
+     → reference/音源と楽器リサーチ.md §4-3・優先度4
+     カードID・小節・ステップから決まるので、同じ演奏は同じように再現される。 */
+  drumRate(bar, step) {
+    if (!this.sampled) return 1;                    // 合成音は毎回波形が違う
+    const r = makeRng(hashSeed(this.id, bar, Math.round(step) + 101))();
+    return 1 + (r * 2 - 1) * 0.003;
   }
 
   /* 案1：このステップは他のパートで埋まりすぎているか？
