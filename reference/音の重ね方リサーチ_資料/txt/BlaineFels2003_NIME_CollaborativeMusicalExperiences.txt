@@ -1,0 +1,598 @@
+Proceedings of the 2003 Conference on New Interfaces for Musical Expression (NIME-03), Montreal, Canada
+
+Contexts of Collaborative Musical Experiences
+
+Tina Blaine
+Entertainment Technology Center Carnegie Mellon University Pittsburgh, PA 15123
+bean@cs.cmu.edu
+
+Sidney Fels
+University of British Columbia Dept. of Electrical & Computer Engineering
+Vancouver, BC, V6T 1Z4
+ssfels@ece.ubc.ca
+
+ABSTRACT
+We explore a variety of design criteria applicable to the creation of collaborative interfaces for musical experience. The main factor common to the design of most collaborative interfaces for novices is that musical control is highly restricted, which makes it possible to easily learn and participate in the collective experience. Balancing this tradeoff is a key concern for designers, as this happens at the expense of providing an upward path to virtuosity with the interface. We attempt to identify design considerations exemplified by a sampling of recent collaborative devices primarily oriented toward novice interplay. It is our intention to provide a non-technical overview of design issues inherent in configuring multiplayer experiences, particularly for entrylevel players.
+Keywords
+Design, collaborative interface, musical experience, multiplayer, novice, musical control.
+1. INTRODUCTION
+The emergence of electronic instruments, and most notably the computer, has led to the creation of new interfaces and sounds never before possible. In addition, the computer can be used to create arbitrary mappings between gesture and sound, thereby providing the possibility of computersupported sound and directed musical interaction. Consequently, a wave of new types of collaborative interfaces and group experiences has emerged for collective music making with the potential to include people with little or no musical training. Therefore, understanding the role of music i n relation to people's experiences playing collaborative instruments requires a shift in perspective. By attributing less relevance to the importance of traditional music metrics based on melody, more emphasis can be placed on metrics that involve the players' experience. The psychological state of "flow" is achieved by engaging in deeply satisfying experiences that alter one's state of consciousness [1]. Making collaborative interfaces relatively simple and easy to learn facilitates flow for novices. This approach can also support the development of intimacy with the interface, which has an "aesthetic of control" [2]. When designing collaborative musical experiences for first-time players in public places, the amount of time necessary to learn an interface must be minimized, coupled with achieving a balance between virtuosity and simplicity [3]. Providing an upward path of increasing complexity necessary for maintaining flow, while at the same time providing an entry level low enough for novices, is very challenging and continues to necessitate further inquiry by experience designers.
+1.1 Accessible Music
+The underlying premise of most collaborative interface design is that with various design constraints, playing music can be made accessible to non-musicians. Participation in making music gives players a sense of belonging and access t o a new community at the expense of limiting the musical range
+
+and possible gestures associated with sound in a collective space. We suggest that analyzing the musical experience of collaborative interfaces should be examined in this context. Essentially, low-level accessibility is necessary for people to participate and communicate with the instruments and each other. Furthermore, many collaborative interfaces are intended for public exhibition, where people casually "walk-up and play". This restricts the amount of time that a designer can expect someone to spend learning an interface, and necessitates highly constrained interfaces that are conducive to easily accessible musical experiences.
+Therefore, we suggest that providing novices with easily accessible music making experiences is more important than having a complex interface with built-in, upward capability for virtuosic expression. The counter-argument to this assumption is that a low entry fee should have no ceiling on virtuosity [4]. Wessel and Wright posit that "...many of the simple-to-use computer interfaces proposed for musical control seem, after even a brief period of use, to have a toy-like character and do not invite continued musical evolution" [4]. While this is fundamentally true for expert musicians, the main opposition to this viewpoint regarding novice interplay is that the demographic for most multiplayer instruments are non-musicians and accordingly, the same principles do not necessarily apply. Although expert musicians are concerned with expressive capabilities and mastery of their instruments, it is unlikely that first time players have the expectation of becoming expert players on any musical instrument.
+1.2 Balancing Complexity and Expressivity
+The trade-off in determining the appropriate balance of complexity and expressivity of an interface is not easily resolved. Historically, the field of musical controllers has advanced primarily through the creation of highly complex single player instruments developed for experts, as opposed to multiplayer interfaces/environments designed for novices [5] [6]. Developing musical interfaces using familiar objects that ordinarily serve another purpose, or inventing entirely new instruments, can change the level of musical expectation by redefining "expert" and "novice" interplay as the basis for engagement. . "Playful" interfaces can also avoid the look and feel of traditional instruments [7]. Designers of collaborative devices that are easy to control but have limited expressive capabilities are challenged not only to conceive of opportunities for musical exploration, but must also cultivate meaningful social interactions and experiences for the players. In a collaborative musical environment, it becomes even more imperative that the technology serves primarily as a catalyst for social interaction, rather than as the focus of the experience [8]. Conversely, interfaces that have extended expressive capabilities tend to be more difficult to control and cater more to the expert player. For designers of most musical interfaces, the overriding challenge is to strike a balance of multimodal interaction using discrete and continuous controls [9], [10], and generally, limit rather than increase the number of features and opportunities for creativity [7].
+
+NIME03-129
+
+Proceedings of the 2003 Conference on New Interfaces for Musical Expression (NIME-03), Montreal, Canada
+
+1.3 Mapping and Control Issues
+Natural mapping behaviors evolve from the creation of a direct relationship between gesture and musical intent. Players' perception of control in collaborative musical environments can be increased by creating predetermined musical events, subject to players manipulating complex parameters of sound through gestures, such as stretching or squeezing [11]. Enhancing the illusion of control can also be achieved with supplemental effects such as lighting, visual imagery and more, to create a highly responsive system based on player input. While the use of pre-composed musical events or sequences severely limits certain aspects of an individual's creative control, it has the benefit of creating more cohesive sound spaces in multiplayer environments. With these mappings, players are not responsible for playing specific notes, scales or harmonies, which helps to minimize chaotic musical interaction.
+2. CONTEXTS OF COLLABORATIVE INTERFACES
+Collaborative musical interfaces may be roughly classified by a number of different attributes unique to the context of communal experience. Table 1 provides a sample listing of multiplayer systems organized by the following elements of design: Focus, Location, Media, Scalability, Player Interaction, Musical Range, Physical Interface, Directed Interaction, Pathway to Expert Performance and Level of Physicality.
+Design issues regarding the input interface, input-to-output mapping and the output interface are of the utmost relevance as well as the topic of much research.1 Thus, the type of collaborative interface depends on a number of factors including range, sensor(s), directed interaction, and pathway to expert performance. Good design practice for these instruments, whether cooperative or not, overlaps with issues regarding human-computer interaction [12]. Such issues include usability, ease of learning, and functionality, specifically in relation to their effects on the success of the collaborative experience. Finding the balance between virtuosity and simplicity provides fertile ground for new collaborative interfaces. Due to space constraints, the authors were unable to include a more comprehensive list, or technical discussion regarding the systems referenced herein.
+2.1 Focus
+The focus of the experience is determined by establishing whether the communication is primarily between players or between players and an audience. Collaborative instruments are usually designed to enhance the communicative experience between players rather than exploit virtuosic play for the benefit of an audience. This may or may not be very interesting for an audience to listen to, since they are not privy to the subtleties of interaction that occurs between players. Most computer-based instruments do not provide direct means for audiences to see how players' gestures affect the music and instead must rely upon indirect means, such as explanation of the interaction or visualization.
+2.2 Location
+Many collaborative interfaces for musical expression are created as installations for public exhibition. In these instances, people are often expected to converge at a specific
+1 Organized Sound special issue on mappings and the New Interfaces for Musical Expression (NIME) proceedings all address these design issues.
+
+location and/or gather around an instrument to play together. Because they are co-located, players can see each other's gestures and more readily understand the relationship between each player's actions and the sounds produced. However, if the sounds are not easily attributable to specific actions or devices, then players must find other ways to communicate. Beatbugs [13], Musical Trinkets [14], and SoundMapping [15], all work around this issue in a variety of ways. With the growth of the Internet, a new genre of collaborative interfaces allows players to communicate over a network from nonspecific locations, from virtually anywhere in the world [16]. Systems such as the Hub [17], Brain Opera [18][19], Faust Music OnLine (FMOL) [20], and Rocket Network [21], are notable examples of efforts in this direction that integrate(d) more professional levels of musicianship.
+2.3 Media
+Many collaborative interfaces combine audiovisual elements as a way of enhancing communication and creating more meaningful experiences. The use of visual imagery can facilitate the collaborative experience by reinforcing the responsiveness of the system to players' actions. However, visual imagery can also distract players from seeing other players' actions, or from attending to aural elements, or both. Some of the systems that include visual imagery as the primary medium include Jamoworld [22], Jamodrum [23], Iamascope [24], and Currents of Creativity [3]. One particular challenge with visually oriented systems, is that the identification of players with imagery can be so strong that the act of making music becomes a secondary part of the experience.
+2.4 Scalability
+By their very nature, collaborative interfaces are designed for a minimum of two or more players. However, the number of players greatly influences the types of interfaces and music that is appropriate. An interface built for two people is generally quite different from one built for tens, hundreds or thousands of players. When considering scale, factors such as turn-taking protocols and gesture-sound correspondences shift as the number of players increase. For example, it does not make sense to expect turn-taking protocols to emerge in an interface with three hundred drum pad inputs distributed through a large area, as embedded in the RhythmTree structure [18]. Directly refuting this notion is the MidiBall [25] interface, where only a few people are physically able to hit the ball at one time, even if hundreds or thousands of people are present.
+2.5 Player Interaction
+Generally, collaborative instruments provide each player with a method for individual control within a shared sonic environment. Although the control devices may be identical or different for each player, the underlying method of interaction is quite often the same. For example, in Musical Trinkets [14] and Musical Navigatrics [26], each player has their own unique set of figures used to control sound. While each trinket has a specific sound or algorithmic effect associated with it, all players interact in the same way, b y moving the objects over a shared tabletop surface in order to activate those sounds. In a communal space without too many people and/or distractions, this approach has the advantage that players are able to observe each other to determine what distinguishes each player's visual and aural impact. However, if the mapping between the interface or device and its affect o n the sonic output is unclear, then it becomes more difficult to use the interface for musical collaboration.
+
+NIME03-130
+
+Proceedings of the 2003 Conference on New Interfaces for Musical Expression (NIME-03), Montreal, Canada
+
+System Focus Location Media Scale Player Interaction Musical Range/ Notes Physical Interface/ Sensor Directed Interaction Learning Curve Pathway to Expert Performance Level of Physical-
+ity Musical Genre
+
+Audio Grove (Moeller, 1997)
+Augmented Groove (Pouprev et al., 2001)
+Beatbugs (Weinberg et al., 2002)
+
+Players Local
+Players Local
+Players Local + Audience
+
+Brain Opera (Machover, 1996)
+Bullroarer (Robson, 2001)
+Composition on the Table (Iwai, 1998)
+
+Players + Audience
+Players
+
+Local and Net
+Local
+
+Players Local
+
+Currents of Creativity (D'Arcangel o, 2001)
+FMOL (Jorda, 1999)
+
+Players Players
+
+Local Net
+
+Hub (GreshamLancaster, 1998)
+
+Audience
+
+Local and Net
+
+Iamascope (Fels and Mase, 1998)
+Jamodrum /Jamoworld (Blaine & Perkis, 2000) (Blaine & Forlines 2002)
+MidiBall (Jacobson, Blaine, and Pacheco, 1993)
+Musical Trinkets /Navigatrics (Paradiso et al., 2001), (Pardue and Paradiso, 2002)
+Rhythm Tree (Paradiso, et al., 2001)
+
+Players Local Players Local
+
+Players are the Audience
+
+Local
+
+Players Local
+
+Players Local
+
+Sound, 1-30 Same Light, Device
+
+Sound, 1-3 Image, Device
+
+Same
+
+Sound, 1-8 Device
+
+Same
+
+Sound, Image, Device
+Sound, Device
+
+1-
+
+Differ-
+
+100's ent
+
+1-3
+
+Same
+
+Image, 1-6 Sound, Light, Device
+Image, 1-6 Sound, Device
+
+Same Same
+
+Sound, 2 Image, Software
+Sound, 1-6 Software
+
+Same
+Different
+
+Image, 1-3 Sound
+
+Same
+
+Image, Sound
+
+1-12, Same 1-4
+
+Sound, Image, Device
+
+1-
+
+Same
+
+1000s
+
+Sound, 1-5 Device
+
+Same
+
+Sound,
+Lights, Device
+
+1 ­ 50 Same
+
+Players control DSP
+Players control DSP
+Players control DSP + rhythmic input
+Limited & Unlimited
+Players control DSP
+Players control rhythm + midi loops
+Limited: pre-
+composed loops
+Unlimited
+
+Touch, Capacitive
+sensing
+Camera, HMD, Glyph Disks
+InfraRed, Bend sensors, Piezos
+Varied Custom Devices
+Sliders, potentiometers
+Buttons, Switches,
+Faders
+Computer Kiosk
+Mouse, Kybd
+
+Low
+
+Fast
+
+Med-High Medfacilitator Fast
+
+High workshops
++ dist'd leadership
+
+Slow
+
+Conductor, facilitators + freeplay
+Low
+
+Slow Fast
+Fast
+
+Low
+
+Fast
+
+High
+
+Fast
+
+No
+
+Medium
+
+Unlimited Mouse,
+
+No
+
+Keyboard,
+
+Joysticks
+
+Trackball +
+
+MIDI
+
+Devices
+
+Limited
+
+Camera
+
+Low
+
+Slow Fast
+
+Limited, Drumpads
+
+Med -
+
+Fast
+
+Midi + Precomposed loops
+
++ turntable disks
+
+High: virtual facilitator, Dist'd leadership
+
+Limited
+
+Custom
+
+Low
+
+Fast
+
+Device
+
++RF
+
+Players Passive RF Med-High Fast
+
+control
+
+Tags
+
+facilitator
+
+DSP
+
+Limited Drum Pads
+
+Low
+
+Fast
+
+No No Possibly Possibly No No No Yes Yes
+No No
+No No
+No
+
+High Ambient
+
+High
+
+Techno, House
+
+High
+
+Electronic Polyrhythmic
+
+Med- Varied High
+
+High Med
+
+Ambient Drones, Electronic
+Minimalist
+
+Med World
+
+Low Electronic Low Electronic
+
+High
+
+Simple Melody
+
+High
+
+World, SFX, percussion samples
+
+High
+
+Vox Samples, variable
+
+High Beat mix
+
+High
+
+Percussion & Vox Samples
+
+NIME03-131
+
+Proceedings of the 2003 Conference on New Interfaces for Musical Expression (NIME-03), Montreal, Canada
+
+Sound
+
+Players Local Sound, 1-4
+
+Same
+
+Players
+
+GPS, tilt, Med-High Fast
+
+No
+
+High Ambient
+
+Mapping
+
+Device
+
+control Accelero-
+
+(Mott, Sosnin,
+
+timbre,
+
+meters
+
+1997
+
+pitch +
+
+rhythm
+
+Speaking
+
+Players Local Sound, 1-8
+
+Same
+
+Limited
+
+Photo-
+
+Low
+
+Fast
+
+No
+
+High Ambient
+
+Orbs (Ask,
+
+Device
+
+resistors
+
+2001)
+
+Squeezables Players Local Sound, 1-3
+
+Same
+
+Players
+
+FSR's,
+
+Med-High Fast
+
+No
+
+High Ambient
+
+(Weinberg + Aud-
+
+Device
+
+control
+
+Potentio-
+
+World,
+
+and Gan,
+
+ience
+
+DSP
+
+meters,
+
+Drum &
+
+2001)
+
+Variable
+
+Bass
+
+resistors
+
+Tooka (Fels Players Local Sound
+
+2
+
+and Vogt,
+
++ Aud-
+
+2002)
+
+ience
+
+Same
+
+Limited
+
+Breath
+
+No
+
+Slow
+
+TBD
+
+High Open
+
+Table 1: Contexts of Collaborative Interface Design
+
+2.6 Musical Range/Notes
+The most common technique used to provide an easily learned interface is to limit the range of notes or sounds that any action creates. Group dynamics and social interaction are consistently achieved by limiting the players' opportunities for extended musical exploration, and in many cases, directing the players' interaction. For example, providing players with short musical phrases, percussion loops, or melodies that are constrained by key, tempo or rhythm are proven methods of designing a limited range of elements that can still be satisfying and fun to play. A number of the experiences such as Augmented Groove [27], Composition on the Table [28], Audio Grove [29], MusiKalscope [30], Bullroarers [8], Musical Trinkets [14], and Squeezables [11], approach limiting the potential for chaotic musical interaction between players by adding control over effect algorithms of precomposed or algorithmically generated music. A few commonly used effect-algorithm-control-parameters include volume, modulation, pitchbend, tremolo, delay, and echo, in addition to numerous other digital signal processing effects and filters that affect the timbral qualities of predetermined sound elements.
+2.7 Physical Interface/Sensor
+Designers of collaborative instruments can choose from an extensive selection of sensors, software and signal processing options. Joysticks, ultrasound, infrared, accelerometers, potentiometers, force-sensitive resistors, piezos, magnetic tags, and many more sensor technologies are available to those interested in converting voltage data into MIDI or routing signals through other sound synthesis systems such as Max/MSPTM2, SuperCollider3 or Open Sound World4. Measuring changes in motion, light, gravity, pressure, velocity, skin conductivity or muscle tension are just a few of the ways that a player's gestural input can be turned into musical output. The ways in which a physical interface and sensors are integrated are of primary importance as they provide the affordances [31] that make the interaction obvious to the novice. For example, when someone encounters the spongy objects known as Squeezables [11], the immediate response is to manipulate and squeeze these soft toy-like sculptures, thus affecting the musical outcome of these instruments. Conversely, the Iamascope does not have a tangible interface, but invites the player with a visual display,
+2 Max/MSP is a trademark of Cycling '74, 379A Clementina Street, San Francisco, CA 94103.
+3 Available at: http://www.audiosynth.com
+4 Available at: http://www.cnmat.Berkeley_EDU/OSW
+
+as a camera tracks their motions. As another example, players simply wave their hands between the opening of the Speaking O r b s [32] and a reflective light to trigger an array of windchime sounds via photo-resistors that send MIDI "note on" and "note off" messages.
+2.8 Directed Interaction
+Group dynamics and social interplay for novices is often achieved by directing the players' interaction. Augmented Groove [27] , Beatbugs [13], Musical Trinkets [14], and SoundMapping [15] are experiences that initially provide a knowledgeable person to assist the players. Another effective method for constraining the musical space is accomplished through distributed leadership [33] and turn-taking behaviors. Beatbugs [13], integrates different play modes with session leaders who "pass" rhythmic motifs amongst the group to enable real-time manipulation and response to sonic events. The Jamodrum [23] software elicits a "call and response" behavior as a means of orchestrating the players' experience and allowing opportunities for individuals to take turns in order to hear their contributions to the overall mix. The Tooka [34], was specifically designed for two players with the idea of suspending the need for turn-taking protocols entirely. In other experiences such as Currents of Creativity [3], software limits the player's interactions.
+2.9 Pathway to Expert Performance
+Ideally, a collaborative musical instrument would be initially easy to learn. On the other hand, musical expression is something that requires mastery of an instrument before subtlety can be achieved. Over time and with practice, a player can continue to refine their range of musical expression and become an expert. Traditional acoustic musical instruments have different entry levels for players to become musically adept. However, they all share the capacity to provide subtle forms of musical expression as players develop their skills. Supporting a pathway to expert performance is difficult because the ease of learning is often realized by restricting the range of musical possibilities available to the player through computer-mediation. Nevertheless, it is exactly this broader range of musical possibilities that is necessary for expressive expert performance. The evaluation of any collaborative instrument necessitates balancing this trade-off between speed of learning and musical capability.
+2.10 Level of Physicality between Players (and Interface)
+The availability of new sensors and computer interfaces for building novel musical controllers allows the creation of instruments that can involve virtually every part of the human
+
+NIME03-132
+
+Proceedings of the 2003 Conference on New Interfaces for Musical Expression (NIME-03), Montreal, Canada
+
+body including brain waves, muscle activations [9] and tongue movements [35]. Many collaborative instruments encourage various levels of movement, gesture, touch, and physical interactions such as dancing with strangers in highly customized environments. These design strategies lay the foundation for developing intimate personal connections with other players and their instruments over relatively short periods of time, and also help foster a sense of community. Frequently, it is the group ambience and development of synergistic relationships between players, rather than the interface itself, that leads to positive communal experiences.
+3. CONCLUSION
+"Interactive instruments embody all of the nuance, power, and potential of deterministic instruments, but the way they function allows for anyone, from the most skilled and musically talented performers to the most unskilled members of the large public, to participate in a musical process." (Chadabe, 2002) [36]
+In conclusion, there are many challenging issues only beginning to be understood as they relate to the experience of collaborative instruments and computer-mediated experiences. Crafting interaction to create a satisfying and aesthetic musical encounter relies on the fulfillment of the basic qualities of social desire and human experience. Finding a balance between ease-of-learning, type of control (i.e. discrete versus continuous control), level of cross-modal interaction and support of virtuosity varies for every instrument and interface, depending on the functionality designers address. Issues of complexity and simplicity must be balanced as well. Building in enough depth to sustain interest while providing easy entry for first-time players is challenging in any environment. Multimodal inputs can assist with easy access for novices and still provide greater depth of expression for musicians. The reality of designing for public spaces is that an installation's flow-through capacity may translate into people having as little as three to five minutes to experience the act of playing music together.
+Particularly when designing for novice players, it seems clear that the overriding similarity between systems is that the overall experience takes precedence over the generation of music itself. Music and sound are still significant aspects of the experience, but the ability to control individual notes, harmonies, melodies, and so forth, is not the most important factor to a non-musical person in determining whether or not an interface is engaging. The opportunities for social interaction, communication, and connection with other participants is of paramount importance to the players' comfort with the interface. Ultimately, this will lead to a sense of community, even with strangers, in a public setting. While the affordances of the sensors and interface should be transparent to the players, understanding their individual impact on the system is critical. This can be achieved through the use of music, lights, images, sound effects, or a broad range of other possibilities; anything that supports the intentions of the players will serve to reinforce the perception of a highly responsive system.
+4. REFERENCES
+[1] Csikszentmihalyi, M. (1990), Flow: The Psychology of Optimal Experience, Harper Perennial, 1990.
+[2] Fels, S. (2000), Intimacy and Embodiment: Implications for Art and Technology, Proceedings of the ACM Conference on Multimedia, 2000, pp. 13-16.
+[3] D'Arcangelo, G. (2001), Creating Contexts of Creativity: Musical Composition with Modular Components, In Proceedings of the 1st Workshop on New Interfaces for
+
+Musical Expression (NIME01), ACM SIGCHI, 2001, electronic proceedings.
+
+[4] Wessel, D., and Wright, M. (2001), Problems and
+Prospects for Intimate Musical Control of Computers, In Proceedings of the 1st Workshop on New Interfaces for Musical Expression (NIME01), ACM SIGCHI, 2001,
+electronic proceedings.
+
+[5] Paradiso, J. (1997), Electronic music interfaces: new ways to play, IEEE Spectrum Magazine, Vol. 34, No. 12, 1997, pp. 18-30.
+
+[6] Cutler, M., Tobari, G., and Bean (2000), "OuterLimits," Electronic Musician Magazine, August 2000, pp. 4972.
+
+[7] Cook, P. (2001), Principles for Designing Computer Music Controllers, In Proceedings of the 1st Workshop on New Interfaces for Musical Expression (NIME01),
+ACM SIGCHI, electronic proceedings.
+
+[8] Robson, D. (2001), PLAY!:Sound Toys For the Non Musical, In Proceedings of the 1st Workshop on New Interfaces for Musical Expression (NIME01), ACM
+SIGCHI, electronic proceedings.
+
+[ 9 ] Tanaka, A. and Knapp, R.B. (2002), Multimodal
+Interaction in Music Using the Electromyogram and Relative Position Sensing, In Proceedings of the 2nd International Conference on New Interfaces for Musical Expression(NIME02), 2002, pp. 43-48.
+
+[10] Verplank, B. (2001), A Course on Controllers, In Proceedings of the 1st Workshop on New Interfaces for Musical Expression (NIME01), ACM SIGCHI, 2001,
+electronic proceedings.
+
+[11] Weinberg, G. and Gan, S. (2001), The Squeezables: Toward an Expressive and Interdependent Multiplayer Musical Instrument, Computer Music Journal, 25:2, 2001, pp. 37­45.
+
+[12] Orio, N, Schnell, N, Wanderley, M. (2001), Input Devices for Musical Expression: Borrowing Tools from HCI, In Proceedings of the 1st Workshop on New Interfaces for Musical Expression (NIME01), ACM SIGCHI, 2001,
+electronic proceedings.
+
+[13] Weinberg, G., Aimi, R., and Jennings, K. (2002), The
+Beatbug Network: A Rhythmic System for Interdependent Group Collaboration, In Proceedings o f the 2nd International Conference on New Interfaces for Musical Expression(NIME02), 2002, pp. 107-111.
+
+[14] Paradiso, J., Hsiao, K., Benbasat, A. (2001), Tangible Music Interfaces using Passive Magnetic Tags, In Proceedings of the 1st Workshop on New Interfaces for Musical Expression (NIME01), ACM SIGCHI, electronic
+proceedings.
+
+[15] Mott, I. and Sosnin, J. (1997), Sound Mapping: An
+
+Assertion
+
+of
+
+Place,
+
+Interface'97:
+
+http://www.reverberant.com/SM/paper.htm accessed on
+
+Oct 18, 2002.
+
+[16] Weinberg, G. (2002), The Aesthetics, History, and Future Prospects of Interdependent Music Networks, Computer Music Journal, Göteborg, Sweden: International Computer Music Association, 2002, pp. 349-356.
+
+[17] Gresham-Lancaster, S. (1998). "The Aesthetics and History of the Hub: The Effects of Changing Technology on Network Computer Music." Leonardo Music Journal vol. 8, 1998, pp. 39-44.
+
+NIME03-133
+
+Proceedings of the 2003 Conference on New Interfaces for Musical Expression (NIME-03), Montreal, Canada
+
+[18] Paradiso, J. (1999), The Brain Opera Technology: New
+Instruments and Gestural Sensors for Musical Interaction and Performance, Journal of New Music Research, 28(2), 1999, pp. 130-149.
+
+[19] Machover, T. (1996), Brain Opera, In Memesis: The Future of Evolution. Ars Electronica Editions, Linz, Austria, 1996.
+
+[20] Jordà, S. (1999), Faust Music On Line: An Approach t o
+Real-Time Collective Composition on the Internet, Leonardo Music Journal, Vol. 9, 1999, pp. 5-12.
+
+[21] Hall, G. (2002), Bands Without Borders, Electronic Musician Magazine, October 2002, pp. 72-86.
+
+[22]
+
+Blaine, T. and Forlines, C. (2002), JAM-O-WORLD:
+Evolution of the Jam-O-Drum into the Jam-O-Whirl Gaming Interface, In Proceedings of the 2nd International Conference on New Interfaces for Musical Expression(NIME02), 2002, pp. 17-22.
+
+[23] Blaine, T., and Perkis, T. (2000), The Jam-O-Drum
+Interactive Music System: A Study in Interaction Design. DIS2000 Conference Proceedings, 2000, pp.
+165-173.
+
+[24] Fels, S. and Mase., K. (1999), Iamascope: A Graphical Musical Instrument, Computers and Graphics, Vol. 2, No. 23, 1999, pp. 277-286.
+
+[25] Jacobson, L., Blaine, T., and Pacheco, C. (1993). Time for Technojuju, New Media Magazine, January, 1993, pp.18.
+
+[26] Pardue, L. and Paradiso, J. (2002) Musical Navigatrics:
+New Musical Interactions with Passive Magnetic Tags. In Proceedings of the 2nd International Conference on New Interfaces for Musical Expression (NIME02), 2002,
+168-176.
+
+[27] Poupyrev, I., Berry, R., Billinghurst, M., Kato, H., Nakao, K., Baldwin, L., Kurumisawa, J. (2001), Augmented Reality Interface for Electronic Music Performance. In proceedings of the 9th International Conference on Human-Computer Interaction (HCI International 2001), 2001, pp. 805-808.
+
+[28] Iwai, T. (1998), Composition on the Table, exhibition at Millennium Dome 2000, London, UK, 1998.
+
+[29] Möller, C. (1997), Audio Grove, Exhibition: Spiral Art
+
+C e n t e r , Tokyo, M a y ,
+
+1997,
+
+http://users.design.ucla.edu/projects/arc/cm/cm/staticE
+
+/page8.html accessed on Nov. 7, 2002.
+
+[30] Fels, S., Nishimoto, K., and Mase, K. (1997),
+MusiKalscope: A Graphical Musical Instrument, Proceedings of IEEE International Conference on Multimedia Computing and Systems, 1997, pp. 55-62.
+
+[31] Norman, D. (1990), The Design of Everyday Things, Currency/Doubleday, 1990.
+
+[32] Ask, E. (2001), Speaking Orbs - Interactive MultiParticipant Sound Sculpture, Demonstration at the 1st Workshop on New Interfaces for Musical Expression (NIME01), ACM SIGCHI, 2001, electronic proceedings.
+
+[33] Cirigliano, G. and Villaverde, A. Dinámica de grupos y educación: fundamentos y técnicas. Buenos Aires, Argentina. Editorial Hvmanitas, 1966.
+
+[34] Fels, S. and Vogt, F. (2002), Tooka: Exploration of Two Person Instruments, In Proceedings of the 2nd International Conference on New Interfaces for Musical Expression(NIME02), 2002, pp. 116-121.
+
+[35] Vogt, F. and McCaig, G. and Ali, A. and Fels, S. (2002), Tongue 'n' Groove. In Proceedings of the 2nd International Conference on New Interfaces for Musical Expression(NIME02), 2002, pp. 60-64.
+
+[36] Chadabe, J. (2002), The Limitations of Mapping as a Structural Descriptive in Electronic Instruments. I n Proceedings of the 2nd International Conference o n New Interfaces for Musical Expression (NIME02), 2002,
+pp. Keynote-2-i-v.
+
+NIME03-134
+
+

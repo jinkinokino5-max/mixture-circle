@@ -1,0 +1,209 @@
+Two Shared Rapid Turn Taking Sound Interfaces for Novices
+
+Anne-Marie Skriver Hansen
+PhD student, Architecture, Design and Media Technology
+Aalborg University, Denmark Niels Jernes Vej 14, A5-206
+DK-9220 Aalborg Ø Email: amhansen@create.aau.dk
+
+Hans Jørgen Andersen
+Associate Professor, Arcitecture, Design and Media Technology Aalborg University, Denmark
+Niels Jernes Vej 14, 3-111 DK-9220 Aalborg Ø
+Email: hja@create.aau.dk
+
+Pirkko Raudaskoski
+Associate Professor, Communication Aalborg University, Denmark Krogstræde 3, 5-223 DK-9220 Aalborg Ø Email: pirkko@hum.aau.dk
+
+ABSTRACT
+This paper presents the results of user interaction with two explorative music environments (sound system A and B) that were inspired from the Banda Linda music tradition in two different ways. The sound systems adapted to how a team of two players improvised and made a melody together in an interleaved fashion: Systems A and B used a fuzzy logic algorithm and pattern recognition to respond with modifications of a background rhythms. In an experiment with a pen tablet interface as the music instrument, users aged 10-13 were to tap tones and continue each other's melody. The sound systems rewarded users sonically, if they managed to add tones to their mutual melody in a rapid turn taking manner with rhythmical patterns. Videos of experiment sessions show that user teams contributed to a melody in ways that resemble conversation. Interaction data show that each sound system made player teams play in different ways, but players in general had a hard time adjusting to a non-Western music tradition. The paper concludes with a comparison and evaluation of the two sound systems. Finally it proposes a new approach to the design of collaborative and shared music environments that is based on "listening applications".
+Keywords
+Music improvisation, novices, social learning, interaction studies, interaction design.
+1. INTRODUCTION
+Collaborative music interfaces have formed a special topic in the research into new interfaces for musical expression, as well as part of an ongoing development of mainstream computer games and popular music performance instruments [5][7][9]. This paper contributes to research into collaborative music improvisation interfaces for novices: [2][3][4][10][11]. The mentioned research introduces ways in which groups of people can express themselves musically in a social setting. They explore ways in which a digital sound system can mediate mutual user action captured by a shared physical interface and map parameters of physical expression to musical expression. When designing the experiments presented in this paper we were inspired by a specific musical style that links two or more musicians in a music performance and improvisation. The music tradition used is that of the Banda Linda horn orchestras, where each musician contributes with one to two tones in an interleaved fashion with other members of an ensemble [1].
+Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. NIME'12, May 21-23, 2012, University of Michigan, Ann Arbor. Copyright remains with the author(s).
+
+This kind of musical expression requires that each musician is highly aware of the others while playing. Our challenge was to design a music interface that would allow novices (nonmusicians) to express themselves while obtaining awareness towards the other user's actions. We designed two different kinds of sound systems, system A and B that provided users with two different ways of taking turns adding to a shared melody. In addition to this, the two sound systems used two different methods of real-time measurement of mutual user action: Systems A used a fuzzy logic algorithm to detect turn taking tendencies. System B used pattern recognition as a way to identify specific turn taking relationships. The real-time "results" of the two different measurement methods were mapped to a background rhythm that adapted to rhythmical aspects of the two users' shared melody: The background rhythm was changed through "sonic rewards" that consisted of modifications and "add-ons" to a ground rhythm. The objective of the study was to understand how users, or players, as we would like to call them, activated tones according to a changing background rhythm. The hypothesis was that players would hear that the background rhythm changed according to their play, and that they in turn would adjust their play in order to modify the background rhythm. Results show that in both systems there were a few signs that players collaborated about changing the shared melody in order to obtain sonic rewards. In most teams, however, players seemed to hear that their play had an effect on the background rhythm, but they were not aware of what to do in order to make specific changes to the background rhythm. The main finding of this study was that in the design of "active music listening" applications [6] for novices, it is essential to include any user's natural ways of expression when trying to match them with any type of musical framework, especially when it comes to the practice of free improvisation. Based on our experiences presented in this paper, we suggest to design "listening interfaces" that focus on the kind of musical expression that novice players immediately engage in when using a particular physical interface with a corresponding shared electronic music instrument.
+2. A SHARED INTERFACE ADAPTING
+TO RHYTHMICAL RELATIONSHIPS
+Firstly, the sound systems A and B were based on the principles of Banda Linda horn orchestras in two different ways. In sound system A, each player could play a "phrase" of pitches that would form part of a melody. In sound system B, each player could only play one pitch per "phrase", and therefore only contribute with one single note at a time. Secondly, the designs were inspired by Pachet's interactive music instrument called
+
+"the Continuator", where a single player takes turns playing with a keyboard. The keyboard listens to a player who plays notes and the keyboard responds after a while with a melody that consists of modified forms of the melodic material [9]. In sound system A and B "sonic rewards" happened based on a selection of characteristic rhythmical relationships found in the timing of turn activations and turn lengths in the players' melody. We used the term sonic reward, because we believed that rhythmical "effects" would work as sonic reward system similar to a visual point system and encourage players to take turns in a varied rhythmical fashion. The two sound systems did not have any visual interface. Players were to play the pen tablets as music instruments and listen to the sonic result of their play. Five teams tried sound system A (team 1-5a) and six teams tried sound system B (team1-6b). Players participated in fifteen minute long experiment sessions. First each sound system was demonstrated to the player teams, after which the teams played together for five minutes (see figure 1).
+Figure 1. Diagram over experiment setup. Two pen tablets were connected to a laptop that recorded and stored all interaction data relevant to software events into data files [A]. A camera video filmed and stored documentation of two players' collaboration into a video database [B]. A speaker placed behind each player played individual tone sounds and the background rhythm.
+A pen tablet was used as a "music instrument". This interface has previously been used as a music instrument in [12]. It turned out that this interface had a significant effect on the musical outcome.
+2.1 Using a three-step design process
+For the design of the two sound systems we used a three-step design process (see table 1). In both systems players were sonically rewarded according to significant rhythmical relationships that they engaged in on the fly. It is important to point out that there are many forms of "significant" rhythmical relationships and that we focused on only a few (see tables 24). Also, we point out that the rewarding systems only had short-term memory of one or two bars (one or two cycles of the ground rhythm, corresponding to a time frame of roughly 2 seconds). In both systems the pen tablet was divided into two rows of eight keys or pitch fields. The two rows of eight pitches belonged in the G-major scale and were one octave apart with the "high" pitches in the upper row and "low" pitches in the lower row. Each player would have to take turns by playing parts of a melody and play a sort of sonic "exquisite corpse". Both sound systems understood a melody part as one "turn activation": Something that happened when a player touched the tablet with his/her pen. If a player tapped a second time
+
+with his/her pen, the player would not get any sound until the other player had activated a tone.
+Table 1. Three step design process
+Design of sonic expression ­ the individual electronic music instruments.
+Design of an analysis system that listened to the turn taking rhythm of two players.
+Design of a sonic reward system that changed a ground rhythm and accompanied the ground rhythm with drum
+thrills.
+
+Sound systems A and B differed in the following way: If a player in sound system A touched the tablet and moved the pen across the tablet, the player could play several pitches within the same turn activation. In sound system B pen movement did not cause any pitch changes. Each player only had one pitch available per turn activation, so the player would have to lift the pen and put it in a new pitch field in order to activate a new pitch. The two sound systems produced a rhythmical accompaniment to the melody that two players made. This rhythmical accompaniment consisted of a "ground rhythm" that repeated itself every bar. In addition to the ground rhythm short drum thrills and melody snippets were added. System A and B shared part of the turn taking rhythm interpretation algorithms. The following diagram (see table 2) displays the mappings between turn taking interpretation algorithms and the ground rhythm modifications. Every time players performed one of the following co-actions, the ground rhythm was immediately modified.
+Table 2. How player action influenced the ground rhythm.
+
+Cause
+
+Effect
+
+a) activating tones at the same time (tapping)
+
+mirror the next part (2/4 beats) of the ground rhythm and a drum thrill
+
+b) ending tone at the same time (lifting pen)
+
+repeat the next part (2/4 beats) of the ground rhythm and a drum thrill
+
+c) short* break between turn add a beat after 'now' activations (*up to 300 ms) - use last heard drum sound
+
+d) activating tones in time offset the next part (2/4
+
+with the 4/4 pulse beat
+
+beats) of the ground rhythm
+
+e) more than 4 pitch shifts delete next beat after 'now'
+
+per bar (rhythm cycle)
+
+- this caused a break
+
+f) if the time between turn activations has been regular over the last three tones
+
+increase or decrease the pace of the ground rhythm between 90 to 140 beats per minute.
+
+System A and B differed in the way they analyzed the turn activation rhythm of the two players: Sound system A used fuzzy logic algorithms to look for temporal tendencies in turn activations and turn lengths. If selected tendencies were detected they activated different drum thrills or "effects", as the players liked to call them (see table 3). They reacted upon turn activations within the last one-two bars of the accompanying ground rhythm. Sound system B used a library of rhythmical patterns to compare to the rhythm of the players' turn
+
+activations (see table 4). When players activated tones in a rhythm that matched one of the rhythm patterns in the library, they would activate a corresponding drum thrill or a short melody snippet. The library contained simple rhythmical patterns where most beats where positioned on the main 4/4 rhythm beats.
+
+Table 3. How player action influenced the ground rhythm.
+
+Cause
+
+Effect
+
+a) activating tones at the same time (tapping)
+
+mirror the next part (2/4 beats) of the ground rhythm and a drum thrill
+
+b) ending tone at the same time (lifting pen)
+
+repeat the next part (2/4 beats) of the ground rhythm and a drum thrill
+
+c) short* break between turn add a beat after 'now' activations (*up to 300 ms) - use last heard drum sound
+
+d) activating tones in time offset the next part (2/4
+
+with the 4/4 pulse beat
+
+beats) of the ground rhythm
+
+e) more than 4 pitch shifts delete next beat after 'now'
+
+per bar (rhythm cycle)
+
+- this caused a break
+
+f) if the time between turn activations has been regular over the last three tones
+
+increase or decrease the pace of the ground rhythm between 90 to 140 beats per minute.
+
+Table 4. Sound system A. The fuzzy logic algorithm that found temporal tendencies in turn activations among players.
+
+Analysis principle
+
+Current implementation
+
+a) is there a majority of short tones? (every bar)
+
+play thrill a if more than 75% of all tones within last bar were short.
+
+b) are pause and tone
+
+Play thrill b if one tone and
+
+durations of similar lengths? the following pause were of
+
+(every bar)
+
+similar length*.
+
+c) do players overlap each other? (ever bar)
+
+play thrill c if players overlap each other more than once.
+
+d) amount of short breaks (every 2nd bar)
+
+play thrills d1 and d2, if the amount of short breaks were >11<15 and >16 respectively.
+
+e) similarity (in percentage) play thrill e if the similarity of rhythmical turn activation is more than 90 %. between last two bars.
+
+f) majority of long tones (every 2nd bar)
+
+If four long* tones are registered, play thrill f
+
+g) short tone, long tone pattern (every 2nd bar)
+
+play thrill g if a short* and a long* tone followed each other more than once.
+
+h) short pause, long pause pattern (every 2nd bar)
+
+play thrill h if a short* and a long* pause followed each other more than once.
+
+* Note: We used three tone and pause length thresholds:
+
+"short" = 1-2/16, "medium" = 3-8/16, "long" = 9-16/16
+
+Table 5. Sound system B. Two examples of rhythm patterns from the library.
+
+1&2&3&4&
+
+X
+
+X
+
+X
+
+1&2&3&4&
+
+X
+
+XXX
+
+3. INTERACTION DATA RESULTS
+To sum up, the two sound systems were designed to challenge players to take turns making a melody. The rhythm of their turns would modify a background rhythm and drum thrills and melody snippets would be added to the ground rhythm. Through visual inspection of graphs that showed time between turn activations we noticed the following: a) periods in which player teams engaged in "rapid turn taking" that changed the background rhythm and b) temporal changes in turn taking: which kinds of rhythmical effects were activated in the background rhythm.
+3.1 Periods of Rapid Turn Taking
+If players were to affect the background rhythm, they would have to take turns within the last two bars of the background rhythm. Roughly speaking, players had to take turns within two seconds. Interaction data of turn lengths show that only in small sections did player teams manage to take turns rapidly and get sonic rewards. In sound system A most teams had brief sessions of rapid turn taking throughout their play sessions. Here one of the players would introduce a short phrase, but this did not make the other player engage in rapid turn taking. This indicates that player teams were not able to engage in the kind of rapid turn taking that would modify the ground rhythm. In sound system B the rapid turn taking sessions were a bit longer, compared to system A, yet not long enough that rapid turn taking could be defined as the main play style. However, in 3 out of 6 system B play sessions the players' turns were all around 2 seconds ­ at the limit of what we defined as "rapid turn taking".
+3.2 Temporal Changes in Turn Taking
+In sound system A, players had more irregular play and long breaks between turn activations. This could indicate that players tried to vary their rhythm and obtain different rhythmical effects. In sound system B player teams were continuously active: fewer and smaller breaks than in sound system A. In the videos player teams seemed to be less aware that the rhythm of activated tones affected the background rhythm.
+4. VIDEO ANALYSIS
+This section describes how a player team activated tones according to the background rhythm when using the two sound systems.
+4.1 Notes about the Drawing Interface
+The fact that players used a pen tablet interface influenced their play: The drawing-like interface encouraged players to make continuous lines of melodies, instead of tapping rhythms. In sound system A a turn would often stretch across several cycles of the rhythm. The fact that players could play phrases of melodies based on pitch changes (without lifting their pens from the tablet) made it possible to play an entire melody within one turn activation. It was clear that each player felt that
+
+s/he only had "used their turn" when they had played an entire melody phrase (see appendix, video1). Players made a rhythm based on pitch changes and not pen lifts (see appendix, video 2). Because players made phrases that contained multiple pitches, they did not explore different turn taking rhythms, and they did not learn which kinds of turn taking rhythms caused which "effects". To some players it seemed like the accompanying rhythm was too much of a "background" component. Players mostly seemed to notice long drum thrills, not so much the changes that were made to the ground rhythm itself. When drum thrills appeared, some players would turn their heads and look at the computer screen. The screen did not give any indication of points, but in team 2a players interpreted the screen so that there, to them, would be an indication of points when they heard a drum thrill (see appendix, video 3). While trying sound system A, players "drew" or "wrote" melodies by spelling words and drawing shapes. In team 2a players used drawing rhythms as a method to get drum thrills: They made sure that they timed their drawings of lines correctly (see appendix, video 4). In sound system B the possibility of changing pitch while moving the pen did not exist. It was clear on the videos that players were frustrated with only having one pitch per turn. They kept drawing with their pens across the tablet to change pitch (see appendix, video 5). System B seemed to be counter-intuitive to the use of a drawing board where a lot can be accomplished in one stroke. In team 4b players tried different tone combinations by playing simultaneously in different fields (see appendix, video 6).
+4.2 When Rapid Turn Taking Happened
+As seen in interaction data, team 5b managed to have a few sessions with rapid turn taking. The first time the player team engaged in rapid turn taking, they were encouraged by the experiment instructor to "play fast after each other". The way they played was a bit mechanical: Each player activated tones at the same pace. This caused a lot of drum thrills to happen, and both team members listened carefully. However, at the end of the play session, it did not seem clear to them which turn taking rhythms caused which "effects" to happen (see appendix, video 7). The second time team 5b engaged in rapid turn taking, one of the team members suggested that they would play "fast" again. This required concentration and planning: The player who suggested to play fast was placed so that he faced the other player, and he verbally suggested which kind of rhythm they should play. He also instructed the other player to lift his pen, so that he did not make a tone that was too long.
+5. DISCUSSION
+In summary a team of players were challenged to continue each other's melody by taking turns adding tones to the melody. The rhythm of turn activations would modify a background rhythm and/or different drum thrills and melody snippets were added. In both sound systems each player's turn lasted about 2 seconds or more. This shows that it was difficult for players to negotiate a rhythm of turns tone by tone amongst each other. In sound system A the rhythm of pitch changes overwrote the rhythm of turn activations. Most player teams did not change the rhythm of the turn activations in order to modify the background rhythm. When teams were aware that they changed the background rhythm they thought that their changes were caused by what/how they drew, and not by the rhythm of their pen taps. The idea of taking turns making a rhythm in an interleaved manner was too challenging for players who were non-musicians. Team 5, who managed to modify the background rhythm, had to plan co-play to a very high degree. For future studies we propose to design and use of "listening components" that register play tendencies in different types of
+
+shared electronic music instruments. Based on real-time results from such listening components, shared music instruments that adapt to typical play tendencies found in "novice play" can be developed.
+6. ACKNOWLEDGMENTS
+Our thanks to students and music teachers in two ground schools in Aalborg, Denmark for your participation and ideas.
+7. REFERENCES
+[1] Arom, S. African Polyphony and Polyrhythm ­ Musical Structure and Methodology. Published in French by SELAF. Translated by Thom, M, Tuckett B. and Boyd, R, Cambridge: Cambridge University Press, UK, 1991.
+[2] Blaine T. and Forlines, C. JAM-O-WORLD: Evolution of the Jam-O-Drum Multi-player Musical Controller into the Jam-O-Whirl Gaming Interface. In Proceedings of New Interfaces for Musical Expression (NIME'02) (Dublin, Ireland, May 24-26, 2002). ACM Press 2002, 1-6.
+[3] Blaine, T. and Fels, S. Contexts of Collaborative Musical Experiences'. In Proceedings of New Interfaces of Musical Expression (NIME'03) (Montreal, Canada, May 22-24 2003). ACM Press 2003, 129-134.
+[4] Cappelen, B. and Andersson, A.P. Expanding the Role of the Instrument. In Proceedings of New Interfaces for Musical Exploration (NIME'11) (Oslo, Norway, May 30June1, 2011). ACM Press 2011, 511-514.
+[5] Jordà, S., Geiger, G., Alonso, M., Kaltenbrunner, M. The reacTable: Exploring the Synergy between Live Music Performance and Tabletop Tangible Interfaces. In Proceedings of Tangible Embedded and Embodied Interaction (TEI'07) (Baton Rouge, Louisiana, USA, February 15-17, 2007) ACM Press, 2007, 139-146.
+[6] Leman, M. Embodied Music Cognition and Mediation Technology. MIT Press. Massechussets Institute of Technology, 2008.
+[7] Nishibori, Y. Iwai, T. Tenori-On. In Proceedings of New Interfaces for Musical Expression (NIME'06) (Paris, France, June 4-8, 2006). ACM Press, 2006, 172-175.
+[8] Pachet, F. On the Design of a Musical Flow Machine. In A Learning Zone of One's Own, Tokoro and Steels Eds, IOS Press, 2004.
+[9] Swift, B., Gardner, H., Riddell, A. Engagement Networks in Social Music-making. In proceedings of OZCHI 2010 (OZCHI'10) (Brisbane, Australia, November 22-26, 2010), 104-111.
+[10] Weinberg, G., The Beatbug ­ Evolution of a Musical Controller. Francis & Tailor, Routledge, Digital Creativity 19:1 (Mar. 2008), 3-18.
+[11] Weinberg, G. Interconnected Musical Networks: Toward a Theoretical Framework. Computer Music Journal, vol. 29, No. 2 (Jun. 2005), 23-29.
+[12] Zbyszyski, M. et al. Ten Years of Tablet Musical Interfaces at CNMAT. In Proceedings of New Interfaces of Musical Expression (NIME'07) (New York, New York, USA, June 6-10). ACM Press, 2007, 100-105.
+8. Appendix
+Please use the password amsh2012jan in order to see the following videos: Video 1: http://vimeo.com/32434250 Video 2: http://vimeo.com/32433791 Video 3: http://vimeo.com/32436711 Video 4: http://vimeo.com/32437870 Video 5: http://vimeo.com/32438459 Video 6: http://vimeo.com/32439358 Video 7: http://vimeo.com/36071240
+
+

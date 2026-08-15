@@ -1,0 +1,161 @@
+PLOS ONE
+
+RESEARCH ARTICLE
+A brief and efficient stimulus set to create the inverted U-shaped relationship between rhythmic complexity and the sensation of groove
+
+a1111111111 a1111111111 a1111111111 a1111111111 a1111111111
+
+Jan StupacherID1,2*, Markus Wrede3, Peter Vuust1
+1 Department of Clinical Medicine, Center for Music in the Brain, Aarhus University & The Royal Academy of Music Aarhus, Aalborg, Denmark, 2 Institute of Psychology, University of Graz, Graz, Austria, 3 Department of Clinical Medicine, Aarhus University, Aarhus, Denmark * stupacher@clin.au.dk
+Abstract
+
+OPEN ACCESS
+Citation: Stupacher J, Wrede M, Vuust P (2022) A brief and efficient stimulus set to create the inverted U-shaped relationship between rhythmic complexity and the sensation of groove. PLoS ONE 17(5): e0266902. https://doi.org/10.1371/journal. pone.0266902
+Editor: Jessica Adrienne Grahn, University of Western Ontario, CANADA
+Received: November 18, 2021
+Accepted: March 29, 2022
+Published: May 19, 2022
+Copyright: © 2022 Stupacher et al. This is an open access article distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited.
+
+When listening to music, we often feel a strong desire to move our body in relation to the pulse of the rhythm. In music psychology, this desire to move is described by the term groove. Previous research suggests that the sensation of groove is strongest when a rhythm is moderately complex, i.e., when the rhythm hits the sweet spot between being too simple to be engaging and too complex to be interpretable. This means that the relationship between rhythmic complexity and the sensation of groove can be described by an inverted U-shape (Matthews 2019). Here, we recreate this inverted U-shape with a stimulus set that was reduced from 54 to only nine rhythms. Thereby, we provide an efficient toolkit for future studies to induce and measure different levels of groove sensations. Pleasure and movement induction in relation to rhythmic complexity are emerging topics in music cognition and neuroscience. Investigating the sensation of groove is important for understanding the neurophysiological mechanisms underlying motor timing and reward processes in the general population, and in patients with conditions such as Parkinson's disease, Huntington's disease and motor impairment after stroke. The experimental manipulation of groove also provides new approaches for research on social bonding in interpersonal movement interactions that feature music. Our brief stimulus set facilitates future research on these topics by enabling the creation of efficient and concise paradigms.
+
+Data Availability Statement: All relevant data are within the paper and its Supporting information file.
+
+Funding: The Center for Music in the Brain is funded by the Danish National Research Foundation (DNRF 117, awarded to PV). JS is supported by an Erwin Schro¨dinger fellowship from the Austrian Science Fund (FWF) [J-4288]. This research was funded in whole, or in part, by the Austrian Science Fund (FWF) [J-4288, awarded to JS]. For the purpose of open access, the author has applied a CC BY public copyright license to any
+
+Introduction
+In music psychology, the experience of groove is often defined as a pleasurable state of wanting to move one's body in relation to the pulse of a musical rhythm [1­4]. Recent findings suggest that we feel a strong desire to move our bodies when listening to music with a moderate amount of rhythmic complexity, whereas in comparison, low and high amounts of rhythmic complexity decrease our desire to move [5, 6]. Consequently, the relationship between rhythmic complexity and the sensation of groove can be described by an inverted U-shape. Besides
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+1/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+
+Author Accepted Manuscript version arising from this submission.
+Competing interests: The authors have declared that no competing interests exist.
+
+rhythmic complexity, Matthews and colleagues [5] investigated the influence of harmonic complexity on the sensation of groove and found that wanting to move ratings were similar for low and moderately complex harmonies, but dropped for a highly complex harmony. The present study tests whether these effects of rhythmic and harmonic complexity can be replicated with a subset of nine stimuli from the original set of 54 stimuli used by Matthews and colleagues [5].
+Rhythmic complexity, and the related affective and behavioral responses, play important roles in recent research on music-supported movement therapies, social bonding, and neurophysiological mechanisms underlying motor timing and reward processes. Predicting how music unfolds and develops over time is a rewarding, pleasurable process [7, 8] that involves neural auditory-motor interactions [9, 10]. With music that is rated as high-groove, neural auditory-motor interactions are more affected than with low-groove music [4]. Music that facilitates the sensation of groove might therefore be especially effective in therapeutic programs for improving body movements in individuals with conditions such as Parkinson's disease, Huntington's disease and motor impairment after stroke [11, 12]. Importantly, in patients with motor impairments, the most groove-inducing rhythms might be shifted from moderate to low rhythmic complexities when compared with healthy control participants [13]. A similar shift of the inverted U-shape towards simpler rhythms could also occur for cochlear implant users--but research on this topic is lacking.
+Rhythmic complexity is also important for social bonding in interpersonal movement interactions that feature music. A clear perception of the temporal structure of music is crucial for providing a meaningful social context in which the movements of oneself and others can be interpreted and evaluated. Interestingly, recent findings suggest that a moderate level of rhythmic complexity may be favorable for social bonding when moving together with music: The feeling of social closeness tends to follow an inverted U-shape in relation to rhythmic complexity [14]. Although the inverted U-shape of rhythmic complexity can also be found in social interactions, it remains an open question whether and how groove experiences differ in individual and social contexts.
+Combined with neuroimaging, groove research can help us understand the role of motor and reward networks when making and listening to music [4, 15, 16]. In neuroimaging, but also in behavioral studies, one of the outstanding questions is how rhythmic and harmonic complexity contribute to motor behavior, reward and pleasure. To facilitate future research on all of the previously mentioned topics, we present a brief stimulus set of nine rhythms that reproduces the effects of rhythmic and harmonic complexity found in an experiment by Matthews and colleagues [5] with a stimulus set of 54 rhythms.
+
+Method
+Participants
+Data were collected in an online questionnaire completed by 174 participants. Five participants reported a history of motor-related neurological diseases and were excluded. The resulting 169 participants (116 female, 53 male) had a mean age of 25.1 years (SD = 6.1). One hundred fifty-one participants were Danish; the rest of the participants came from 13 different countries (Austria [n = 1], Belgium [1], Canada [1], France [2], Germany [3], Iceland [1], Lithuania [1], Mexico [1], Norway [2], South Korea [1], Sweden, UK [2], and Uruguay [1]). Twenty-five participants reported playing an instrument and singing, 75 participants reported playing an instrument but not singing, 14 participants reported singing but not playing an instrument, and 55 participants reported not playing an instrument and not singing. The sample size was comparable to Matthews and colleagues' [5] sample of 201 participants. The study was conducted in accordance with the guidelines from the Declaration of Helsinki and the
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+2/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+Danish Code of Conduct for Research Integrity and Aarhus University's Policy for research integrity, freedom of research and responsible conduct of research. All collected data included no personally identifiable information.
+Stimuli
+Nine audio clips were selected based on subjective musicality by author MW from a set of 54 stimuli used by Matthews and colleagues [5]. The audio clips were ten seconds long and consisted of rhythmic patterns played with one chord in a piano timbre. Every rhythmic pattern consisted of five onsets per bar, which were repeated for four bars in total. The rhythmic and harmonic complexity of the patterns had three levels. Rhythmic complexity varied between low, moderate and high levels of syncopation (Fig 1A). The chords were in D major and varied between low harmonic complexity (D major triad and two inversions), moderate harmonic complexity (four note chords with extensions), and high harmonic complexity (flat ninth interval between chord note and extension). For more information about the stimuli, see Matthews et al. [5]. Roughness was calculated with the MIR-toolbox [17] to estimate harmonic complexity of the selected stimuli. Pulse clarity (MIR toolbox) and syncopation index [5, 18] were calculated to estimate rhythmic complexity. Mean roughness was lowest for low harmonic complexity (188), followed by moderate (213), and high (266) harmonic complexity. Pulse clarity (PC) was highest and syncopation index (SI) was lowest for low rhythmic complexity (PC: 0.72, SI: 0), followed by moderate (PC: 0.31, SI: 4), and high (PC: 0.28, SI: 18) rhythmic complexity. For details on the calculations of the syncopation indices, see Fig 1B and 1C. The nine stimuli can be found online at https://researchbox.org/487.
+Procedure
+Each audio clip was presented once in randomized order. After each stimulus, participants rated the groove of the audio clip on a continuous slider ranging from "not groovy" on the left to "very groovy" on the right. The numerical values ranged from 1 on the left side to 101 on the right side, but participants could not see these values. Groove was defined as "wanting to move in time with the music" [1, 2, 4]. In contrast to Matthews et al. [5] who asked, "How much does this musical pattern make you want to move?" the present study directly mentioned the term groove and connected it to the urge to move with a musical rhythm.
+Results and discussion
+In line with previous research by Matthews et al. [5] and Witek et al. [6], groove ratings followed an inverted U-shape when plotted against rhythmic complexity, i.e. syncopation (Fig 2). The strongest sensation of groove was reported for patterns with a moderate amount of rhythmic complexity (M = 61.2, SD = 23.7), followed by low (M = 41.3, SD = 24.4) and high (M = 20.1, SD = 20.5) rhythmic complexity. The manipulation of harmonic complexity also led to similar results as in Matthews et al. (2019): Groove ratings were highest for low harmonic complexity (M = 47.3, SD = 29.0) followed by moderate (M = 43.5, SD = 27.4) and high (M = 31.8, SD = 26.4) harmonic complexity.
+An ANOVA on groove ratings with the within-subject factors rhythmic complexity and harmonic complexity revealed main effects of rhythmic complexity (F(2,1344) = 686.30, p < .001, 2 = .46) and harmonic complexity (F(2,1344) = 105.43, p < .001, 2 = .07) as well as an interaction between the two factors (F(4,1344) = 7.05, p < .001, 2 = .01). With the large effect size of 2 = .46, the factor rhythmic complexity may be more important for the sensation of groove than harmonic complexity, with a much smaller effect size of 2 = .07. This finding is in accordance with Matthews et al. [5], who suggest that "rhythm plays a primary role in generating
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+3/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+
+Fig 1. Description of the rhythms with metric weights and syncopation measures. A) Low, moderate and high rhythmic complexity (RC) stimuli. Each onset is represented by a dot () with the corresponding metric weight noted below. The eight-note hi-hat (×) is part of each of the three stimuli. B and C) Calculations of the syncopation index following Fitch and Rosenfeld (2007) and Matthews et al. (2019) for the moderate and high rhythmic complexity stimuli. A syncopation occurs when a rest (here at the eight-note level) is preceded by the onset of a note of lesser weight. The summed up differences between syncopated notes and rests make the syncopation index.
+https://doi.org/10.1371/journal.pone.0266902.g001
+the sensation of groove, with harmony providing a modulatory role through its effect on pleasure". It is important to note that the inverted U-shape of rhythmic complexity might be more prominent in a sample of professional musicians and less prominent in non-musicians in comparison to our sample of mixed musical expertise [5].
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+4/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+
+Fig 2. Groove ratings as a function of rhythmic and harmonic complexity. Dots represent mean groove ratings. Boxplots: The centerline represents the median. The lower and upper ends of the boxes correspond to the first and third quartiles. Whiskers represent lowest and highest values within 1.5 × interquartile range (IQR) from the lower and upper quartiles, respectively. Circles represent values outside 1.5 × IQR. ns = nonsignificant,  p < .001.
+https://doi.org/10.1371/journal.pone.0266902.g002
+The interaction between the two factors was unpacked with Bonferroni-corrected paired ttests (see Fig 2). Differences in groove ratings between low and moderate harmonic complexity were nonsignificant in stimuli with low and high rhythmic complexity, but significant in stimuli with moderate rhythmic complexity. All other pairwise comparisons between harmonic complexity levels within each rhythmic complexity level were significant (p < .001). Data of the individual participants can be found in S1 Table. In accordance with findings of Matthews et al. [5], our study provides further evidence for the assumption of an inverted U-shape relationship between rhythmic complexity and the sensation of groove. This inverted U-shape can be explained using the theory of predictive coding of music, in which it is proposed that music perception and action are shaped by bottom-up sensory input on one hand, and top-down predictive brain models on the other hand [19, 20]. According to the predictive coding of rhythm [20], a listener compares an internally generated predictive model with the actual sensory input. Music with moderate rhythmic complexity is regular enough for a listener to create a predictive mental model of beat and meter that is possible to move in time to, whereas the syncopations within the rhythm result in prediction errors. These prediction errors can be reduced either by updating the model to better align with the sensory input, or by changing the input, for example by moving one's body in time with the beat to add a proprioceptive dimension. In these ways, reducing prediction errors increases top-down engagement, embodiment, pleasure, and reward. If the rhythms are very simple, however, the predictions and the input match almost perfectly, leading to few prediction errors, and therefore fewer
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+5/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+updates of the predictive model and less top-down engagement. If the rhythms are very complex, the listener is unable to create an appropriate predictive model at all, precluding the possibility of updating the model. Compared to moderately complex rhythms, both very simple and very complex rhythms may therefore reduce top-down engagement, pleasure, and embodied experiences associated with updating and maintaining the predictive model.
+Syncopation is one of the most discussed musical features related to groove [5, 6, 16, 21­ 23], but it is of course not the only one. Other rhythmic and sonic features connected to the sensation of groove are energy in bass frequencies [24, 25], event density [22, 26] cf. [25], beat salience / pulse clarity [26] cf. [22, 25], and tempo [1] cf. [22] cf. [27]. Microtiming-- intended and expressive onset deviations from the metric grid in the range of a few tens of milliseconds--is another often-discussed feature of groove. However, empirical studies come to contradictory conclusions with positive, negative, and null effects of microtiming deviations on groove ratings (see e.g., [28] for an overview). The brief stimulus set presented here can be used to investigate how syncopation interacts with the above-mentioned features in evoking the sensation of groove.
+As the current musical stimuli are synthesized, their (micro)rhythmic and sonic features can be easily adapted for future experiments. Their synthesized nature also minimizes potential effects of familiarity that can occur with popular music [29]. However, the high control and internal validity associated with synthesized stimuli, a fully crossed randomized design, and individual data collection come with a decrease in ecological validity. Future experiments could therefore build on the recent findings by comparing synthesized versus performed versions of the stimulus set, and individual versus collective listening environments.
+The application-oriented conclusion of the present study is that the inverted U-shaped relationship between rhythmic complexity and the sensation of groove can be shown efficiently with a set of nine stimuli that are only rated once. The effects of harmonic complexity on groove ratings measured with this small stimulus set are also similar to the effects of the original study with 54 stimuli [5]. This is especially important for future studies on rhythm perception and the sensation of groove with time constraints and complex designs. The brief stimulus set facilitates efficient combinations of groove paradigms and clinical applications, such as Parkinson's, Huntington's, and stroke therapies, or cochlear implant research. Participants in most of these groups particularly profit from short paradigms. Furthermore, the stimulus set's conciseness is ideal for large-scale online experiments comparing participants who, for example, differ in cultural background, musical expertise, dance training, motor skills, empathy, or age. These types of groove research paradigms will help us to better understand the interplay between timing processes, movement, social behavior, and pleasure in music listening, music making, and dance.
+Supporting information
+S1 Table. Individual groove ratings of participants. The table shows all combinations of low, moderate, and high rhythmic complexities (LR, MR, and HR, respectively) with low, moderate, and high harmonic complexities (LH, MH, and HH, respectively). Ratings were given on a continuous scale from 1 on the left to 101 on the right. Participants could not see these values. (PDF)
+Author Contributions
+Conceptualization: Jan Stupacher, Markus Wrede, Peter Vuust.
+Data curation: Markus Wrede.
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+6/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+Formal analysis: Jan Stupacher.
+Methodology: Jan Stupacher, Markus Wrede.
+Supervision: Jan Stupacher.
+Writing ­ original draft: Jan Stupacher.
+Writing ­ review & editing: Jan Stupacher.
+References
+1. Janata P, Tomic ST, Haberman JM. Sensorimotor coupling in music and the psychology of the groove. Journal of Experimental Psychology: General. 2012; 141: 54­75. https://doi.org/10.1037/a0024208 PMID: 21767048
+2. Madison G. Experiencing groove induced by music: Consistency and phenomenology. Music Perception. 2006; 24: 201­208. https://doi.org/10.1525/mp.2006.24.2.201
+3. Senn O, Bechtold T, Rose D, Ca^ mara GS, Du¨ vel N, Jerjen R, et al. Experience of groove questionnaire: Instrument development and initial validation. Music Perception. 2020; 38: 46­65. https://doi.org/10. 1525/mp.2020.38.1.46
+4. Stupacher J, Hove MJ, Novembre G, Schu¨tz-Bosbach S, Keller PE. Musical groove modulates motor cortex excitability: A TMS investigation. Brain and Cognition. 2013; 82: 127­136. https://doi.org/10. 1016/j.bandc.2013.03.003 PMID: 23660433
+5. Matthews TE, Witek MAG, Heggli OA, Penhune VB, Vuust P. The sensation of groove is affected by the interaction of rhythmic and harmonic complexity. Plos One. 2019; 14: e0204539. https://doi.org/10. 1371/journal.pone.0204539 PMID: 30629596
+6. Witek MAG, Clarke EF, Wallentin M, Kringelbach ML, Vuust P. Syncopation, body-movement and pleasure in groove music. Plos One. 2014; 9: e94446. https://doi.org/10.1371/journal.pone.0094446 PMID: 24740381
+7. Huron D. Sweet anticipation: Music and the psychology of expectation. Cambridge, Massachusetts: MIT Press; 2006.
+8. Salimpoor VN, Zald DH, Zatorre RJ, Dagher A, McIntosh AR. Predictions and the brain: How musical sounds become rewarding. Trends in Cognitive Sciences. 2015; 19: 86­91. https://doi.org/10.1016/j. tics.2014.12.001 PMID: 25534332
+9. Chen JL, Penhune VB, Zatorre RJ. Listening to musical rhythms recruits motor regions of the brain. Cerebral Cortex. 2008; 18: 2844­2854. https://doi.org/10.1093/cercor/bhn042 PMID: 18388350
+10. Grahn JA, Brett M. Rhythm and beat perception in motor areas of the brain. Journal of Cognitive Neuroscience. 2007; 19: 893­906. https://doi.org/10.1162/jocn.2007.19.5.893 PMID: 17488212
+11. Nombela C, Hughes LE, Owen AM, Grahn JA. Into the groove: Can rhythm influence Parkinson's disease? Neuroscience & Biobehavioral Reviews. 2013; 37: 2564­2570. https://doi.org/10.1016/j. neubiorev.2013.08.003 PMID: 24012774
+12. Schaefer RS. Auditory rhythmic cueing in movement rehabilitation: Findings and possible mechanisms. Philosophical Transactions of the Royal Society B: Biological Sciences. 2014; 369: 20130402. https:// doi.org/10.1098/rstb.2013.0402 PMID: 25385780
+13. Pando-Naude V., Matthews T., Højlund A., Jakobsen S., Østergaard K., Johnsen E., et al. Parkinson's disease reduces the urge to move to medium complex groove rhythms. Manuscript in preparation.
+14. Stupacher J, Witek MAG, Vuoskoski JK, Vuust P. Cultural familiarity and individual musical taste differently affect social bonding when moving to music. Scientific Reports. 2020; 10: 10015. https://doi.org/ 10.1038/s41598-020-66529-1 PMID: 32572038
+15. Cameron DJ, Zioga I, Lindsen JP, Pearce MT, Wiggins GA, Potter K, et al. Neural entrainment is associated with subjective groove and complexity for performed but not mechanical musical rhythms. Experimental Brain Research. 2019; 237: 1981­1991. https://doi.org/10.1007/s00221-019-05557-4 PMID: 31152188
+16. Matthews TE, Witek MAG, Lund T, Vuust P, Penhune VB. The sensation of groove engages motor and reward networks. NeuroImage. 2020; 214: 116768. https://doi.org/10.1016/j.neuroimage.2020.116768 PMID: 32217163
+17. Lartillot O, Toiviainen P. A Matlab Toolbox for Musical Feature Extraction from Audio. Proceedings of the 10th International Conference on Digital Audio Effects (DAFx-07). Bordeaux, France; 2007.
+18. Fitch WT, Rosenfeld AJ. Perception and production of syncopated rhythms. Music Perception. 2007; 25: 43­58. https://doi.org/10.1525/mp.2007.25.1.43
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+7/8
+
+PLOS ONE
+
+Rhythmic complexity and the sensation of groove
+19. Koelsch S, Vuust P, Friston K. Predictive processes and the peculiar case of music. Trends in Cognitive Sciences. 2019; 23: 63­77. https://doi.org/10.1016/j.tics.2018.10.006 PMID: 30471869
+20. Vuust P, Witek MAG. Rhythmic complexity and predictive coding: A novel approach to modeling rhythm and meter perception in music. Frontiers in Psychology. 2014; 5: 1111. https://doi.org/10.3389/fpsyg. 2014.01111 PMID: 25324813
+21. Madison G, Sioros G. What musicians do to induce the sensation of groove in simple and complex melodies, and how listeners perceive it. Front Psychol. 2014; 5: 894. https://doi.org/10.3389/fpsyg.2014. 00894 PMID: 25191286
+22. Senn O, Kilchenmann L, Bechtold T, Hoesl F. Groove in drum patterns as a function of both rhythmic properties and listeners' attitudes. Plos One. 2018;13. https://doi.org/10.1371/journal.pone.0199604 PMID: 29958289
+23. Sioros G, Miron M, Davies M, Gouyon F, Madison G. Syncopation creates the sensation of groove in synthesized music examples. Frontiers in Psychology. 2014; 5: 1036. https://doi.org/10.3389/fpsyg. 2014.01036 PMID: 25278923
+24. Hove MJ, Martinez SA, Stupacher J. Feel the bass: Music presented to tactile and auditory modalities increases aesthetic appreciation and body movement. Journal of Experimental Psychology: General. 2020; 149: 1137­1147. https://doi.org/10.1037/xge0000708 PMID: 31697113
+25. Stupacher J, Hove MJ, Janata P. Audio features underlying perceived groove and sensorimotor synchronization in music. Music Perception. 2016; 33: 571­589. https://doi.org/10.1525/mp.2016.33.5.571
+26. Madison G, Gouyon F, Ulle´ n F, Ho¨ rnstro¨ m K. Modeling the tendency for music to induce movement in humans: First correlations with low-level audio descriptors across music genres. Journal of Experimental Psychology: Human Perception and Performance. 2011; 37: 1578­1594. https://doi.org/10.1037/ a0024323 PMID: 21728462
+27. Etani T, Marui A, Kawase S, Keller PE. Optimal tempo for groove: Its relation to directions of body movement and Japanese nori. Frontiers in Psychology. 2018; 9: 462. https://doi.org/10.3389/fpsyg. 2018.00462 PMID: 29692747
+28. Senn O, Kilchenmann L, von Georgi R, Bullerjahn C. The effect of expert performance microtiming on listeners' experience of groove in swing or funk music. Frontiers in Psychology. 2016; 7: 1487. https:// doi.org/10.3389/fpsyg.2016.01487 PMID: 27761117
+29. Senn O, Bechtold TA, Hoesl F, Kilchenmann L. Taste and familiarity affect the experience of groove in popular music. Musicae Scientiae. 2021; 25: 45­66. https://doi.org/10.1177/1029864919839172
+
+PLOS ONE | https://doi.org/10.1371/journal.pone.0266902 May 19, 2022
+
+8/8
+
+

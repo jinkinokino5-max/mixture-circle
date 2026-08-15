@@ -1,0 +1,562 @@
+Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018 Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018
+
+TU-NOTE VIOLIN SAMPLE LIBRARY ­ A DATABASE OF VIOLIN SOUNDS WITH SEGMENTATION GROUND TRUTH
+Henrik von Coler
+Audio Communication Group TU Berlin Germany
+voncoler@tu-berlin.de
+
+ABSTRACT
+The presented sample library of violin sounds is designed as a tool for the research, development and testing of sound analysis/synthesis algorithms. The library features single sounds which cover the entire frequency range of the instrument in four dynamic levels, two-note sequences for the study of note transitions and vibrato, as well as solo pieces for performance analysis. All parts come with a hand-labeled segmentation ground truth which mark attack, release and transition/transient segments. Additional relevant information on the samples' properties is provided for single sounds and two-note sequences. Recordings took place in an anechoic chamber with a professional violinist and a recording engineer, using two microphone positions. This document describes the content and the recording setup in detail, alongside basic statistical properties of the data.
+1. INTRODUCTION
+Sample libraries for the use in music production are manifold. Ever since digital recording and storage technology made it possible, they have been created for most known instruments. Commercial products like the Vienna Symphonic Library1 or The EastWest Quantum Leap2 offer high quality samples with many additional techniques for expressive sample based synthesis. For several reasons, these libraries are not best suited for the use in research on sound analysis and synthesis. Many relevant details are subject to business secrets and thus not documented. Copyright issues may prevent a free use as desired in a scientific application. These libraries also lack annotation and metadata which is essential for research applications, if used for machine learning or sound analysis / synthesis tasks.
+The audio research community has released several databases with single instrument sounds in the past, usually closely related to a specific aspect. Libraries like the RWC [1] or the MUMS [2] aim at genre or instrument classification and timbre analysis [3]. Databases for onset and transient detection which include hand labeled onset segments have been presented by Bello et al. [4] and von Coler et al. [5].
+The presented library of violin sounds is designed as a tool for the research, development and testing of sound analysis/synthesis algorithms or machine learning tasks. The contained data is structured to enable the training of sinusoidal modeling systems which distinguish between stationary and transient segments. By design, the library allows the analysis of several performance aspects, such
+1www.vsl.co.at/ 2http://www.soundsonline.com/ symphonic-orchestra
+
+as different articulation styles, glissando [6] and vibrato. It features recordings of a violin in an anechoic chamber and consists of three parts:
+1. single sounds
+2. two-note sequences
+3. solo (scales and compositions/excerpts)
+For single sounds and two-note sequences, hand-labeled segmentation files are delivered with the data set. These files focus on the distinction between steady state and transient or transitional segments. The prepared audio files and the segmentation files are uploaded to a static repository with a DOI [7]3. A Creative Commons BY-ND 4.0 license ensures the unaltered distribution of the library.
+The purpose of this paper is a more thorough introduction of the library. Section 2 will explain the composition of the content, followed by details on the recording setup and procedure in Section 3. The segmentation data will be introduced in Section 4. Section 5 presents selected statistical properties of the sample library. Final remarks are included in Section 6.
+2. CONTENT DESCRIPTION
+2.1. Single Sounds
+Similar to libraries for sample based instruments, the single sounds capture the dynamic and frequency range of the violin, using sustained sounds. The violinist was instructed to play the sounds as long as possible, using just one bow, without any expression. Steady state segments, respectively the sustain parts, of these notes are thus as played as steady as possible. This task showed to be highly demanding and unusual, even for an experienced concert violinist.
+On all of the four strings, the number of semitones listed in Table 1 was captured, each starting with the open string. This leads to a total of 84 positions. All positions are captured in four dynamic levels which were specified as pp - mp - mf - ff resulting in a total amount of 336 single sounds. According to Meyer [8], the dynamic interval interval of a violin covers a range from 58 . . . 99 dB.
+3https://depositonce.tu-berlin.de//handle/ 11303/7527
+
+DAFX-1
+DAFx-312
+
+Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018 Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018
+
+Table 1: Number of positions on each string
+
+String G D A E
+
+Positions 18 18 18 30
+
+Each item was recorded in several takes, until recording engineer, the author and the violinist agreed on success. Although all sounds were explicitly captured in both up- and down-stroke techniques, these modes have not been considered individually in the data set and thus appear randomly.
+
+2.2. Two-Note Sequences
+
+Position
+
+02
+
+7
+
+12
+
+30
+
+Fifth, one string Fifth, two strings Fourth, low
+Fourth, high
+Figure 1: Violin board with positions for two-note sequences
+
+Table 2: All two-note pairs
+
+Two-note item no. 01-24 25-48 49-72 73-96 97-120 121-144 145-168 169-192
+Two-note item no. 193-198 199-204 205-210 211-216
+Two-note item no. 217-236 237-256 257-276 277-296
+Two-note item no. 297-312 313-328 329-344
+
+5 semitones, one string
+
+Note 1
+
+ISO Pos. String ISO
+
+D4 7
+
+G A3
+
+A4 7
+
+D E4
+
+E5
+
+7
+
+A B4
+
+B5 7
+
+E F#5
+
+D4 7
+
+G G4
+
+A4 7
+
+D D5
+
+E5
+
+7
+
+A A5
+
+B
+
+7
+
+E E6
+
+Repeated tones
+
+Note 1
+
+ISO Pos. String ISO
+
+D4 7
+
+G D4
+
+A4 7
+
+D A4
+
+E5
+
+7
+
+A E5
+
+B5 7
+
+E B5
+
+7 semitones, one string
+
+Note 1
+
+ISO Pos. String ISO
+
+D4 7
+
+G G3
+
+A4 7
+
+D D4
+
+E5
+
+7
+
+A A4
+
+B5 7
+
+E E5
+
+7 semitones, two strings
+
+Note 1
+
+ISO Pos. String ISO
+
+D4 7
+
+G A4
+
+A4 7
+
+D E5
+
+E5
+
+7
+
+A B5
+
+Note 2
+
+Pos. String
+
+2
+
+1
+
+2
+
+2
+
+2
+
+3
+
+2
+
+4
+
+12
+
+1
+
+12
+
+2
+
+12
+
+3
+
+13
+
+4
+
+Note 2
+
+Pos. String
+
+7
+
+G
+
+7
+
+D
+
+7
+
+A
+
+7
+
+E
+
+Note 2
+
+Pos. String
+
+0
+
+G
+
+0
+
+D
+
+0
+
+A
+
+0
+
+E
+
+Note 2
+
+Pos. String
+
+7
+
+D
+
+7
+
+A
+
+7
+
+E
+
+For the study of basic articulation styles, a set of two-note sequences was recorded at different intervals, listed in Table 2. The respective positions on the board are visualized in Figure 1. All combinations were recorded at two dynamic levels mp and ff. Three different articulation styles (detached, legato, glissando) were used and some combinations were captured with additional vibrato. These combinations lead to a grand total of 344 two-note items.
+5 semitones on one string were captured in 8 pairs with 24 versions (2 dynamic levels, 2 directions, with and without vibrato, 3 articulation styles): 2 · 2 · 3 = 24.
+Repeated tones were captured in 4 pairs with 6 versions (2 dynamic levels, legato and detached, the latter with and without vibrato): 22 + 2 = 6
+7 semitones on one string were captured in pairs with 20 versions (2 dynamic levels, two directions, detached only without vibrato, legato and glissando with and without vibrato): 2 · 2 + 24 = 20
+7 semitones on two strings were captured in 3 pairs with 16 versions (2 dynamic levels, two directions, with and without vibrato and two articulation styles [legato, detached]):24 = 16
+
+2.3. Solo: Scales and Compositions
+Two scales ­ an ascending major scale and a descending minor scale ­ were each played in three interpretation styles, as listed in Table 3. The first style was plain, without any expressive gestures, followed by two expressive interpretations. Six solo pieces and excerpts, listed in Table 4 which mostly contain cantabile legato passages were recorded. All compositions were proposed by the violinist, ensuring familiarity with the material.
+
+Table 3: Scales in the solo part
+
+Item 01 02 03 04 05 06
+
+Type major, ascending major, ascending major, ascending minor, descending minor, descending minor, descending
+
+Interpretation plain expressive 1 expressive 2 plain expressive 1 expressive 2
+
+DAFX-2
+DAFx-313
+
+Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018 Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018
+
+Table 4: Solo recordings
+
+Item 07
+08 09 10 11
+12
+
+Composition
+Sonata in A major for Violin and Piano
+Violin Concerto in E minor, Op. 64, 2nd movement
+Méditation (Thaïs)
+Chaconne in g minor
+Violin Concerto in E minor, Op. 64, 3rd movement
+Violin Sonata no.5, Op.24, 12s movement
+
+Composer César Franck
+Felix Mendelssohn Jules Massenet Tomaso Antonio Vitali Felix Mendelssohn
+Ludwig van Beethoven
+
+3. RECORDING SETUP
+The recordings took place in the anechoic chamber at SIM4, Berlin. Above a cutoff frequency of 100 Hz the room shows an attenuation coefficient of µ > 0.99, hence the recordings are free of reverberation in the relevant frequency range. The recordings were conducted within two days, taking one day for the single sounds and the second day for two-note sequences and solo pieces. All material was captured with a sample-rate of of 96 kHz and a depth of 24 Bit.
+Microphones
+The following microphones were used:
+· 1x DPA 4099 cardiod clip microphone
+· 1x Brüel & Kjær 4006 omnidirectional small diaphragm microphone with free-field equalization, henceforth BuK
+The DPA microphone was mounted as shown in Figure 2, above the lower end of the f-hole in 2 cm distance. Due to its fixed position, movements of the musician do not influence the recording. The B&K microphone was mounted in 1.5 m distance above the instrument, at an elevation angle of approximately 45 , as shown in Figure 3.
+
+Figure 3: Position of the B&K microphone
+
+Instructions
+For each of the single-sound, two-note and scale items, a minimal score snippet was generated using LilyPond [9]. Examples for items' instructions are shown in Fig. 4. The resulting 63 page score was then used to guide the recordings. Although the isolated tasks may seem simple and unambiguous, this procedure ensured smooth recording sessions.
+
+vib.
+
+2
+
+2
+
+ff
+(a) Two-note example with vibrato and glissando
+
+3
+
+3
+
+mp mp
+
+(b) Single-sound example with upbow and downbow
+
+Figure 4: Instruction scores for two-note a and single-sound b
+
+Figure 2: Position of the DPA microphone
+4http://www.sim.spk-berlin.de/refelxionsarmer_ raum_544.html
+
+4. SEGMENTATION
+The segmentation of a monophonic musical performance into notes, and even more into a note's subsegments is not trivial [10, 11]. During the labeling process, the best of the takes for each item was selected from the raw recordings and the manual segmentation scheme proposed by by von Coler et al. [5] was applied using Sonic Visualiser [12].
+
+DAFX-3
+DAFx-314
+
+Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018 Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018
+
+(a) Energy trajectory
+(b) Peak frequency spectrogram
+Figure 5: Sonic Visualiser setup for annotation of single sound 333
+4.1. Single Sounds
+Each single sound is divided into three segments, which are defined by four location markers in the segmentation files5, as shown in Table 5. The first time instant (A) marks the beginning of the attack segment, the second instant (C) marks the end of the attack segment, respectively the beginning of the sustain part. The end of the sustain, which is also the beginning of the release segment, is labeled with the (D). The label (B) marks the end of the release portion and the complete sound. The left column holds the related time instants in seconds.
+Table 5: Example for a single-sound segmentation file (SampLib_DPA_01.txt)
+0.000000 A 0.940646 C 7.373000 D 8.730500 B
+The definition of the attack segment is ambiguous in literature [13] and shall thus be specified for this context: Attack here refers to the actual attack-transient, the very first part of a sound with a significant inharmonic content and rapid fluctuations. In other contexts, the attack may be regarded the segment of rise in energy to the local maximum. Often, there is still a significant increase in energy after the attack-transient is finished. As the attack-transient is characterized by unsteady, evolving partials and low relative partial amplitudes, the manual segmentation process is performed using a temporal and a spectral representation. Figure 5 shows a typical Sonic Visualiser setup for the annotation of a single sound. The noisiness of the signal during attack and release can be seen in the spectral representation. How attack transient and rising slope may differ, is illustrated in Fig. 6. The gray area represents the labeled attack segment, which is finished before the end of the rising slope is reached.
+Less ambiguous, the release part is labeled as the segment from the end of the excitation until the complete disappearance
+5The segmentation files are part of the repository [7]
+
+0.08
+
+0.06
+
+RMS
+
+0.04
+
+RM S
+
+0.02
+
+Attack segment
+
+End of rising slope
+
+0.00 0
+
+0.5
+
+1
+
+1.5
+
+2
+
+2.5
+
+t/s
+
+Figure 6: RMS trajectory of a note beginning with attack segment (gray) and end of the rising slope (single sound no. 19)
+
+0.08
+
+0.06
+
+RMS
+
+0.04
+
+RM S
+
+0.02
+
+Release segment
+
+Beginning of falling slope
+
+3
+
+4
+
+5
+
+6
+
+7
+
+t/s
+
+Figure 7: RMS trajectory of a note end with release segment (gray) and beginning of the falling slope (SampLib_19)
+
+of the tone. As shown in Fig. 7, there is often a significant decrease in signal energy before the actual release starts. For items with low dynamics, the release is also covering the very last part of the excitation.
+The ease of annotation varies between dynamic levels, as well as between the fundamental frequency of the items. Notes played at fortissimo show clear attack and decay segments with a steady sustain part, whereas pianissimo tones have less prominent boundary segments and a parabolic amplitude envelope. The higher SNR in fortissimo notes allows a better annotation of the transients. Tones with a high fundamental frequency have less prominent partials, whereas the bow noise is emphasized. They are thus more difficult to label, since attack transient are less clear in the spectrogram. The segmentation of high pitched notes at low velocities is hence most complicated.
+4.2. Two-Note Sequences
+The two-note sequences contain the the segments note, rest and transition with the labels listed in Table 6. Stationary sustain parts are labeled as notes, whereas the transition class includes attack and release segments, as well as note transitions, such as glissando.
+All two-note sequences follow the same sequence of segments (0-2-1-2-1-2). Figure 8 shows a labeling project in Sonic Visualiser for a two-note item with glissando. The transition segment is placed according to the slope of the glissando transition.
+
+DAFX-4
+DAFx-315
+
+Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018 Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018
+
+Table 6: Segments in the two-note labeling scheme
+
+Label 0 2 1
+
+Segment rest transition note
+
+2
+
+log(rms)
+
+4
+
+6
+
+pp
+
+mp
+
+mf
+
+ff
+
+Figure 9: Boxplot of RMS for the sustain from the BuK microphone
+
+(a) Energy trajectory
+
+(b) Peak frequency spectrogram
+Figure 8: Sonic Visualiser setup for annotation of two-note item 22
+
+4.3. Solo
+Solo items have been annotated using the guidelines proposed by von Coler et al. [5]. Due to the choice of the compositions, only few parts violated the restriction to pure monophony. Solo item 10, for example, starts with a chord, which is labeled as a single transitional segment.
+
+5. STATISTICS
+This section reports selected descriptive statistical properties of the sample library which are potentially useful when considering the use of the data.
+
+5.1. Single Sounds
+Fig. 9 shows the RMS for all single sounds, in box plots for each dynamic level. The median for the dynamic levels is logarithmically spaced.
+
+Table 7: Segment length statistics for the single-sounds
+
+Attack Sustain Release
+
+l/s 0.247 5.296 0.705
+
+µ/s 0.206 1.118 0.802
+
+Statistics for the segment lengths of the single sounds are presented in Table 7 and Figure 10, respectively. With a mean of 5.296 s, the sustain segments are the longest, followed by release segments with a mean of 0.705 s. Attack segments have a mean
+
+length of 0.247 s. Extreme outliers in the mean attack length are caused by high pitched notes with low dynamics.
+
+8
+
+6
+
+l[s]
+
+4
+
+2
+
+0 Attack
+
+Sustain
+
+Release
+
+Figure 10: Box plots of segment lengths for all single sounds
+
+5.2. Two-Note The two-note sequences allow a comparison of different articulation styles. Figure 11 shows the lengths for detached, legato and glissando transitions in a box plot. With a median duration of 0.72 s, glissando transitions tend to be longer than legato (0.38 s) and detached (0.37 s) transitions.
+1.5
+1
+0.5
+
+l[s]
+
+detached
+
+legato Transition type
+
+glissando
+
+Figure 11: Box plot of transition lengths for all two-note sequences
+
+DAFX-5
+DAFx-316
+
+Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018 Proceedings of the 21st International Conference on Digital Audio Effects (DAFx-18), Aveiro, Portugal, September 4­8, 2018
+
+5.3. Solo
+
+Table 8: Note statistics for items in the solo category
+
+Solo item 1 2 3 4 5 6 7 8 9 10 11 12
+
+Number of notes 8 8 8 8 8 8 104 75 89 63 76 56
+
+l/s 0.698 0.721 0.728 0.707 0.724 0.774 0.695 1.074 0.911 0.735 0.689 0.615
+
+µ/s 0.745 0.768 0.776 0.753 0.771 0.848 0.661 0.899 0.923 0.690 0.707 0.740
+
+For the solo category, the basic statistics on the note occurrences and lengths are listed in Table 8. All scales (items 1 - 6) contain 8 notes, compositions (items 7-12) have a mean of 77 notes per item. With a mean note length of 0.614 906 s, item 12 has the shortest, and with 1.074 361 s, item 8 has the longest notes.
+
+6. CONCLUSION
+The presented sample library is already in application within sinusoidal modeling projects and for the analysis of expressive musical content. Overall recording quality proves to be well suited for most tasks in sound analysis. Since the segmentation ground truth follows strict rules and has undergone repeated reviews, it may be considered consistent.
+
+7. ACKNOWLEDGMENTS
+The author would like to thank the violin player, Michiko Feuerlein, and the sound engineer, Philipp Pawlowski, for their work during the recordings, as well as the SIM Berlin for the support. Further acknowledgment is addressed to Moritz Götz, Jonas Margraf, Paul Schuladen and Benjamin Wiemann for the contributions to the annotation.
+
+[5] Henrik von Coler and Alexander Lerch. "CMMSD: A Data Set for Note-Level Segmentation of Monophonic Music". In: Proceedings of the AES 53rd International Conference on Semantic Audio. London, England, 2014.
+[6] Henrik von Coler, Moritz Götz, and Steffen Lepa. "Parametric Synthesis of Glissando Note Transitions - A user Study in a Real-Time Application". In: Proc. of the 21st Int. Conference on Digital Audio Effects (DAFx-18). Aveiro, Portugal, 2018.
+[7] Henrik von Coler, Jonas Margraf, and Paul Schuladen. TUNote Violin Sample Library. TU-Berlin, 2018. DOI: 10 . 14279/depositonce-6747.
+[8] Jürgen Meyer. "Musikalische Akustik". In: Handbuch der Audiotechnik. Ed. by Stefan Weinzierl. VDI-Buch. Springer Berlin Heidelberg, 2008, pp. 123­180.
+[9] Han-Wen Nienhuys and Jan Nieuwenhuizen. "LilyPond, a system for automated music engraving". In: Proceedings of the XIV Colloquium on Musical Informatics (XIV CIM 2003). Vol. 1. 2003, pp. 167­171.
+[10] E. Gómez et al. "Melodic Characterization of Monophonic Recordings for Expressive Tempo Transformations". In: Proceedings of the Stockholm Music and Acoustics Conference. 2003.
+[11] Norman H. Adams, Mark A. Bartsch, and Gregory H. Wakefield. "Note Segmentation and Quantization for Music Information Retrieval". In: IEEE Transactions on Speech and Audio Processing 14.1 (2006), pp. 131­141.
+[12] Chris Cannam, Christian Landone, and Mark Sandler. "Sonic visualiser: An open source application for viewing, analysing, and annotating music audio files". In: Proceedings of the 18th ACM international conference on Multimedia. ACM. 2010, pp. 1467­1468.
+[13] Xavier Rodet and Florent Jaillet. "Detection and Modeling of Fast Attack Transients". In: Proceedings of the International Computer Music Conference. 2001, pp. 30­33.
+
+8. REFERENCES
+[1] Masataka Goto et al. "Development of the RWC music database". In: Proceedings of the 18th International Congress on Acoustics (ICA 2004). Vol. 1. 2004, pp. 553­556.
+[2] Tuomas Eerola and Rafael Ferrer. "Instrument library (MUMS) revised". In: Music Perception: An Interdisciplinary Journal 25.3 (2008), pp. 253­255.
+[3] Gregory J Sandell. "A Library of Orchestral Instrument Spectra". In: Proceedings of the International Computer Music Conference. 1991, pp. 98­98.
+[4] J.P. Bello et al. "A Tutorial on Onset Detection in Music Signals". In: IEEE Transactions on Speech and Audio Processing 13.5 (2005), pp. 1035­1047.
+
+DAFX-6
+DAFx-317
+
+

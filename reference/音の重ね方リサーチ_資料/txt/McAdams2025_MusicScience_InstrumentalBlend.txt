@@ -1,0 +1,1092 @@
+Research Article
+Factors Contributing to Instrumental Blends in Orchestral Excerpts
+
+l
+Music & Science Volume 8: 1­20 © The Author(s) 2025 DOI: 10.1177/20592043251326391 journals.sagepub.com/home/mns
+
+Stephen McAdams1 , Pierre G. Gianferrara2 , Iza R. Korsmit1 , Meghan Goodchild1 and Kit Soden1
+
+Abstract Timbral blend is a phenomenon that occurs when two or more concurrent acoustic events produced by distinct sources fuse perceptually and give rise to new timbres. Auditory scene analysis proposes that concurrent grouping cues of onset synchrony, harmonicity, and parallel change in pitch and dynamics are involved in the perceptual fusion of events, but research has also shown that several timbral cues can affect concurrent grouping. We investigated potential factors that may cause different degrees of instrumental blend in orchestral excerpts using rating scales ranging from "unity" to "multiplicity" and from "strongly blended" to "not at all blended." With linear mixed effects modeling, the factors found to affect ratings included the rating scale used, musical training, timbre class (instrument families involved), the degree of parallelism and onset synchrony of melodic lines involved in the blend, the number of different notes present simultaneously, and several acoustic features related to timbre. Musicians differ from nonmusicians in the use of the multiplicity scale, rating excerpts as more multiple, even if they are fairly well blended, whereas nonmusicians ratings are similar for both scales and to musicians' ratings of blend. Excerpts with bowed strings and/or woodwinds blend the strongest, followed by combinations involving brass instruments, with excerpts involving percussion and plucked strings blending the least. The important finding of this study on real musical excerpts is in demonstrating the relative roles of the score-based and acoustic factors that are associated with the perception of multiplicity and blend in complex orchestral sonorities as well as the influence of musical training.
+Keywords Auditory scene analysis, concurrent grouping, instrumental blend, orchestration, perceptual fusion, timbre
+Submission date: 4 March 2024; Acceptance date: 5 February 2025
+
+Orchestration involves the selection, combination, and juxtaposition of sounds to achieve a particular sonic goal. Historically speaking, composers started paying attention to the choice of combinations of instruments, and the resulting effect it had on their music, in the late Baroque era (Chon et al., 2018; Kendall & Carterette, 1993; Reuter, 2018). Traditionally, musicians, musicologists, and composers have relied on orchestration treatises to learn about instrumental combinations. These treatises generally present a plethora of examples from the repertoire, commenting on which combinations of instruments sound good and which do not (e.g., Adler, 2002; Piston, 1955; Read, 1979, 2004). However, Berlioz and Strauss's (1948) and Koechlin's (1954­1959) treatises challenged this conservative approach by putting forward a new
+
+vision of orchestration with an emphasis on sonic goals and desired perceptual effects. Instead of imposing rigid rules that would make a piece of music sound better (or worse), Berlioz and Koechlin proposed a multidimensional process by which different combinations of instruments
+1 Schulich School of Music, McGill University, Montreal, Canada 2 Program in Cognitive Sciences, McGill University, Montreal, Canada
+Corresponding author: Stephen McAdams, Schulich School of Music, McGill University, 555 Sherbrooke St. W., Montreal, QC, H3A 1E3, Canada. Email: stephen.mcadams@mcgill.ca
+Data Availability Statement included at the end of the article
+
+Creative Commons CC BY: This article is distributed under the terms of the Creative Commons Attribution 4.0 License (https://creativecommons.org/licenses/by/4.0/) which permits any use, reproduction and distribution of the work without further permission provided the original work is attributed as specified on the SAGE and Open Access page (https://us.sagepub.com/en-us/nam/open-access-at-sage).
+
+2
+
+Music & Science
+
+may result in a variety of perceptual and acoustic effects. One important orchestration technique is the scoring of the same musical line in two or more instruments (traditionally called "doubling"), resulting in the creation of new timbres from the blending of simultaneously occurring instrument sounds. We investigate the musical conditions under which instrumental blending occurs and in particular how the timbral homogeneity or heterogeneity of combinations of instruments from the same or different families affect the perceived strength of the blend and the perception of unity of the resulting blend. Reflecting on orchestral balance in late 19th-century orchestrations, Rimsky-Korsakov (1912/1964) notes: "It is not always possible to secure proper balance in scoring for full woodwind. For instance, in a succession of chords where the melodic position is constantly changing, distribution is subordinate to correct progression of parts. In practice, however, any inequality of tone may be counterbalanced by the following acoustic phenomenon: in every chord the parts in octaves strengthen one another, the harmonic sounds in the lowest register coinciding with and supporting those in the highest. In spite of this fact, it rests entirely with the orchestrator to obtain the best possible balance of tone; in difficult cases this may be secured by judicious dynamic grading, marking the wood-wind one degree louder than the brass." (p. 94)
+Albert Bregman's (1990) book Auditory Scene Analysis has been very influential in the world of music cognition and eventually became one of the foundational works in the field of auditory psychology generally and music psychology more specifically. We know from Bregman's theory that music perception arises in part from two types of principles that group sound information into events and streams of events: concurrent grouping (perceptual fusion) and sequential grouping (formation of continuous streams). To this, McAdams et al. (2022) have added segmental grouping (chunking into perceptual units). These grouping processes can be thought of as correlates of Gestalt principles (Koffka, 1922; Köhler, 1969). Auditory scene analysis proposes that auditory fusion occurs as a result of concurrent grouping processes. Four important concurrent grouping cues predict the perceptual fusion of sound events (McAdams, 1984): onset synchrony, harmonicity, coherent frequency behavior, and common spatial origin. Onset synchrony refers to the synchronization of the onsets of different acoustic components. This information can be largely gleaned from the score by seeing how the musical lines have been scored in rhythmic synchrony or not, but also depends on microtiming (i.e., musically precise synchronicity) in performance. Sound events or frequency components that start at the same time perceptually have a higher tendency to fuse perceptually (Bregman & Pinker, 1978; Dannenbring & Bregman, 1978; Lembke et al., 2017; Wright & Bregman, 1987). Harmonicity refers to the case in which all frequency components of a sound share a common period; they have a higher tendency to fuse perceptually (Bregman & Pinker, 1978; de
+
+Cheveigné et al., 1995, 1997; Hartmann et al., 1990). The occurrence of pure harmonicity in orchestral excerpts is rare, with notable exceptions being Boléro (1928) by Maurice Ravel and works of the French spectral style such as Partiels (1975) by Gérard Grisey or Claude Vivier's creation of les couleurs in Lonely Child (1980). Coherent frequency behavior refers to the synchronized and parallel motion of a component's frequencies and can be thought of as an instance of the Gestalt principle of common fate. One example occurs in vibrato, where all frequencies are shifted in a coherent fashion maintaining the intervals (ratios) between components. This in turn creates an effect of perceptual unity (McAdams, 1989). This factor can also be gleaned from the score in terms of melodic motion. Common spatial origin refers to the location of the different instruments in space. Sounds coming from the same place tend to fuse more than sounds coming from different places. However, this cue is considered weak in that it can be overridden by the others, allowing for the blending of instruments at different locations on a concert stage (Darwin & Hukin, 1999; Hukin & Darwin, 1995). In the current study, we focus on the cues of onset synchrony and pitch parallelism.
+In music, instrumental blends result from the fusion of two or more concurrent events produced by different sound sources, giving rise to new timbres. Sandell (1991, 1995) has theorized on instrumental blends and proposes several perceptual categories of instrument combinations. He labels the case in which different timbres are heard independently of one another timbral heterogeneity because the listener can identify and name the different instruments that are being played simultaneously (Kendall & Carterette, 1993). Second, when instrumental blend does occur, two cases may be distinguished. A timbral emergence consists of a new timbre emerging from the fusion of its constituent timbres. A timbral augmentation occurs when one or several "embellishing" timbre(s) highlight(s) the perceptual qualities of another timbre referred to as the "dominating" timbre. McAdams et al. (2022) distinguish two subcategories of these two types of blend: stable and transforming. The main difference between these subcategories is that the transforming versions involve a change in instrumentation over time, nonetheless maintaining a blended sonority, whereas the stable versions have a consistent instrumentation over the duration of the orchestral effect. McAdams et al. (2022) introduce other notions related to blend as well. A blend may be sustained over time, or it may be punctuated when synchronous sounds with short duration are perceptually fused into a blended event, which doesn't leave time for a listener to analyze the compound event into its constituent events. In the current study, we focus on stable, sustained blends.
+Timbre is an example of a perceptual attribute that arises from concurrent grouping. What is perceived as timbre depends on what spectral components are fused perceptually (Bregman & Pinker, 1978; McAdams & Bregman, 1979). Once formed, timbre then contributes to sequence
+
+McAdams et al.
+
+3
+
+structuring by affecting sequential grouping through the segregation of auditory streams played by different instruments and segmental grouping through timbral contrasts (McAdams et al., 2022). Several timbral cues contribute to the fusing of different sounds into one event. Sandell (1995) had listeners rate the blend of unison dyads of sounds drawn from Grey's (1977) stimulus set of resynthesized sustaining instruments on a scale from "oneness" to "twoness," where "oneness" referred to a perfect instrumental blend, and "twoness" referred to timbral heterogeneity. He found that similar spectral centroids (the center of mass of the frequency spectrum), similar temporal envelopes, and a lower spectral centroid of the combined sounds resulted in higher blend ratings. Tardieu and McAdams (2012) extended this work with combinations of unison sustained and impulsive instruments (including pitched percussion and string pizzicati). Participants rated the degree of instrumental blend strength of dyads on a scale from "not blended" to "very blended." Results revealed major effects of differences in the logarithm of the attack time and spectral centroid of the two sounds and suggested that impulsive sounds contributed more to perceptual blend in a manner that was inversely proportional to the sharpness of the attack, whereas sustained sounds contributed more to the emergent timbre.
+Fricke (1986) addressed the issue of partial masking between concurrent instruments. Following from Schumann's (1929) theories of pitch- and playing-effortindependent resonance regions in the spectra of instrument sounds, which he conceived in terms of formants by analogy with vowel sounds, Fricke considered instruments with nonoverlapping formant structures and proposed that instrument sounds presented concurrently could be individually distinguished by detecting the formant peaks of one instrument in the spectral valleys of the other instrument. Reuter (1996) tested this hypothesis with pairs of instruments playing concurrently. He found good, but not total, correspondence with the support for timbral heterogeneity being strongest with woodwind and brass instruments that have clearly defined first formants when playing in low to middle registers. He also noted that timbral blending was associated with overlapping formant areas of concurrent sounds playing in unison. Reuter (2002) then established the correspondence between timbral blending and heterogeneity in the descriptions of their resulting orchestrational effects in many orchestration treatises from the 19th century onward. Following on from Reuter's work, Lembke (2014, Appendix B) estimated the pitch-generalized spectral envelopes of orchestral instruments and found that although some instruments do display some formant structure, such as the double reeds, French horn, and trombone, many other instruments have essentially low-pass spectral envelopes with barely discernable formants, notably strings and C trumpet. This leads us to propose that a more general way to conceive of this is in terms of degree of spectral overlap. Lembke and McAdams (2015) found that the degree of spectral overlap between constituent sounds enhanced blend perception.
+
+Lembke et al. (2019) extended the work from dyads to triads with string, woodwind, and brass combinations, including impulsive sounds of string pizzicati. The primary factors involved in blend were the absence of impulsive sounds (differences in attack slope) in triads and whether the instruments were playing in unison or other intervals. Non-unison sounds were less blended than unisons. A secondary role was played by several spectral descriptors that captured the degree of spectral overlap between concurrent sounds.
+Kendall and Carterette (1993) investigated the degree of instrumental blend strength in pairs (dyads) of orchestral wind instruments with different conditions (unison tone, unison melody, tones at an interval of a major 3rd, harmonized melody). They asked participants to rate the strength of instrumental blend on a scale from "oneness" to "twoness." The main result from this experiment was that greater instrumental blends were associated with a diminished ability to identify the different instruments playing simultaneously. Another finding was that "nasal" combinations (e.g., involving oboe) blended less well than "brilliant" combinations (e.g., involving trumpet) or "rich" combinations (e.g., involving saxophone). Finally, Fischer et al. (2021) studied the blends of multi-instrument streams in the context of orchestral stream segregation in predominantly Romantic orchestral excerpts. They found that within-family instrument combinations blended better than between-family combinations. They demonstrated the role played by overlap in timbre correlates of spectral flatness (a measure of the tonalness/noisiness or density of the spectrum), spectral skewness (related to the shape of the spectral envelope), and spectral variation (evolution of the spectral envelope over time), as well as cues derived from the scores such as onset synchrony and the consonance of concurrent pitch relations.
+Neither the standard concurrent grouping cues of onset synchrony, harmonicity, and parallel change in pitch and dynamics nor acoustic properties related to timbre that affect concurrent grouping are sufficient to achieve blend on their own; they must work together. Tardieu and McAdams (2012) and Lembke et al. (2017) demonstrated that combinations of sustained and impulsive instruments blend less well. Lembke and McAdams (2015) showed that overlap of spectral envelopes increases blend ratings. For example, Debussy's combination in the third movement of La Mer of English horn and horn playing in unison, and with glockenspiel three octaves higher (a harmonic relation) in perfect rhythmic synchrony and parallel motion in pitch and dynamics, does not result in a blend of the glockenspiel, because of its different temporal envelope (percussive vs. the sustained envelopes of the wind instruments) and the nonoverlapping spectral envelopes. Overall, the literature suggests that instrumental blend is not an all-or-nothing phenomenon: Blend strength can vary from zero (complete segregation of simultaneous events) to strongly fused. These degrees of instrumental blend strength are the object of the current study as found in orchestral excerpts rather than isolated sounds.
+
+4
+
+Music & Science
+
+Current Study and Hypotheses
+Our goal was to investigate the factors that cause different degrees of instrumental blend strength in the context of stable timbral augmentations and emergences in orchestral excerpts involving different combinations of instrument families. One difference with most of the studies introduced earlier was that we studied instrumental blends with more than two instruments and with excerpts drawn from the Classical, Romantic, and early Modern orchestral repertoire. This necessitated expanding the notion of "oneness­ twoness" used in previous studies by Sandell (1995) and Kendall and Carterette (1993) to the notion of "unity­multiplicity" in one session. A second session with different participants used the same stimuli but employed ratings of degree of blend as in Tardieu and McAdams (2012) and Lembke and McAdams (2015), because the results for some stimuli that seem blended to our ears but which were judged as "multiple" in the first session required further exploration. We pose four main hypotheses:
+
+perception to determine the underlying sensory processing of blend. Of particular interest based on previous work on perception of orchestral excerpts are descriptors of signal energy (frame energy), spectral center of gravity (spectral centroid), the spread of the spectrum (spectral spread), spectral density or tonalness vs noisiness of the spectrum (spectral crest and spectral flatness), and the degree of variation of the spectrum over time (spectral variation). Of additional interest are eventual divergences between excerpts previously identified by analysts as representing timbral augmentation or timbral emergence.
+Method
+Two separate groups of participants used different rating scales for the experiment: a scale from unity to multiplicity for one group and a scale from strongly blended to not at all blended for the other group. All other experimental factors were identical for the two groups.
+
+H1. Blend would be directly related to the timbral homogeneity or heterogeneity of participating instruments, which are also dependent on the instruments involved and the registers and dynamics they play in. This hypothesis is primarily operationalized in terms of within- and between-family combinations of instruments. We recognize nevertheless that some withinfamily cases, such as combinations of woodwinds, may be more heterogeneous, whereas some betweenfamily combinations, such as bassoon and horn or flute and violin, are often traditionally used to achieve strong blends, and these cases should be revealed through analysis of acoustic correlates of timbre in the combinations. H2. Given that musicians sometime speak of the fact that a sonority that has multiple constituents can still be perceived as well blended, we hypothesize that multiplicity ratings would be higher than blend ratings (i.e., more multiple but also more blended). This effect may, however, differ between musicians and nonmusicians given a potentially more analytic listening on the part of musicians and may be affected by the degree of timbral homogeneity. H3. In line with predictions of auditory scene analysis, excerpts in which the different participating instruments play more synchronously and change in pitch in a parallel manner to a greater degree would be rated as more unitary and blended. H4. Excerpts with a greater number of pitches played by different instruments (ignoring unison doublings on the same instrument) would be more strongly blended as they would be more difficult to separate perceptually from one another.
+We also explore the role of various acoustic features related to loudness and timbre in multiplicity and blend
+
+Participants
+Forty participants from the McGill University community (half musicians and half nonmusicians) participated in each group. Participants were required to pass a hearing test with auditory thresholds at or below 20 dB HL in both ears for seven octave-spaced frequencies starting at 125 Hz (ISO 389­8, 2004; Martin & Champlin, 2000). All participants passed the hearing test and provided written consent to participate in the experiment.
+For the multiplicity scale group, 20 participants were musicians with at least two years of music training at the university level (undergraduate or graduate) (9 female, 11 male; aged 22­43 years, M = 26.7, SD = 5.4) and 20 were nonmusicians with less than one year of formal training in early childhood and no longer actively participating in musical activities (15 female, 3 male, 2 preferred not to answer; aged 19­28, M = 22.1, SD = 2.7). For the blend scale group, 20 participants were musicians (11 female, 7 male, 2 preferred not to answer; aged 20­45 years, M = 26.1, SD = 6.3) and 20 were nonmusicians (13 female, 7 male; aged 19­30, M = 22.2, SD = 3.5).
+Stimuli
+The stimuli were all short excerpts of orchestral music extracted and simulated using the following five-step procedure.
+Step 1: Creation of a database of augmentations and emergences. Composers and music researchers had previously analyzed and annotated 65 movements from the Classical, Romantic, and early Modern repertoire in terms of the Taxonomy of Orchestral Grouping Effects (McAdams et al., 2022). Annotations were done while listening to a commercial recording to focus the analysis on perception. The database includes 628 timbral augmentation blends and 155 timbral emergence blends that are
+
+McAdams et al.
+
+5
+
+stable in instrumentation and sustained over time. The perceptual annotations included a rating of relative strength of blend on a scale from one to five within the full orchestral context. All instrumental blends were referenced with metadata including the composer's name, work title, movement, the reference recording, measure numbers of the effect, start and end times of the passage in the recording, and specific combinations of instruments involved in the instrumental blends of interest.
+Step 2: Selection of the specific excerpts of interest. The aim of this study was to investigate a wide range of instrumental blends, necessitating the selection of excerpts from a variety of timbre classes (instrument families involved) and of various blend strengths as noted by the annotators on a scale from one to five (see Appendix), as well as from different orchestration styles across epochs and countries (Austria, England, Finland, France, Germany, Italy, Russia). There were eight different classes of timbral combinations: Strings (S) including violin, viola, cello, and contrabass sections; Brass (B) including horn, trumpet, alto trombone, tenor trombone, bass trombone, and tuba; Woodwinds (W) including flute, piccolo, oboe, oboe d'amore, English horn, clarinet, bass clarinet, bassoon, and contrabassoon; combinations of brass and strings (BS); combinations of woodwinds and strings (WS); combinations of woodwinds and brass (WB); All (A) combinations of brass, woodwinds, and strings; Other (O) combinations including impulsive instruments such as harp, pizzicato strings, glockenspiel, xylophone, timpani, drum, tubular bells, gongs, celeste, vibraphone, and bass drum. The two types of stable and sustained blends were timbral augmentation and timbral emergence. Eight stimuli were originally classified in each timbre class with from three to five augmentations and emergences. The stimulus selection was constrained in part by the pieces that had been annotated and the simulations available in the OrchPlayMusic Library (see below). This yielded a total of 64 stimuli. We note after the fact that due to these constraints, there is a preponderance of late Romantic era excerpts (50 from Verdi, Rimsky-Korsakov, Bizet, Bruckner, Mahler, R. Strauss, Sibelius, D'Indy, Debussy, and Mussorgsky) with a few Classical (eight from Haydn and Mozart), early Romantic (two from Schubert), and Modern (four from Vaughan Williams) excerpts on either end. We return to the implications of this distribution in the Discussion. After perceptual data were collected, it was noticed that two excerpts had been misclassified: One
+
+emergent BS included harp, and one emergent A included timpani, both impulsive instruments, so they were reclassified as O. Another emergent A excerpt was found to include timpani in the score, but the instrument was inaudible, so it was left in A. Table 1 displays the distribution of stimuli across type of instrumental blend and timbre class. The Appendix gives a complete list of all stimuli sorted according to type of instrumental blend and timbre class.
+Step 3: Extraction of each excerpt's audio file. The excerpts were extracted from the reference recordings to serve as a model for the orchestral simulations.
+Step 4: Simulation of the excerpts. In the commercial recordings, all instruments are playing simultaneously in the orchestra. Because our study only investigates timbral blends between specific combinations of instruments, it was necessary to extract the combinations of instruments of interest from the full context in the original recording. The orchestral simulations were realized by Denys Bouliane and Félix Frédéric Baril using their OrchSim system (Bouliane & Baril, n.d.). OrchSim provides a multichannel audio package from which relevant instrument tracks can be extracted from the full context, after having been realized in the full context. OrchSim draws its samples from numerous commercially available virtual instrument libraries. Working from a score in the Finale engraving software (Make Music, Inc., Boulder, CO), each instrument is shaped in dynamics, intonation, and timbral nuance to correspond as closely as possible to what is heard in the reference excerpt. This is a complex multi-step procedure that aims to confirm the accuracy of the simulation by measuring the interpretation of each instrument in relation to other instruments and their roles. Each instrument, or section for strings, forms a separate track in the output file.
+Step 5: Rendering of the completed simulations. After completion of the initial simulations, all excerpts were improved and rendered using Logic Pro X (Apple Inc., Cupertino, CA). For each rendering, instruments of interest were selected, and each excerpt was trimmed according to the annotations' time start and time end. All excerpts were faded in and out, and a room ambiance option was used to reinforce the realism of each excerpt. The room ambiance was designed as a large concert hall in Altiverb (Audioease, Netherlands). Its primary purpose was to harmonize the samples from different audio libraries, as some libraries are recorded with microphones that are
+
+Table 1. Distribution of stimuli across blend type and timbral combination class.
+
+Timbre class
+
+Stimuli
+
+S
+
+B
+
+W
+
+BS
+
+WS
+
+WB
+
+A
+
+O
+
+Total
+
+Blend type
+
+Augmentation
+
+3
+
+5
+
+4
+
+4
+
+4
+
+Emergence
+
+5
+
+3
+
+4
+
+3
+
+4
+
+5
+
+4
+
+5
+
+34
+
+3
+
+3
+
+5
+
+30
+
+6
+
+Music & Science
+
+closer to the sound source than others. The reverberation tail length was approximately 100 ms. The final exported mix is in a stereo format, and the instruments are placed in stereo space as they would be in an orchestra onstage. In a study by McAdams and Goodchild (2018), orchestral simulations created with OrchSim were compared perceptually to commercial recordings and were shown to be of high quality. (See Supplementary Materials for scores and sound files of the excerpts).
+
+the scale were labeled "Unity" (coded 0), which suggested perfect instrumental blend, to the left and "Multiplicity" (coded 1), which suggested perfect timbral heterogeneity,
+to the right. For the other scale group, the end points of the scale were labeled "Very blended" (coded 0), which suggested perfect instrumental blend, to the left and "Not at all blended" (coded 1), which suggested perfect timbral heterogeneity, to the right. The orientation of the two scales was such that they represented "Multiplicity" and "Not at all blended" equivalently.
+
+Procedure
+Prior to starting the experiment, all participants read an instruction sheet that introduced them to the main task. Three practice stimuli were used to familiarize participants with the rating task and experimental interface. The practice stimuli were always played in the same order, and included Mahler, Symphony 1, first movement, m. 3 (Woodwinds), D'Indy, Choral Varié, op. 55, mm. 70­78 (Woodwinds and Strings), and Haydn, Symphony 100, third movement, mm. 57­64 (Woodwinds and Strings). The 64 stimuli of the main experiment were presented in random order for each participant and were presented in two blocks of 32 with the possibility of a break between blocks. For each excerpt, participants were allowed to replay the audio file once by clicking on a button underneath the scale. At the end of the experiment, participants completed a questionnaire that asked them about listening habits and specific musical training.
+For both scale groups, a continuous scale was presented on the screen with a cursor that could be positioned with the computer mouse along the scale depending on the perceived degree of blend. For one group, the end points of
+
+Equipment
+Listeners were all seated in an IAC model 120act-3 doublewalled audiometric booth (IAC Acoustics, Bronx, NY) and heard all stimuli amplified through a Grace Design m904 monitor (Grace Digital Audio, San Diego, CA). Excerpts were presented through Dynaudio BM6a loudspeakers (Dynaudio International GmbH, Rosengarten, Germany) arranged at ±45°, facing the listener at a distance of 1.5 m. The experiment was run on a Mac Pro 5 computer running OS 10.6.8 (Apple Computer, Inc., Cupertino, CA). The experimental session was run with the PsiExp computer environment (Smith, 1995).
+Data Analysis
+Studying instrumental blends extracted from orchestral excerpts necessitates considering the complex interactions between timbre, pitch, and rhythm present in real music. Therefore, to test the effect of these properties on perceived multiplicity, a mixed-effects analysis was performed on the fixed effects listed in Table 2. The main dependent variable
+
+Table 2. Factors and covariates used in the analysis of multiplicity and blend ratings.
+
+Type
+
+Variable
+
+Description
+
+Dependent variables
+Independent variables (between-subjects)
+Independent variables (repeated measures)
+Acoustic covariates (median over the whole excerpt)
+Score-based covariates
+Random intercepts
+
+Multiplicity
+Blend
+Scale Training Timbre class
+Blend type Frame energy Spectral crest Spectral flatness Spectral centroid Spectral variation Spectral spread Pitch parallelism
+Onset synchrony
+Number of notes Participants
+
+Rating on an analog scale of the perceived multiplicity of musical material, where 0 = unity and 1 = clearly multiple
+Rating on an analog scale of the perceived blend of musical material, where 0 = strongly blended and 1 = not at all blended
+Multiplicity ratings, Blend ratings Musicians, Nonmusicians Strings (S), Brass (B), Woodwinds (W), BS, WS, WB, All (A), Other (O,
+inclusion of percussion, plucked strings) Timbral augmentation, Timbral emergence Sum of squared amplitudes of the auditory filters Maximum value of spectrum divided by the spectrum's arithmetical mean Geometrical mean of the spectrum divided by its arithmetical mean Center of mass of the frequency spectrum Amount of variation of the spectrum over time Standard deviation of spectrum around spectral centroid Melodic motion: contrary/mixed (1), oblique (2),
+similar (3), parallel (4) Proportion of instrumental parts attacking synchronously on all events in
+excerpt Number of different pitches played by different instruments Factor to account for individual differences between participants
+
+McAdams et al.
+
+7
+
+was degree of blend measured on two different continuous scales (multiplicity and blend). In one session, this corresponded to the scale from "unity" to "multiplicity." In another session, this corresponded to the scale from "very blended" to "not at all blended." The repeated-measures independent variables were blend type and timbre class. Blend type was a categorical variable with two classes: augmentation and emergence. Timbre class was a categorical variable with eight classes (S, B, W, BS, WS, WB, A, O). The between-subjects independent variables were rating scale (multiplicity, blend) and musicianship group (musicians, nonmusicians). Covariates tested included number of concurrent notes, degree of melodic parallelism, proportion of synchronous onsets, frame energy, spectral centroid, spectral spread, spectral flatness, spectral crest, and spectral variation. The number of notes was an integer variable indicating the total number of different instruments playing simultaneously in each excerpt and the number of different pitches played by a given instrument type. All instruments were playing different parts for any given excerpt. Two or more players of the same instrument playing the same pitch were counted as one--for example, violin section or first and second flute in unison doubling--whereas violins playing divisi on two or more pitches were counted separately. Two different instruments playing the same pitch were counted separately. The degree of parallelism was a dummy variable indicating the degree to which instruments were playing in parallel melodic motion. All excerpts were coded on an ordinal scale from 1 to 4, where 1 signifies "other motion" (contrary motion in which some parts rise in pitch while others descend or mixed motion types), 2 signifies "oblique motion" (some parts remain in place or move relatively little while others move more actively), 3 signifies "similar motion" (the parts move in the same direction without necessarily keeping the same pitch interval between them), and 4 signifies "parallel motion" (the parts move in the same direction keeping exactly the same interval between them). To compute an index of onset synchrony, we first created a composite rhythm from the score combining all instruments in the excerpt. This involves deriving a rhythm that takes into account every instrument attacking a note at a given moment in the score. The proportion of common onsets between independent parts across all events in this composite rhythm was taken as the onset synchrony score. So for example, if Instrument 1 plays on beats 1 and 3, Instrument 2 on beats 2 and 4, and Instrument 3 on beats 1, 2, 3, and 4, the composite rhythm would have events on beats 1, 2, 3, and 4. There would be 2 out of 3 instruments on each of these beats and so the proportion would be .67.
+Several audio descriptors were used to represent loudness- and timbre-related features of the excerpts as covariates. They were computed with the revised version of the Timbre Toolbox (Peeters et al., 2011; revised by Kazazis et al., 2021). The auditory model of Moore and Glasberg (1983) was used as an input representation for the extraction of the audio descriptors. This model
+
+outputs the signal in several different auditory channels to simulate the filtering in the auditory periphery. The included descriptors, taken as the median value over the whole excerpt, were chosen based on previous work. Median frame energy was included as an indication of the relative level of the excerpts. It was computed as the sum of squared amplitudes in each time frame in each auditory filter, and the median of the resulting time series was calculated. Sandell (1995) found that the global spectral centroid, the center of mass of the spectrum, plays a role in blend. Several other spectral and spectrotemporal descriptors were found to play a role in blend perception in orchestral works by Fischer et al. (2021). These include spectral flatness and spectral crest (different measures of the degree to which the spectrum is denser or has more emergence of spectral components), and spectral variation (the degree of variation of the spectral shape over time). There is an inverse relation between spectral flatness and spectral crest. High values of spectral flatness indicate a noisy or dense spectrum, which sounds harsh. Spectral crest measures the peakiness of the spectrum, so high values indicate greater tonalness and low values greater noisiness or spectral density. We also included spectral spread (the standard deviation of the spectrum around the mean). The absolute values of correlations between these audio descriptors ranged from .120 to .681 (M = .281). Fischer et al. also included spectral skewness, but for our excerpts, skewness was strongly correlated with spectral centroid, r = ­.728, and very strongly correlated with spectral flatness, r = ­.830, so it was not included.
+Results
+To examine inter-participant agreement, Cronbach's alpha and intraclass correlation coefficient (ICC) were computed for all excerpts and by timbre class separately for musicians and nonmusicians (Tables 3 and 4). Both measures were high for the large majority of cases, and the 95% confidence interval (CI) only included zero in 4 of the 36 cases for alpha and in 1 case for ICC. The 95% CIs were based on population values for ICC and on a bootstrap of alpha with 1000 samples.
+Linear mixed effects modeling was used to analyze the data. We used model selection to identify the most parsimonious model of how independent variables and acoustic and score-based covariates affect blend-related ratings. We first computed a base model that contains all possible main and interaction effects (scale, musical training, timbre class, blend type) with random intercepts for participants. No other random intercepts or random slopes were included because they led to singular models, that is, the models would not converge. Then we used the dredge function in R to select the model with the lowest BIC (Schwarz, 1978). We specified that we wanted the model to include the three-way interaction of scale × musical training × timbre class in line with the hypothesized interaction in our second hypothesis. A
+
+8
+
+Music & Science
+
+Table 3. ICC and Cronbach's alpha () measures and 95% confidence intervals (CI) for multiplicity ratings for all excerpts (Global) and for each timbre class (TC), separately for musicians and nonmusicians.
+
+Multiplicity
+
+MU (20)
+
+NM (20)
+
+Group (nstim) ICC CI(ICC)
+
+
+
+CI()
+
+ICC CI(ICC)
+
+
+
+CI()
+
+Gobal (64)
+
+0.841 [.776, .893]
+
+0.869 [.805, .909]
+
+0.843 [.780, .894] 0.862 [.802, .898]
+
+TC S (8)
+
+0.795 [.540, .949]
+
+0.838 [.401, .915]
+
+0.776 [.488, .945] 0.799 [.064, .898]
+
+B (8)
+
+0.735 [.403, .934]
+
+0.769 [­.049, .891] 0.871 [.698, .969] 0.883 [.537, .950]
+
+W (8)
+
+0.675 [.315, .916]
+
+0.756 [­.117, .853] 0.603 [.118, .901] 0.636 [­.092, .830]
+
+BS (7)
+
+0.884 [.718, .976]
+
+0.917 [.717, .959]
+
+0.906 [.769, .981] 0.918 [.574, .965]
+
+WS (8)
+
+0.776 [.503, .944]
+
+0.829 [­.871, .922] 0.856 [.663, .965] 0.864 [.602, .931]
+
+WB (8)
+
+0.493 [­.120, .874] 0.522 [­.354, .758] 0.707 [.359, .926] 0.762 [.365, .864]
+
+A (7)
+
+0.750 [.424, .946]
+
+0.805 [.329, .897]
+
+0.867 [.674, .973] 0.882 [.579, .944]
+
+O (10)
+
+0.855 [.693, .956]
+
+0.890 [.733, .939]
+
+0.843 [.668, .952] 0.883 [.606, .938]
+
+Mean (TC)
+
+0.756
+
+0.799
+
+0.808
+
+0.832
+
+Note: Bold italic values indicate that zero is included in the 95% CI.
+
+Table 4. ICC and Cronbach's alpha measures and 95% confidence intervals for blend ratings for all excerpts (Global) and for each timbre class, separately for musicians and nonmusicians.
+
+Blend
+
+MU (20)
+
+NM (20)
+
+Group (nstim) ICC
+
+CI(ICC)
+
+
+
+CI()
+
+ICC
+
+CI(ICC)
+
+
+
+CI()
+
+Global (64) TC S (8)
+B (8) W (8) BS (7) WS (8) WB (8) A (7) O (10) Mean (TC)
+
+0.893 0.866 0.814 0.863 0.917 0.845 0.883 0.923 0.863 0.874
+
+[.850, .928] [.688, .968] [.576, .955] [.685, .967] [.794, .983] [.644, .962] [.615, .959] [.818, .985] [.708, .959]
+
+0.907 0.881 0.843 0.893 0.924 0.872 0.855 0.945 0.889 0.890
+
+[.870, .930] [.639, .933] [.219, .920] [.703, .946] [.663, .967] [.634, .932] [.479, .924] [.845, .971] [.716, .941]
+
+0.882 0.555 0.862 0.727 0.903 0.885 0.871 0.938 0.897 0.836
+
+[.835, .921] [.028, .888] [.690, .966] [.403, .931] [.762, .980] [.731, .972] [.696, .969] [.846, .987] [.778, .969]
+
+0.898 0.594 0.881 0.785 0.917 0.902 0.877 0.942 0.92 0.857
+
+[.852, .924] [­.942, .813] [­.080, .949] [.379, .889] [.582, .964] [.349, .963] [.424, .944] [.848, .970] [.794, .958]
+
+Note: Bold italic values indicate that zero is included in the 95% CI.
+
+model with the following effects was selected: scale (SC), musical training (MT), timbre class (TC), blend type (BT), SC × MT, SC × TC, MT × TC, TC × BT, and SC × MT × TC. The improvement in BIC between the full model and the selected model was 161.5. A model with a BIC value that is lower than the previous model by 10 or more typically indicates very strong evidence for the current model (Raftery, 1995). Type III (Wald) tests of fixed effects are reported using Satterthwaite's method (Satterthwaite, 1946) (Table 5). Eta-squared is not a reliable statistic for evaluating a local effect size in mixed-effects models because of the presence of random effects (and therefore shared/partitioned variance). Therefore they are not reported. However, pseudo-R2 values (Nakagawa & Schielzeth, 2013) for the whole model can be computed and compared across models, which we do in introducing the covariates into the base model. Conditional R2 (Rc2) is for the model
+
+with fixed and random effects, and marginal R2 (Rm2 ) is for the model with only fixed effects. These statistics are not comparable in size to regular R2. Bonferroni correction was applied to post hoc contrasts to compensate for multiple comparisons, and corrected p-values are reported. All analyses were performed in R (version 4.2.1; www.r-project.org). The linear mixed models were computed with the lmer function from the lmerTest package (Kuznetsova et al., 2020), and their performance was compared with the dredge function from the MuMIn package (Barton , 2022). The estimated means were computed with the emtrends and emmeans functions from the emmeans package (Lenth et al., 2022). We will present the base model first and then examine the effect of adding each score-based or acoustic covariate to this model, including their interaction with timbre class because this fixed effect was one of the strongest in the base models and is also directly relevant
+
+McAdams et al.
+
+9
+
+Table 5. Type III tests of fixed effects for the selected base model.
+
+Fixed effect
+
+df
+
+F
+
+p
+
+Scale (SC)
+Musical training (MT)
+Timbre class (TC)
+Blend type (BT) SC × MT SC × TC MT × TC TC × BT SC × MT × TC
+
+1, 80.2 1, 80.2 7, 5040.0 1, 5040.0 1, 80.2 7, 5040.0 7, 5040.0 7, 5040.0 7, 5040.0
+
+8.78 <1 42.47 <1
+5.95 2.44 12.85 28.38 2.05
+
+.0040 > .10 < .0001 > .10
+.017 .017 < .0001 < .0001 .046
+
+to our concern with orchestration. These models were compared with the anova function from the lmerTest package. For the base model, R2c = .228 and R2m = .117.
+The main effect of timbre class was highly significant. Boxplots of the distribution of mean ratings of excerpts for each timbre class are shown for multiplicity in Figures 1a and 1b. To test our first hypothesis that single-family instrument combinations (S, B, and W) would be more unified and blended than double-family combinations (BS, WS, and WB) and then other combinations involving three families, percussion, or plucked strings (A, O), we computed contrasts on the estimated marginal means of timbre class across all other factors. These tests yielded significant differences between the other category (M = .564) and the single (M = .436) and double (M = .451) categories, z-ratio = 6.258, p < .0001 for single and z-ratio = 7.859, p < .0001 for double, but not between single and double, z-ratio = 1.649, p = .099. Contrasts between all timbre classes reveal an interesting pattern that suggests a reinterpretation of the simplistic first hypothesis based on timbral homogeneity (Figure 2). Globally it appears that combinations of strings and/or winds blend the best and are perceived as more unitary, followed by combinations including brass, and then those with impulsive instruments blending the least and being most multiple. These general trends across rating scales vary considerably within the two ratings scales. For both rating scales, partially overlapping clusters emerge with S, W, and WS having lowest multiplicity, B, BS, WB, and A having intermediate multiplicity, and O having the highest multiplicity, although A is judged as more multiple but still moderately well blended. Blend ratings are globally lower than those for multiplicity. When blend is range-normalized to multiplicity, it appears that the timbre classes that are most strongly affected by the difference in ratings are those containing woodwinds (W, WS, A: solid arrows in Figure 2b), suggesting that the presence of woodwinds leads to an even greater perception of blend even when they are perceived as multiple within the sonority.
+The main effect of scale was significant with multiplicity ratings being higher than blend ratings--on average a given excerpt was judged as less unitary than it was judged as blended. However, this factor interacted with both
+
+musical training and timbre class. Post-hoc contrasts reveal that the scale × musical training interaction is due to differences between multiplicity and blend ratings for musicians. Musicians rated excerpts as less unitary with multiplicity ratings but more blended with blend ratings, z-ratio = 3.821, p = .0001. There was no difference between the scales for nonmusicians, z-ratio = 0.370, p > .10. Musicians thus appear to rate some excerpts as more blended even though they are rated as less unitary. The difference between the two scales can be gleaned from Figure 3 plotting mean multiplicity and blend ratings for each excerpt against each other. The dashed line represents the linear regression between the two and the solid line represents identity between them. Note that the two lines converge as the excerpts become more multiple and less blended, but they diverge at the lower end, suggesting that strongly blended musical excerpts can still be perceived as containing multiple sound sources.
+The scale × timbre class interaction is due to significantly higher multiplicity ratings than blend ratings (multiplicity ratings were less unitary than blend ratings) for only three of the eight timbre classes: W (z-ratio = 2.817, p = .0049), WS (z-ratio = 3.738, p = .0002), A (z-ratio = 3.900 p = .0001), and marginally for O (z-ratio = 1.929, p = .054). Note in Figure 3 that the means for these classes are above or on the dashed regression line, whereas the others are closer to the solid identity line. The musical training × timbre class interaction was highly significant. The ratings are similar for both groups for four of the eight timbre classes. However, nonmusicians gave higher (less blended, more multiple) ratings than musicians for S (z-ratio = -3.932, p = .0001) and B (z-ratio = -1.959, p = .050), whereas the reverse is true for W (z-ratio = 3.292, p = .0010) and O (z-ratio = 2.754, p = .0059).
+Of particular interest is the significant three-way interaction between scale, musical training, and timbre class to test our second hypothesis (H2). The interactions between scale and timbre class are displayed separately for musicians and nonmusicians in Figure 4. For nonmusicians, there were no significant differences between the two scales across the eight timbre classes. For musicians, by contrast, multiplicity was rated higher than (non)blend for all timbre classes except S and B. Musicians rated multiplicity higher than nonmusicians for five of the timbre classes, but the reverse was true for the S class. Blend ratings were much more similar between the groups, except for S and A, where nonmusicians rated the excerpts on average as less blended than did musicians. So, the source of the three-way interaction is essentially due to a distinct treatment of the difference between the two rating scales across timbre classes by musicians.
+A final significant interaction of interest is between timbre class and blend type (Figure 5). For excerpts with multiple families and/or impulsive instruments, timbral emergences are rated as more multiple and less blended than timbral augmentations. The reverse is
+
+10
+
+Music & Science
+
+Figure 1. Boxplot of distribution of mean multiplicity (a) and blend (b) ratings of the excerpts within each timbre class. Solid bars are medians, boxes represent the interquartile range (IQR), and whiskers represent minimum and maximum ratings excluding outliers more than 1.5 IQRs above the third quartile or below the first quartile.
+
+true for single- and double-family combinations, although there is no difference between blend types for W and WB.
+Analysis with Covariates
+Each score-based or acoustic covariate was entered independently as a main fixed effect and as an interaction with timbre class. The results are shown in Table 6. In all cases, Rc2 and Rm2 increased and BIC decreased with the addition of the covariates. Plots of regressions for individual timbre classes for each covariate are included in Figures S1­S9 in Supplementary Materials. The interaction could not be computed for parallelism with all timbre
+
+classes, because W excerpts were all parallel (4). So, the model with this covariate was computed without W.
+Seven of the nine covariates had significant main effects, excluding spectral centroid and spectral spread. All nine covariates had significant interactions with timbre class. Interpretations of many of these interactions need to be conducted with caution given the small number of items per timbre class (7­10). The three score-based covariates had similar significant linear trends for all timbre classes. In support of hypothesis H3, increases in the degree of pitch parallelism (Fig. S1) and onset synchrony (Fig. S7) tend to result in increased unity and blend ratings. However, the result concerning onset synchrony should be taken with caution as excerpts were not selected on this basis
+
+McAdams et al.
+
+11
+
+Figure 2. a) Estimated marginal means for timbre classes with ratings for multiplicity and blend scales. Nonsignificant differences between timbre class means are enclosed in boxes. b) Indication of relative change from multiplicity to blend. Blend means have been range-normalized to multiplicity means to visualize the relative change after having accounted for the generally lower ratings for blend. S = strings, B = brass, W = woodwinds, A = all three families, O = includes plucked strings and percussion.
+
+and three quarters of them were perfectly synchronous in the score. In contradiction to hypothesis H4, increases in the number of notes at different pitches or on different instruments resulted in increased multiplicity and decreased blend ratings (Fig. S2). Among the acoustic covariates, a decrease in spectral crest (Fig. S3) and increases in spectral variation and spectral flatness (Figs. S4 and S5, respectively) were associated with increased multiplicity and decreased blend ratings. The opposite direction of influence of spectral crest and spectral flatness is puzzling as they are both measures of spectral peakiness or noisiness. Three other acoustic covariates--spectral centroid (Fig. S8), spectral spread (Fig. S9), and frame energy (Fig. S6)--are more difficult to interpret, because for different timbre classes, ratings were associated in opposite directions with variations in these features.
+Discussion
+This experiment investigated the degree of blend on two different rating scales, one related to the perceived unity or multiplicity of the sonorities carrying the musical excerpt and the other related to perceived blend rated directly. Several factors were included to explore the perception of blend and multiplicity in orchestral excerpts in which the potential blending instruments were extracted from the full orchestral context using the multitrack
+
+OrchSim orchestral simulator. Using orchestral excerpts extends previous work using isolated tone dyads or triads or simple melodies (Kendall & Carterette, 1993; Lembke et al., 2019; Reuter, 1996; Tardieu & McAdams, 2012). We tested the effect of several factors directly evident in the scores, such as the timbre class of instrument family combinations and cues known to affect concurrent grouping, such as onset synchrony and parallelism of melodic motion. An additional score-based factor examined was the number of different pitches played by different instruments. We also tested two groups of participants, musicians with formal training in music at least at the second year of university and nonmusicians with less than a year of formal training in early childhood. Finally, we also analyzed the potential contribution as grouping cues of loudness- and timbre-related descriptors derived from the audio of the excerpts. These cues would include effects related to dynamics, instrumentation, and register, noting that differences in register and dynamics also affect the acoustic cues underlying timbre perception.
+The linear mixed effects modeling revealed a base model with significant contributions of main effects rating scale and timbre class and two-way and three-way interactions among scale, training, and timbre class, plus a timbre class × blend type interaction. Post-hoc tests on the main effect of timbre class found that the classes with a combination of strings, woodwinds, and brass or the inclusion of
+
+12
+
+Music & Science
+
+Figure 3. Scatter plot of blend against multiplicity ratings. The regression line is dashed, and the reference identity line is solid.
+
+impulsive instruments (percussion and plucked strings) were rated as more multiple and less blended than singlefamily and double-family combinations, in partial support of hypothesis H1. This finding was further refined by contrasts among all classes, which showed that strings, woodwinds, and their combination were the most unitary and blended, suggesting a refinement of hypothesis H1. Combinations involving brass (single-, double-, and triplefamily combinations) had intermediate multiplicity and blend ratings, and, again, combinations of sustained and impulsive instruments were most multiple and least blended. These results confirm with orchestral excerpts the findings of studies on isolated tones with dyads or triads of instruments in which the presence of impulsive instruments reduces the perception of blend (Lembke et al., 2019; Reuter, 1996; Tardieu & McAdams, 2012). However, the fact that brass excerpts were perceived as less blended and more multiple than woodwind excerpts is somewhat surprising given that there are smaller timbral differences among brass instruments, which all have lip-valve excitations, than among woodwind instruments, whose excitation mechanisms vary from air jet to tongued or untongued single or double reeds. Given that there were differences in ratings among excerpts within each timbre class (Figure 1), it would be instructive to examine the differences between the lowest-rated and
+
+highest-rated excerpts. This reveals a potential contribution of the interval complexity of vertical sonorities demonstrating the importance of harmonicity in blend. The majority of the lowest-rated (strongly blended) excerpts in terms of blend have unison or octave spacing, with one excerpt having parallel thirds. With one exception, the excerpts with the highest ratings (weakly blended) have more complex stacked intervals of fourths, fifths, thirds, sixths, and even rather dense clusters of 13 intervals in the case of m. 162 from Debussy's Images. So deviations from harmonicity in these complex sonorities seem to weaken blend perception along with onset asynchronies and deviations from parallelism, the latter also working against harmonicity in addition to facilitating segregation of parts due to a lack of common trajectory. The deviations from harmonicity are also present at a within-instrument level for O excerpts including pitched metal percussion (celesta, glockenspiel, tubular bells, gongs), all of which have inharmonic spectra.
+These results differ, however, from the blend experiment by Fischer et al. (2021), who found that single-family combinations were most blended, followed by double- and triple-family combinations and the impulsive class, except for the strings­brass combination, which was the least blended. However, the comparison between that study and this one should be considered with caution given that
+
+McAdams et al.
+
+13
+
+Figure 4. Average ratings for the eight timbre classes for the two rating scales for musicians (left panel) and nonmusicians (right panel). Error bars are 95% confidence intervals around the mean. Black asterisks between the curves represent significance of contrasts between scales. Asterisks above and below the curves represent significance of contrasts between musical training groups and indicate the direction of the difference. MU = musicians, NM = nonmusicians, S = strings, B = brass, W = woodwinds, A = all three families, O = includes plucked strings and percussion.
+* p < .05, ** p < .01, *** p < .001, **** p < .0001.
+
+Figure 5. Average ratings for the eight timbre classes for the two blend types. Error bars are 95% confidence intervals around the mean. Asterisks represent significance of contrasts between blend types. S = strings, B = brass, W = woodwinds, A = all three families, O = includes plucked strings and percussion. * p < .05, ** p < .01, *** p < .001, **** p < .0001.
+
+14
+
+Music & Science
+
+Table 6. Wald Type III statistics for effects, linear trend statistics (z-ratio) of covariate with ratings, pseudo-R2 values, and decrease in BIC (BIC) compared to base model without the covariate.
+
+Effect
+
+df
+
+F
+
+p
+
+z-ratio
+
+p
+
+Rc2
+
+R2m
+
+BIC
+
+Parallelism (P)
+
+1, 5040
+
+336.59
+
+<.0001
+
+-19.764
+
+<.0001
+
+.292
+
+.180
+
+368.7
+
+P × TC
+
+6, 5040
+
+9.92
+
+<.0001
+
+Onset synchrony (OS)
+
+1, 5040
+
+11.02
+
+.0009
+
+-3.320
+
+.0009
+
+.266
+
+.154
+
+186.1
+
+OS × TC
+
+7, 5040
+
+25.36
+
+<.0001
+
+Number of notes (NN)
+
+1, 5040
+
+178.67
+
+<.0001
+
+13.367
+
+<.0001
+
+.259
+
+.147
+
+138.1
+
+NN × TC
+
+7, 5040
+
+11.86
+
+<.0001
+
+Spectral flatness (SF)
+
+1, 5040
+
+31.51
+
+<.0001
+
+5.613
+
+<.0001
+
+.251
+
+.140
+
+85.4
+
+SF × TC
+
+7, 5040
+
+12.54
+
+<.0001
+
+Spectral crest (SCr)
+
+1, 5040
+
+166.23
+
+<.0001
+
+-12.893
+
+<.0001
+
+.275
+
+.163
+
+245.3
+
+SCr × TC
+
+7, 5040
+
+13.33
+
+<.0001
+
+Spectral variation (SV)
+
+1, 5040
+
+50.81
+
+<.0001
+
+7.128
+
+<.0001
+
+.255
+
+.143
+
+111.3
+
+SV × TC
+
+7, 5040
+
+15.24
+
+<.0001
+
+Spectral centroid (SCe)
+
+1, 5040
+
+<1.0
+
+> .10
+
+--
+
+--
+
+.260
+
+.148
+
+144.4
+
+SCe × TC
+
+7, 5040
+
+30.57
+
+<.0001
+
+Spectral spread (SS)
+
+1, 5040
+
+<1.0
+
+> .10
+
+--
+
+--
+
+.260
+
+.148
+
+141.1
+
+SS × TC
+
+7, 5040
+
+30.46
+
+<.0001
+
+Frame energy (FE)
+
+1, 5040
+
+30.21
+
+<.0001
+
+5.496
+
+<.0001
+
+.257
+
+.145
+
+122.8
+
+FE × TC
+
+7, 5040
+
+24.66
+
+<.0001
+
+Note: TC = timbre class. The parallelism analysis was conducted removing W, as all the values were the same for that timbre class. For the base model, Rc2 = .228 and R2m = .117.
+
+they had few excerpts for most of the classes and a larger number of excerpts that varied greatly in blend ratings for strings and woodwinds. The BS, WS, and O classes, for example, were represented by just three or four excerpts in their study. So the stimulus selection was too skewed to address this issue. The main aim in their study was to determine whether the degree of blend of the individual streams affected the degree of segregation of the two constituent streams in their main experiment.
+The interaction of rating scale, musical training, and timbre class (Figure 4) summarizes the main findings. The primary factor responsible for this interaction, in support of hypothesis H2, is that musicians gave higher multiplicity ratings than nonmusicians across most of the timbre classes but were very similar to nonmusicians in their blend ratings. Also, musicians gave higher multiplicity ratings than blend ratings, whereas nonmusicians gave similar ratings on both scales. We conclude that musicians adopted a more analytical listening and rating strategy when judging multiplicity than did nonmusicians. Speculatively, one might think that when judging multiplicity, musicians are listening to cues that signal differences (i.e., analytical listening) more so than do nonmusicians due to their training as practicing musicians in ensembles. But when judging blend, they are perhaps focusing more on synthetic, or more holistic, listening, as are nonmusicians, bringing the two groups more in line with each other.
+Two of our initial hypotheses (H3 and H4) concerned the role of score-based covariates in blend-related ratings. We confirmed the role of melodic parallelism and onset synchrony (H3). A greater degree of parallelism generally results in stronger blends and a more unitary percept in line with the Gestalt principle of common fate (Bregman,
+
+1990). There was nevertheless a great deal of diversity of ratings for some of the perfectly parallel excerpts (Fig. S1), suggesting that this factor alone does not explain the ratings. Also, an increase in onset synchrony was accompanied by increased blend and unity ratings (Fig. S7). However, the excerpts were not initially chosen to have a uniform distribution of onset synchrony values. Three-quarters of them are perfectly synchronous based on the score. So this result should be interpreted with caution, although it provides additional support for its significant contribution to blend in Fischer et al. (2021). This result may be due to the fact that excerpts were not selected to include a uniform distribution of degrees of synchrony, and indeed only 14 of the 64 excerpts had onset synchrony proportions less than .9. However, the effect of the number of notes goes in the opposite direction to our prediction, with more notes creating a greater sense of multiplicity and less blend (H4). Generally, the more varied the pitch and instrument content of a sonority, the more it is judged as multiple and less strongly blended. But there is a nonnegligible diversity in ratings for sonorities with a smaller number of notes, suggesting that other factors are at play for those excerpts (Fig. S2). The divergence of blend ratings for smaller numbers of instruments suggests that although the independent note count is not a good predictor of instrumental blend for small ensembles, it may nevertheless account for greater degrees of multiplicity and decreased blend in the case of larger groups of instruments with more diversely pitched sonorities.
+Three of the acoustic covariates had similar linear trends across all timbre classes: spectral crest, spectral flatness, and spectral variation. Greater noisiness in the spectrum or spectral density is associated with higher multiplicity and lower
+
+McAdams et al.
+
+15
+
+blend ratings (increased flatness, decreased crest) (Figs. S5 and S3, respectively). Note that these two acoustic features are negatively correlated, but only weakly (R2 = .206). Greater spectral variability over time is also associated with higher multiplicity and lower blend ratings (Fig. S4). These results suggest that greater blend and unity result from less spectrally variable stimuli with a stronger tonal component (clear harmonics and less dense spectrum).
+The other three acoustic features are more difficult to interpret given that their relation depends on timbre class. Sandell (1995) had found that blend was stronger when the spectral centroid of combined sounds was lower. His study used sounds that had been analyzed and resynthesized by Grey (1977), including bowed strings, woodwinds, and brass presented as isolated tone dyads. However, his result follows for only three of the timbre classes in the current study: BS, WS, and A (Fig. S8). There was no effect of spectral centroid on blend-related ratings for S. For B, W, WB, and O, the opposite was the case: Increased centroid was associated with higher multiplicity and lower blend ratings. A similar situation exists for spectral spread, with BS, WS, and A giving stronger blend and unity ratings for greater spectral spread, the opposite being the case for S, B, WB, and O (Fig. S9). W excerpts only covered a very narrow range of spread values. With frame energy, S and BS tended toward greater blend and unity with increased energy, whereas the opposite was true for B, W, WS, WB, and O (Fig. S6). The values of A were quite dispersed and didn't result in a significant linear trend. However, these results need to be considered in light of the small number of cases for each one, and a greater number of excerpts in each category with more dispersed values along these acoustic features would be needed to draw clearer conclusions.
+It is worth noting that the limitations imposed by the available annotations in the database and the available simulations through OrchPlay Music Library led to a preponderance of excerpts by Romantic composers in our sample. Romantic composers had access to published orchestration treatises at the time and thus would have had models for the combinations of instruments, and particularly woodwind instruments, that would blend well based on the register- and dynamic-dependent timbre behavior of woodwinds and strings. Their combinations were described in detail in many treatises (e.g., Gevaert, 1885; Marx, 1847/ 1851; Prout, 1902; Riemann, 1888/1890; Sundelin, 1828; Widor, 1904, to name just a few; see also Reuter, 2018). Nevertheless, selecting a range of annotation strengths across the different categories (to the extent possible) provided variability in the factors contributing to or detracting from blend in each timbre class (see Figure 1). And indeed there was a spread in the multiplicity and blend ratings within each timbre class. The important finding of this study is thus to be found in the relative roles of the scorebased and acoustic factors that are associated with the perception of multiplicity and blend in complex orchestral sonorities.
+
+To summarize our findings in the context of traditional Western orchestral repertoire--with a predominance of Romantic era excerpts in which instrumental combinations are purposely crafted to blend or not blend depending on the musical material--sustained strings, woodwinds, and their combinations provided the strongest blending and unitary percepts. Combinations involving impulsive sounds (plucked strings and percussion) in combination with sustaining instruments were perceived as the most multiple and least blended. In addition to the combinations of instrument families, parallel pitch motion, onset synchrony, and the number of different pitches on different instruments also affected ratings of multiplicity and blend, with globally greater parallelism and synchrony and a smaller number of notes giving stronger blends and a perception of unity. Several spectral factors related to timbre, as computed across the whole excerpts, also affected blend and multiplicity, demonstrating the role of timbre-related acoustic properties as a concurrent grouping cue. Greater spectral density or tonalness and greater spectral variation were associated with increased multiplicity and lower blend ratings. The effect of other acoustic factors such as spectral centroid, spectral spread, and frame energy depend on the timbre class.
+Further research is needed to shed light on the complex interactions among musical training, concurrent grouping cues (including timbre-related properties), pitch relations, rhythm, musical genre, and era. In addition, other factors such as dynamics, harmony, register, playing techniques, and the voicing of vertical sonorities across instruments should be investigated, as they may also play a role in the blending of groups of instruments, as well as in the emergent timbral properties of the blends. This would require a largescale study to control for all these factors. We modeled onset synchrony in terms of what was written in the score, but another factor that could be studied in more depth is the role of microtiming of onsets across concurrently sounding instruments. This would involve determining perceptual attack times (PAT) for individual notes, whether attacked or played legato, but to do so would require the development of reliable models for PAT, which could be particularly problematic in legato passages. We elected to start with presenting blend passages isolated from their full context because of the inherent difficulties in getting nonmusicians in particular to pay attention only to the target instruments in the full context. However, future work will also need to address the issue that blends removed from the full orchestral context may be perceived differently than within that context, although getting listeners to focus on a subgroup of instruments in a complex orchestral texture to judge their degree of blend will not be without its challenges.
+Authors' Note
+PGG is now at the Department of Neurobiology, Physiology and Behavior, University of California, Davis. IRK is now at the Institute of Psychology, Cognitive Psychology Unit, Leiden University. KS is now at the Faculté de musique, Université de Montréal. MG is now at Queen's University and Scholars Portal
+
+16
+
+Music & Science
+
+of the Ontario Council of University Libraries. The authors thank Bennett K. Smith for programming the experimental interface, OrchPlayMusic, Inc. for granting us access to the original simulated orchestral excerpts, Félix Frédéric Baril for extracting the excerpts from the full orchestral context, and Marcel Montrey for help with data analysis.
+Action Editor
+Trevor Agus, Queen's University Belfast, SARC, School of Arts, English and Languages.
+Peer Review
+Christoph Reuter, University of Vienna, Department of Musicology; Daniel Pressnitzer, École Normale Supérieure, Département d'Études Cognitives.
+Author Contributions
+PGG, SMc, MG, and KS conceived the study and selected the orchestral excerpts. PGG and SMc researched the literature, developed the conceptual and theoretical framework, and designed the experiments. PGG and IRK ran the participants in the study. IRK analyzed the data and contributed to the Methods and Results sections. SMc and PGG wrote the manuscript. All authors reviewed, edited, and approved the final version of the manuscript.
+Declaration of Conflicting Interests
+The authors declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article.
+Ethical Approval
+The study was certified for ethical compliance by the McGill University Research Ethics Board II (Certificate 162-0817).
+Funding
+The authors disclosed receipt of the following financial support for the research, authorship, and/or publication of this article: This work was supported by grants from the Canadian Natural Sciences and Engineering Research Council (grant number RGPIN 2015-05280), the Fond de recherche du Québec-- Société et culture (grant number 2017-SE-205667), the Canadian Social Sciences and Humanities Research Council (grant number 895-2018-1023), and a Canada Research Chair (grant number 950-223484) awarded to SMc.
+ORCID iDs
+Stephen McAdams https://orcid.org/0000-0002-6744-9035 Pierre G. Gianferrara https://orcid.org/0000-0002-0985-6791 Iza R. Korsmit https://orcid.org/0000-0003-4750-1710 Meghan Goodchild https://orcid.org/0000-0001-7988-8046
+Data Availability Statement
+The data are available on the Borealis Canadian public repository (McAdams et al., 2025).
+Supplemental Material
+Supplemental material for this article is available online.
+
+References
+Adler, S. (2002). The study of orchestration (3rd ed.). W. W. Norton and Company. (1982).
+Barton , K. (2022). MuMIn: Multi-Model Inference (1.47.1). https://CRAN.R-project.org/package=MuMIn.
+Berlioz, H., & Strauss, R. (1948). Treatise on instrumentation (T. Front, Trans.). Alfred Kalmus Classic Edition. (Original work published 1844-1855, enlarged and revised by Richard Strauss 1904.).
+Bouliane, D., & Baril, F. F. (n.d.). OrchPlayMusic Library. Retrieved January 23, 2024, from https://orchplaymusic.com
+Bregman, A. S. (1990). Auditory scene analysis: The perceptual organization of sound. MIT Press.
+Bregman, A. S., & Pinker, S. (1978). Auditory streaming and the building of timbre. Canadian Journal of Psychology/Revue canadienne de psychologie, 32(1), 19­31. https://doi.org/10. 1037/h0081664
+Chon, S. H., Huron, D., & DeVlieger, D. (2018). An exploratory study of western orchestration: Patterns through history. Empirical Musicology Review, 12(3-4), 116­159. https://doi. org/10.18061/emr.v12i3-4.5773
+Dannenbring, G. L., & Bregman, A. S. (1978). Streaming vs. fusion of sinusoidal components of complex waves. Perception and Psychophysics, 24(4), 369­376. https://doi. org/10.3758/BF03204255
+Darwin, C. J., & Hukin, R. W. (1999). Auditory objects of attention: The role of interaural time differences. Journal of Experimental Psychology: Human Perception and Performance, 25(3), 617­629. https://doi.org/10.1037//00961523.25.3.617
+de Cheveigné, A., McAdams, S., Laroche, J., & Rosenberg, M. (1995). Identification of concurrent harmonic and inharmonic vowels: A test of the theory of harmonic cancellation and enhancement. Journal of the Acoustical Society of America, 97(6), 3736­3748. https://doi.org/10.1121/1.412389
+de Cheveigné, A., McAdams, S., & Marin, C. M. H. (1997). Concurrent vowel identification. II: Effects of phase, harmonicity, and task. Journal of the Acoustical Society of America, 101(5), 2848­2856. https://doi.org/10.1121/1.419476
+Fischer, M., Soden, K., Thoret, E., Montrey, M., & McAdams, S. (2021). Instrument timbre enhances perceptual segregation in orchestral music. Music Perception, 38(5), 473­498. https:// doi.org/https://doi.org/10.1525/MP.2021.38.5.473
+Fricke, J. (1986). Zur Anwendung digitaler Klangfarbenfilter bei Aufnahme und Wiedergabe. In M. Dickreiter (Ed.), 14. Tonmeistertagung München (pp. 135­148). Bildungswerk des Verbandes Deutscher Tonmeister.
+Gevaert, F.-A. (1885). Nouveau traité d'instrumentation. Lemoine et fils.
+Grey, J. M. (1977). Multidimensional perceptual scaling of musical timbres. The Journal of the Acoustical Society of America, 61(5), 1270­1277. https://doi.org/10.1121/1.381428
+Hartmann, W. M., McAdams, S., & Smith, B. K. (1990, Oct). Hearing a mistuned harmonic in an otherwise periodic complex tone. Journal of the Acoustical Society of America, 88(4), 1712­1724. https://doi.org/10.1121/1.400246
+
+McAdams et al.
+
+17
+
+Hukin, R. W., & Darwin, C. J. (1995). Effects of contralateral presentation and of interaural time differences in segregating a harmonic from a vowel. Journal of the Acoustical Society of America, 98(3), 1380­1387. https://doi.org/10.1121/1.414348
+ISO 389­8. (2004). Acoustics ­ Reference zero for the calibration of audiometric equipment ­ Part 8: Reference equivalent threshold sound pressure levels for pure tones and circumaural earphones (Tech. Rep.). International Organization for Standardization.
+Kazazis, S., Depalle, P., & McAdams, S. (2021). The Timbre Toolbox User's Manual, https://github.com/MPCL-McGill/ TimbreToolbox-R2021a (Last viewed 23 01 24).
+Kendall, R. A., & Carterette, E. C. (1993). Identification and blend of timbres as a basis for orchestration. Contemporary Music Review, 9(1-2), 51­67. https://doi.org/10.1080/07494469300640341
+Koechlin, C. (1954). -1959). Traité de l'orchestration, en 4 volumes [Treatise on orchestration, in 4 volumes]. Max Eschig.
+Koffka, K. (1922). Perception: An introduction to the Gestalt-theorie. Psychological Bulletin, 19(10), 531­585. https://doi.org/10.1037/h0072422
+Köhler, W. (1969). The task of Gestalt psychology. Princeton University Press.
+Kuznetsova, A., Brockhoff, P. B., Christensen, R. H. B., & Jensen, S. P. (2020). lmerTest: Tests in linear mixed effects models (3.1-3). https://CRAN.R-project.org/package=lmerTest.
+Lembke, S.-A. (2014). When timbre blends musically: Perception and acoustics underlying orchestration and performance [PhD Thesis]. McGill University. Montreal, QC.
+Lembke, S.-A., Levine, S., & McAdams, S. (2017). Blending between bassoon and horn players: An analysis of timbral adjustments during musical performance. Music Perception, 35(2), 144­164. https://doi.org/https://doi.org/10.1525/MP. 2017.35.2.144
+Lembke, S.-A., & McAdams, S. (2015). The role of spectral-envelope characteristics in perceptual blending of wind-instrument sounds. Acta Acustica United with Acustica, 101(5), 1039­1051. https://doi.org/10.3813/AAA.918898
+Lembke, S.-A., Parker, K., Narmour, E., & McAdams, S. (2019). Acoustical correlates of perceptual blend in timbre dyads and triads. Musicae Scientiae, 23(2), 250­274. https://doi.org/10. 1177/1029864917731806
+Lenth, R. V., Buerkner, P., Herve, M., Jung, M., Love, J., Miguez, F., Riebl, H., & Singmann, H. (2022). emmeans: Estimated marginal means, aka least-squares means (1.8.0). https:// CRAN.R-project.org/package=emmeans.
+Martin, F. N., & Champlin, C. A. (2000). Reconsidering the limits of normal hearing. Journal of the American Academy of Audiology, 11(02), 64­66. https://doi.org/10.1055/s-00421748011
+Marx, A. B. (1851). Die Lehre von der musikalischen Komposition, vierter Theil [The theory of musical composition, Part 4]. Breitkopf & Härtel.
+McAdams, S. (1984). The auditory image: A metaphor for musical and psychological research on auditory organization. In W. R. Crozier & A. J. Chapman (Eds.), Cognitive processes in the perception of art (pp. 289­323). North-Holland. https://doi.org/10.1016/S0166-4115(08)62356-0
+
+McAdams, S. (1989). Segregation of concurrent sounds.1. Effects of frequency-modulation coherence. The Journal of the Acoustical Society of America, 86(6), 2148­2159. https://doi. org/10.1121/1.398475
+McAdams, S., & Bregman, A. S. (1979). Hearing musical streams. Computer Music Journal, 3(4), 26­43. https://www.jstor.org/ stable/4617866
+McAdams, S., Gianferrara, P. G., Korsmit, I. R., Goodchild, M., & Soden, K (2025). Data for paper entitled "Factors Contributing to Instrumental Blends in Orchestral Excerpts." https://doi.org/ 10.5683/SP3/HJ4GY3, Borealis, V1
+McAdams, S., & Goodchild, M. (2018). Perceptual evaluation of the recording and musical performance quality of DOSim and OrchSim orchestral simulations compared to professional recordings. MPCL Technical Report MPCL-001. Retrieved December 21, 2023, from https://www.mcgill.ca/mpcl/files/ mpcl/mcadams_2018_mpcl.pdf
+McAdams, S., Soden, K., & Goodchild, M. (2022). A taxonomy of orchestral grouping effects derived from principles of auditory perception. Music Theory Online, 28(3). https://doi.org/10. 30535/mto.28.3.6
+Moore, B. C. J., & Glasberg, B. R. (1983). Suggested formulae for calculating auditory-filter bandwidths and excitation patterns. The Journal of the Acoustical Society of America, 74(3), 750­753. https://doi.org/10.1121/1.389861
+Nakagawa, S., & Schielzeth, H. (2013). A general and simple method for obtaining R2 from generalized linear mixed-effects models. Methods in Ecology and Evolution, 4(2), 133­142. https://doi.org/10.1111/j.2041-210x.2012.00261.x
+Peeters, G., Giordano, B. L., Susini, P., Misdariis, N., & McAdams, S. (2011). The Timbre Toolbox: Extracting audio descriptors from musical signals. Journal of the Acoustical Society of America, 130(5), 2902­2916. https://doi.org/10. 1121/1.3642604
+Piston, W. (1955). Orchestration. W. W. Norton. Prout, E. (1902). Instrumentation. Novello and Company. Raftery, A. E. (1995). Bayesian Model selection in social research.
+Sociological Methodology, 25, 111­163. https://doi.org/10. 2307/271063 Read, G. (1979). Style and orchestration. Schirmer. Read, G. (2004). Orchestral combinations: The science and art of instrumental tone-color. The Scarecrow Press, Inc. Reuter, C. (1996). Die auditive Diskrimination von Orchesterinstrumenten. Lang. Retrieved November 08, 2024, from https://www.researchgate.net/publication/263226861_ Die_auditive_Diskrimination_von_Orchesterinstrumenten Reuter, C. (2002). Klangfarbe und Instrumentation. Lang. Retrieved November 08, 2024, from https://www.researchgate.net/ publication/263227009_Klangfarbe_und_Instrumentation Reuter, C. (2018). Commentary on "An exploratory study of western orchestration: Patterns through history" by S. H. Chon, D. Huron, & D. DeVlieger. Empirical Musicology Review, 12(3-4), 160­171. https://doi.org/10.18061/emr.v12i34.5992 Riemann, H. (1888/1890). Catechism of musical instruments (Guide to instrumentation) (Trans. from German edition). Schirmer.
+
+18
+
+Music & Science
+
+Rimsky-Korsakov, N. (1964). Principles of orchestration: With musical examples drawn from his own works (E. Agate, Trans.; M. Steinberg, Ed.). Dover. (Original work published 1912).
+Sandell, G. J. (1991). Concurrent timbres in orchestration: A perceptual study of factors determining "blend." [PhD thesis]. Northwestern University, Evanston, Illinois.
+Sandell, G. J. (1995). Roles for spectral centroid and other factors in determining" blended" instrument pairings in orchestration. Music Perception, 13(2), 209­246. https://doi.org/10.2307/ 40285694
+Satterthwaite, F. E. (1946). An approximate distribution of estimates of variance components. Biometrics Bulletin, 2(6), 110­114. https://doi.org/10.2307/3002019
+Schumann, K. E. (1929). Physik der Klangfarben [The physics of timbre] [Habilitation Dissertation]. University of Berlin. Berlin.
+Schwarz, G. (1978). Estimating the dimensions of a model. Annals of Statistics, 6(2), 461­464. https://doi.org/10.1214/aos/ 1176344136
+Smith, B. K. (1995). PsiExp: An environment for psychoacoustic experimentation using the IRCAM musical workstation. Paper presented at the Society for Music Perception and Cognition Conference'95, University of California, Berkeley.
+Sundelin, A. (1828). Die Instrumentirung für das Orchester, oder Nachweisungen über alle bei demselben gebräuchliche Instrumente, um dafür wirkungsvoll und ausführbar komponiren zu können [Instrumentation for the orchestra, or instructions on all the instruments used in the orchestra, in order to be able to compose effectively and feasibly for it]. Wagenführ.
+
+Tardieu, D., & McAdams, S. (2012). Perception of dyads of impulsive and sustained instrument sounds. Music Perception, 30(2), 117­128. https://doi.org/10.1525/Mp.2012. 30.2.117
+Widor, C.-M. (1904/1906). The technique of the modern orchestra. A manual of practical instrumentation (Trans. from French edition, E. Suddard). Joseph Williams.
+Wright, J. K., & Bregman, A. S. (1987). Auditory stream segregation and the control of dissonance in polyphonic music. Contemporary Music Review, 2(1), 63­92. https:// doi.org/10.1080/07494468708567054
+Appendix
+Distribution of stimuli across type of instrumental blend and timbre class with strength of blend as annotated by analysts. The correlations with annotated blend strength were R2(62) = .26 for multiplicity ratings and R2 (62) = .28 for blend ratings. Instrument combination abbreviations: S = strings, B = brass, W = woodwinds, BS = brass and strings, WS = woodwinds and strings, WB = woodwinds and brass, A (All) = woodwinds, brass, and strings, O (Other) combinations including impulsive instruments such as plucked strings, glockenspiel, xylophone, timpani, snare drum, tubular bells, gongs, celeste, vibraphone, and bass drum. Piece abbreviations: Sx = Symphony x, LT = La Traviata, DG = Don Giovanni, LM = La Mer, PE = Pictures at an Exhibition, TV = Tod und Verklärung, CV = Choral Varié, ORT = Overture on a Russian Theme.
+
+McAdams et al.
+
+19
+
+Timbre class S B W BS WS WB A O
+
+Blend type Augmented Emergent
+Augmented
+Emergent Augmented Emergent Augmented Emergent Augmented Emergent Augmented
+Emergent Augmented Emergent Augmented
+
+Composer
+Mahler Sibelius Verdi Bruckner Debussy Debussy Haydn Mozart Bruckner Bruckner Debussy Mahler Mussorgsky Mussorgsky Mussorgsky Mussorgsky Debussy Haydn Mahler Strauss Mahler Mozart Schubert Vaughan Williams Debussy Debussy Debussy D'Indy Mussorgsky Rimsky-Korsakov Schubert Mussorgsky Sibelius Vaughan Williams Verdi Debussy Haydn Mozart Mussorgsky Debussy Mahler Mozart Mussorgsky Sibelius Debussy Mussorgsky Mussorgsky Bizet Sibelius Strauss Verdi Debussy Mozart Verdi Debussy Mussorgsky Mussorgsky Mussorgsky Vaughan Williams
+
+Piece
+S1 S2 LT S6 LM LM S100 DG S6 S6 LM S1 PE PE PE PE LM S100 S1 TV S1 DG S9 S8 LM LM Images CV PE ORT S9 PE S2 S8 LT LM S100 DG PE LM S1 DG PE S2 LM PE PE Carmen S2 TV Aida Images DG Aida LM PE PE PE S8
+
+Movement
+I II Prelude I I III III Overture I I III I Promenade The Gnome The Gnome Catacombs III II I -- I Overture IV IV III I Gigue ­ The Gnome -- III S. Goldenberg II IV Prelude III II Overture The Gnome I I Overture Catacombs II I The Gnome Catacombs Overture II -- Moorish dance Gigue Overture Moorish dance III The Gnome The Gnome The Gnome IV
+
+Mm.
+1­6 160­162 18­25 205­216 12­19 51­52 51­56 31­35 208­216 361­369 51­52 357­361 3­4 76­81 103­104 4­7 51­52 45­48
+5 456­458 18­21 24­26 543­558 59­66 175­178 89­90 5­9 70­74 68­69 59­60 306 1­2 179­182 59­67 29­36 171­178 24­28 23­26 70­76 71--72 361­363 38­39 12­13 156­162 12­17 61­63 5­6 131­138 190 434­437 45­52
+162 1­4 53­57 179­182 66 86­89 95­97 81­86
+
+Duration (s)
+24 9 34 27 9 15 12 6 18 24 6 9 10 16 6 13 7 9 7 9 16 13 12 13 9 21 6 24 4 9 6 15 22 13 31 12 12 18 18 12 6 4 12 19 24 10 7 27 7 19 13 19 19 9 7 4 7 6 10
+
+Annotated strength
+5 4 3 3 5 4 2 5 1 2 4 3 2 4 3 4 4 4 4 1 4 4 4 5 4 5 5 3 2 4 5 5 4 4 5 5 4 5 5 3 1 4 4 4 5 4 4 4 2 4 3 3 3 3 1 4 4 4 5
+(continued)
+
+20
+
+(continued) Timbre class
+
+Blend type Emergent
+
+Composer
+Debussy Mussorgsky Mussorgsky Rimsky-Korsakov Vaughan Williams
+
+Piece
+LM PE PE ORT S8
+
+Movement
+I Baba Yaga Baba Yaga -- IV
+
+Music & Science
+
+Mm.
+73­75 110­111 110­115 1­3 19­22
+
+Duration (s)
+6 7 21 9 10
+
+Annotated strength
+3 5 5 4 1
+
+Supplementary Material for "Factors contributing to instrumental blends in orchestral excerpts."
+Figures S1-S9. Regression of predictors onto mean blend-related ratings averaged over multiplicity and blend ratings for each timbre class. Fig. S1 -- Degree of parallelism Fig. S2 -- Number of notes Fig. S3 -- Spectral crest Fig. S4 -- Spectral variation Fig. S5 -- Spectral flatness Fig. S6 -- Frame energy Fig. S7 -- Onset synchrony Fig. S8 -- Spectral centroid Fig. S9 -- Spectral spread Table S1. List of excerpts included as scores and audio clips. Score excerpts (in concert pitch) as simulated and extracted from the full orchestral context.
+1
+
+Perception of orchestral blends
+The following figures show the global regression of individual score-based and acoustic covariates onto averaged multiplicity and blend ratings (thick black line). Also shown are the regression lines for each timbre class (thin colored lines). Results from the linear mixed models with main effects of each covariate and their interaction with timbre class are reported. Significant effects for individual timbre classes are indicated by * in the legend for each figure. The W timbre class was excluded for the ordinal covariate parallelism because the value was 4 (parallel) for all eight excerpts. The covariates are presented in order of decreasing strength of the main effect.
+Figure S1. Degree of parallelism. Globally, as parallelism increases rated unity/blend increases (z-ratio = ­19.764, p < .0001). All timbre classes have significant associations with parallelism.
+2
+
+Perception of orchestral blends
+Figure S2. Number of notes. Globally, as the number of notes increases multiplicity ratings increase and blend ratings decrease (z-ratio = 13.367, p < .0001). All timbre classes except O have significant associations between ratings and number of notes. The O class has generally higher multiplicity/lower blend ratings independently of the number of notes involved.
+Figure S3. Spectral crest. Globally, the tendency is for an increase in spectral crest to result in an increase in unity/blend ratings (z-ratio = ­12.893, p < .0001). All timbre classes except W have significant associations between ratings and spectral crest. This trend is strongest for B and A classes.
+3
+
+Perception of orchestral blends
+Figure S4. Spectral variation. Globally, the tendency is for an increase in spectral variation to result in an increase in multiplicity and decrease in blend ratings (z-ratio = 7.128, p < .0001). All timbre classes except W have significant associations between ratings and spectral variation. This trend is strongest for B and WS classes.
+Figure S5. Spectral flatness. Globally, the tendency is for an increase spectral flatness (an increase in the noisiness of the spectrum) to be associated with an increase in multiplicity and a decrease in blend (z-ratio = 5.613, p < .0001). All timbre classes except W and WS have significant associations between ratings and spectral flatness. This trend is stronger for the O, WB, and BS classes. The A class is an outlier in having a negative slope. It is curious that spectral flatness and crest, which measure similar properties have associations in opposite directions with the ratings.
+4
+
+Perception of orchestral blends
+Figure S6. Frame energy. Globally there is a weak tendency for an increase in energy to be associate with increased ratings of multiplicity and decreased ratings of blend (z-ratio = 5.496, p < .0001). All timbre classes except A have significant associations. However, S and BS have negative slopes and B, W, WS, WB, and O have positive slopes.
+Figure S7. Onset synchrony. Globally the tendency is for increased synchrony to be associated with increased ratings of unity/blend (z-ratio = ­3.320, p = .0009). All timbre classes except S, BS, and WS have significant associations between ratings and onset synchrony. The interpretation of individual timbre classes should be considered in light of the fact that threequarters of the excerpts are perfectly synchronous, so the regression lines for most timbre classes are based on a very small number of points at lower onset synchronies.
+5
+
+Perception of orchestral blends
+Figure S8. Spectral centroid. There is no significant global tendency for this covariate. All timbre classes except S have significant associations between ratings and spectral centroid. However, three of the eight timbre classes have a negative relation between ratings and spectral centroid (BS, WS, and A), and four others have position relations (B, W, WB, and O).
+Figure S9. Spectral spread. There is no significant global tendency for this covariate. All timbre classes have significant associations between ratings and spectral spread except W, which is marginal (p = .068). As with spectral centroid, some timbre classes have negative associations with ratings (BS, WS, and A) and others have positive associations (S, B, WB, and O).
+6
+
+Perception of orchestral blends
+
+Table S1. List of excerpts with timbre class, blend type, composer, piece, movement, measures, and excerpt number for audio clips included in Supplementary Materials. Instrument combination abbreviations: S = strings, B = brass, W = woodwinds, BS = brass and strings, WS = woodwinds and strings, WB = woodwinds and brass, A (All) = woodwinds, brass, and strings, O (Other) combinations including impulsive instruments such as plucked strings, glockenspiel, xylophone, timpani, snare drum, tubular bells, gongs, celeste, vibraphone, and bass drum. Piece abbreviations: Sx = Symphony x, LT = La Traviata, DG = Don Giovanni, LM = La Mer, PE = Pictures at an Exhibition, TV = Tod und Verklärung, CV = Choral Varié, ORT = Overture on a Russian Theme.
+
+Timbre class S
+B
+W
+BS
+
+Blend Type Augmented Emergent
+Augmented Emergent Augmented Emergent Augmented Emergent
+
+Composer
+
+Piece
+
+Mahler
+
+S1
+
+Sibelius
+
+S2
+
+Verdi
+
+LT
+
+Bruckner
+
+S6
+
+Debussy
+
+LM
+
+Debussy
+
+LM
+
+Haydn
+
+S100
+
+Mozart
+
+DG
+
+Bruckner
+
+S6
+
+Bruckner
+
+S6
+
+Debussy
+
+LM
+
+Mahler
+
+S1
+
+Mussorgsky
+
+PE
+
+Mussorgsky
+
+PE
+
+Mussorgsky
+
+PE
+
+Mussorgsky
+
+PE
+
+Debussy
+
+LM
+
+Haydn
+
+S100
+
+Mahler
+
+S1
+
+Strauss
+
+TV
+
+Mahler
+
+S1
+
+Mozart
+
+DG
+
+Schubert
+
+S9
+
+Vaughan Williams S8
+
+Debussy
+
+LM
+
+Debussy
+
+LM
+
+Debussy
+
+Images
+
+D'Indy
+
+CV
+
+Mussorgsky
+
+PE
+
+Rimsky-Korsakov ORT
+
+Schubert
+
+S9
+
+Movement
+I II Prelude I I III III Overture I I III I Promenade The Gnome The Gnome Catacombs III II I -- I Overture IV IV III I Gigue ­ The Gnome -- III
+
+Mm.
+1­6 160­162
+18­25 205­216
+12­19 51­52 51­56 31­35 208­216 361­369 51­52 357­361
+3­4 76­81 103­104
+4­7 51­52 45­48
+5 456­458
+18­21 24­26 543­558 59­66 175­178 89­90
+5­9 70­74 68­69 59­60
+306
+
+Audio clip number 23 52 64 3 9 18 21 44 2 4 16 25 40 30 36 39 17 20 22 56 24 45 50 59 5 6 12 14 34 48 49
+
+7
+
+Perception of orchestral blends
+
+Timbre Class
+
+Blend Type
+
+Augmented WS
+Emergent
+
+Augmented WB
+Emergent
+Augmented A
+Emergent
+Augmented O
+Emergent
+
+Composer
+
+Piece
+
+Mussorgsky Sibelius
+Vaughan Williams Verdi
+Debussy Haydn Mozart Mussorgsky Debussy Mahler Mozart Mussorgsky Sibelius Debussy Mussorgsky Mussorgsky Bizet Sibelius Strauss Verdi Debussy Mozart Verdi Debussy Mussorgsky Mussorgsky Mussorgsky Vaughan Williams Debussy Mussorgsky Mussorgsky Rimsky-Korsakov Vaughan Williams
+
+PE S2 S8 LT LM S100 DG PE LM S1 DG PE S2 LM PE PE Carmen S2 TV Aida Images DG Aida LM PE PE PE S8 LM PE PE ORT S8
+
+Movement Measures
+
+S. Goldenberg II IV
+Prelude III II
+Overture The Gnome
+I I Overture Catacombs II I The Gnome Catacombs Overture II -- Moorish dance Gigue Overture Moorish dance III The Gnome The Gnome The Gnome IV I Baba Yaga Baba Yaga -- IV
+
+1­2 179­182
+59­67 29­36 171­178 24­28 23­26 70­76 71--72 361­363 38­39 12­13 156­162 12­17 61­63
+5­6 131­138
+190 434­437
+45­52 162 1­4
+53­57 179­182
+66 86­89 95­97 81­86 73­75 110­111 110­115
+1­3 19­22
+
+Audio clip number
+41 53 58 63 13 19 43 35 10 26 46 31 51 8 29 32 1 54 55 61 7 42 62 15 33 37 38 60 11 27 28 47 57
+
+8
+
+

@@ -1,0 +1,104 @@
+The Drummer: a Collaborative Musical Interface with Mobility
+
+Andrea Bianchi
+
+Woon Seung Yeo
+
+Graduate School of Culture Technology KAIST
+Daejeon, 305-701 Republic of Korea {andrea,woon}@kaist.ac.kr
+
+Abstract
+It has been shown that collaborative musical interfaces encourage novice users to explore the sound space and promote their participation as music performers. Nevertheless, such interfaces are generally physically situated and can limit the possibility of movements on the stage, a critical factor in live music performance. In this paper we introduce the Drummer, a networked digital musical interface that allows multiple performers to design and play drum kits simultaneously while, at the same time, keeping their ability to freely move on the stage. The system consists of multiple Nintendo DS clients with an intuitive, user-configurable interface and a server computer which plays drum sounds. The Drummer Machine, a small piece of hardware to augment the performance of the Drummer, is also introduced.
+Keywords: collaborative interface, multiplayer, musical expression, musical control, game control, Nintendo DS.
+1. Introduction
+The Drummer is a networked digital musical interface that allows multiple users to design and play a drum kit. The system is based on client-server architecture over a wireless network; every client (see Figure 1) runs on a Nintendo DS (Dual Screen) ­ one of the most popular wireless handheld game devices with touch-screen functionality [1] ­ while the server computer handles the clients' requests and plays matching drum sounds with the software synthesizer. Each user can take advantage of this small and intuitive pen-based device in order to create/customize a drum kit, and then perform together with other users simply by tapping and sliding the pen on the screen.
+Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers, or to redistribute to lists requires prior specific permission and/or a fee. NIME09, June 3-6, 2009, Pittsburgh, PA Copyright remains with the author(s).
+
+Figure 1. The Drummer client running on a Nintendo DS
+2. Motivations and Related Work
+Most collaborative musical interfaces provide each player with a method for individual control within a shared sonic environment [2]. In general, such an environment is physically shared and/or locally situated, as in the case of installations where co-located players can benefit not only from interacting with the instrument and the audience but also with each other. Famous examples include the reacTable [3], Jam-O-Drum [4], Audiopad [5], and others with quite different approaches [6][7] as well.
+Nevertheless, physically located interfaces are not always suitable for live music performances; in fact, the freedom of motion on stage with no physical constraints is a crucial element. So far this has been answered only by certain single-user networked interfaces such as Tenori-On [8] or mobile phones like for the CCRMA MoPhO [9].
+If playing any collaborative musical interface truly requires a shift in perspective toward the re-evaluation of people's experiences [10] and consequently redeeming the novices as possible music performers, then it becomes necessary to address as well the problem of mobility during performances without losing the benefits from proximity.
+We also introduce here some examples of interfaces for percussion instruments for either one player or collaborative situations. First of all, there is Jam-O-World [11] ­ the evolution of the Jam-O-Drum into an immersive multiplayer gaming platform. Tangible controllers were
+
+316
+
+NIME 2009
+
+used in Tabla Drumming [12] and Beat Bug [13], whereas there was more emphasis on gesture recognition in AoBachi [14], the Virtual Drumkit [15] and the popular Wiimote Drum [16]. The WorldBeat [17] is a good example of camera-tracking drumming interface, while the Voice Drummer [18] alternatively uses human voice as its input.
+3. Implementation and Performance
+3.1 The Drummer
+The Drummer is a collaborative musical interface for percussion instruments which allows people to design, play and record drums together. We believe that the Drummer can be used as a collaborative music interface suitable for live performances, where movements on stage are required.
+First of all, the wireless capability of the Nintendo DS makes it a natural candidate for performances on stage, since the users are not constrained by wire or other physical impediments. In addition, players can at any time build and customize their own drum set and play it with others. This opens new possibilities of collaboration and interdependence among players that have not been previously explored.
+It should also be noted that the Nintendo DS is particularly indicated as the Drummer interface [19] because of 1) its wide popularity and availability among novice music players, 2) the ease of mapping pen-based gestures to a percussive instrument, 3) the presence of two displays, which makes it easier to provide visual feedback for higher accuracy [20], and 4) the controller ergonomics, created to maximize the speed of moving fingers.
+3.2 System Architecture
+The system for the Drummer incorporates a client-server architecture, where multiple clients can access the same server simultaneously (Figure 2).
+The server software, written in Processing [21], runs on a computer together with a sound synthesis engine; it not only manages the wireless connections with the clients but also acts as an interface between the clients and the synthesis engine by translating proprietary information sent over the network into MIDI messages. In this project we use Apple's Logic DAW (Digital Audio Workstation) to play back sampled or synthesized drum sounds, which can be easily replaced by other MIDI-capable sound synthesis software such as Max/MSP, Pd, ChucK, etc.
+On the client side is our custom Drummer software, developed to run on the Nintendo DS. Once the Drummer application is running, the user is required to establish a connection with the server. Multiple clients can connect to the same server simultaneously.
+
+Figure 2. Schematic diagram of the Drummer architecture
+3.3 Client User Interface
+The user interface of the clients utilizes two screens. The top screen is only for feedback purpose; its role is to highlight the instrument currently selected by the user (crash cymbals, toms, snares, hi-hats, or bass drums) in order to provide a visual clue. Each instrument is also associated with its own background image. The bottom one, on the other hand, works as a touch-screen input device; by tapping and/or sliding the stylus pen on the canvas together with specific key combinations of the Nintendo DS, the user can create/delete/modify/move instances of instruments, increase/decrease the velocity of the hits (volume), and simply play them.
+Each instrument is represented as a circle on the screen, whose size determines the type of instrument (mapped to the real physical dimension); the user can select different instruments by modifying the size of a circle. Moreover, the color of each circle shows the "instrument family" to which the instrument belongs, providing additional visual clues.
+Currently the system supports any combination among 4 toms, 2 crash cymbals, 2 snares and 2 bass drums. It also supports 2 types of hi-hats: to create a hi-hat the user should drag a circle over another one so that the circle stacked on top (circles are always drawn from the largest to the smallest) behaves as a hi-hat, which is similar to its physical structure.
+Finally, users can easily play the drums by tapping with the pen on the circles that they have previously drawn and positioned on the screen. For each hit, the client sends proprietary messages to the server, which handles them and plays the corresponding drum sounds with the sound synthesis engine.
+The software running on the Nintendo DS has been realized using PAlib [22], and will soon be distributed (under public license) to get as much user feedback as possible.
+
+317
+
+3.4 Collaboration and Interaction
+The Drummer is designed with collaborative use in mind; we hope and believe that it is a musical performance platform in which players can determine the level of interaction among themselves.
+Highly customizable interface of the Drummer enables its users to easily determine their individual roles in multiplayer performances; for instance, instead of playing the whole drum kit, each user can select a small number of instruments and design the layout of his/her individual interface accordingly. This implicit adjustment among players is the type of collaboration we are looking for, because it is spontaneous and could lead to a novel level of interaction and interdependence among the players.
+4. Evaluation and Results
+To gauge the user response to our interface we conducted an experiment with 20 participants among students, staff and faculty (see Table 1). The goals of the experiment were to 1) evaluate the ability of the users to accurately hit the virtual instrument at a relatively fast speed, 2) to judge the users' perception of usability for the interface, and 3) to judge the perceived and actual level of collaboration by playing with others.
+The subjects were given a pre-defined drum kit layout (to prevent them from building too simple drum sets) and had several practice sessions to get familiar with the system before experiment. For each user we analyzed the first 30 seconds of his/her performance to obtain records such as the total number of taps (with time log) and their hit/miss ratio. We then tested collaborative performances between two players for about a minute.
+Table 1 summarizes the result of user survey. We can see that users found the experience quite entertaining (see Usability) and liked the idea of "collaborative music making" (see Collaboration). In the two-player case, some users proposed creative strategies to divide the "responsibility" for different instruments.
+It is also encouraging to see a low error rate in hitting the instrument circles on the screen (see Performance): in about 30 seconds, only 0.7 taps out of 46.55 were out of the target.
+Table 1. Descriptive statistics for the results of the user test.
+
+Although users positively judged the potential of the system for collaboration (4.9), they rated their actual experience relatively lower (4.5). Through the survey, we discovered that such result is mainly due to two factors regarding the performance of the system.
+First of all, almost every user expressed unsatisfaction toward the reactivity of the hardware: tapping with different strength and speed could cause the touch screen to respond differently, thereby confusion the users. This problem, as suggested by some participants, could potentially be solved by substituting the hardware with a more advanced one.
+Secondly, the Drummer is also prone to problems caused by communication delay which is typical of networked systems. Unfortunately, we are unable to precisely measure the reaction time and tolerance to delays that are caused by numerous intrinsic uncertainties such as network congestion, proximity, signal strength, battery level, simultaneous connections, etc. Instead, we tried to roughly assess the network reliability of the system by comparing two different scenarios; we connected one client to the server and tapped on a single instrument at the fastest rate possible, while measuring the time interval between any two packets that arrive at the server consecutively.
+This test was made with two different setups ­ one with the wireless router and the client one meter apart, and the other at ten meters distance (with a wall in between). The result is shown in Table 2: although the measures cannot cover all the possible delay situations, they exemplify the performances in two extreme cases.
+Note that, although we used only one wireless router for this experiment, more routers could be used to enhance the network performance.
+Table 2. Time interval between events at the server ([ms]).
+
+Distance Min Max Average Median
+
+1m
+
+49 545
+
+177
+
+112
+
+10 m
+
+48 11664 747
+
+232
+
+5. Conclusion and Future Work
+This paper introduced the motivations and the realization of the Drummer, a novel collaborative music system with intuitive and easy-to-use mobile interface that enables the user to move freely on stage. However, the Drummer also presents some technical limitations and raises design questions; more specifically, there are two main technical problems that our prototype can answer only partially.
+First of all, numerous factors can have effect on the performance of the system, including the maximum number of users playing simultaneously, communication delays and hardware reactivity.
+
+318
+
+Another technical problem came out from the request of some users who wanted to hit the drums at a rate faster than what they can by hand; in fact, the touch-screen of the Nintendo DS does not support multiple inputs, making it even harder to implement fast "drum roll" type gestures.
+To address this problem we prototyped a small piece of hardware called the Drummer Machine, which is composed of a knob, an Arduino board [23], and a USB port attached to a computer (Figure 3). The knob provides the control over the speed of consecutive hits on an instrument without actually having to tap the stylus on the screen repeatedly. This, however, represents only the first attempt to obtain the solution and we will continue to look for better ways to integrate this functionality in the Drummer.
+Figure 3. The Drummer-Machine, a hardware patch to augment the performance of the Drummer
+References
+[1] "DS at Nintendo," [Web site], [2009 Jan 16], Available: http://www.nintendo.com/ds.
+[2] T. Blaine and S. Fels, "Contexts of collaborative musical experiences," in Proceedings of the 2003 Conference on New interfaces For Musical Expression, pp. 129-134, 2003.
+[3] S. Jordà, G. Geiger, M. Alonso, and M. Kaltenbrunner, "The reacTable: exploring the synergy between live music performance and tabletop tangible interfaces," in Proceedings of the 1st international Conference on Tangible and Embedded interaction, pp. 139-146, 2007.
+[4] T. Blaine and T. Perkis, "The Jam-O-Drum interactive music system: a study in interaction design," in Proceedings of the 3rd Conference on Designing interactive Systems: Processes, Practices, Methods, and Techniques, pp. 165-173, 2000.
+[5] J. Patten, B. Recht, and H. Ishii, "Audiopad: a tag-based interface for musical performance," in Proceedings of the 2002 Conference on New interfaces For Musical Expression, pp. 1-6, 2002.
+[6] S. Jordà, "FMOL: Toward User-Friendly, Sophisticated New Musical Instruments," Computer Music Journal, vol. 26, no. 3, pp. 23-39, Sep. 2002.
+[7] G. Weinberg et al., "The Squeezables: Toward an Expressive and Interdependent Multi-player Musical
+
+Instrument," Computer Music Journal, vol. 25, no. 2, pp. 37-45, Summer 2001. [8] Y. Nishibori and T. Iwai, "TENORI-ON," in Proceedings of the 2006 Conference on New interfaces For Musical Expression, pp. 172-175, 2006. [9] G. Essl, G. Wang, M. Rohs, "Developments and Challenges turning Mobile Phones into Generic Music Performance Platforms" in 5th International Mobile Music Workshop, pp. 11-14, 2008 [10] T. Blaine et al., "Collaborative Musical Experiences for Novices," Journal of New Music Research, vol. 32, no. 4, pp. 411­428, 2003. [11] T. Blaine and C. Forlines, "Jam-O-World: evolution of the Jam-O-Drum multi-player musical controller into the JamO-Whirl gaming interface," in Proceedings of the 2002 Conference on New interfaces For Musical Expression, pp. 1-6, 2002. [12] J. H. Roh and L. Wilcox, "Exploring tabla drumming using rhythmic input," in Conference Companion on Human Factors in Computing Systems, pp. 310-311, 1995. [13] G. Weinberg, R. Aimi, and K. Jennings, "The Beatbug network: a rhythmic system for interdependent group collaboration," in Proceedings of the 2002 Conference on New interfaces For Musical Expression, pp. 1-6, 2002. [14] D. Young and I. Fujinaga, "Aobachi: a new interface for Japanese drumming," in Proceedings of the 2004 Conference on New interfaces For Musical Expression, pp. 23-26, 2004. [15] D. Burgess and E. Mynatt, "3-D interactive percussion: the virtual drum kit," in Conference Companion on Human Factors in Computing Systems, pp. 45-46, 1994. [16] "Wiimote Drum Kit," [Web site], [2009 Jan 10], Available: http://www.thisisnotalabel.com/My-Wiimote-DrumKit.php. [17] J. O. Borchers, "WorldBeat: designing a baton-based interface for an interactive music exhibit," in Proceedings of the SIGCHI Conference on Human Factors in Computing Systems, pp. 131-138, 1997. [18] T. Nakano, M. Goto, J. Ogata, and Y. Hiraga, "Voice Drummer: A Music Notation Interface of Drum Sounds Using Voice Percussion Input," in Proceedings of the 18th Annual ACM Symposium on User Interface Software and Technology (UIST2005), pp. 49-50, 2005. [19] T. Blaine, "The convergence of alternate controllers and musical interfaces in interactive entertainment," in Proceedings of the 2005 Conference on New interfaces For Musical Expression, pp.27-33, 2004. [20] T. Mäki-Patola, "User interface comparison for virtual drums," in Proceedings of the 2005 Conference on New interfaces For Musical Expression, pp. 144-147, 2004. [21] "Processing 1.0," [Web site], [2009 Jan 16], Available: http://processing.org/. [22] "PAlib Homepage," [Web site], [2009 Jan 20], Available: http://www.palib.info /. [23] "Arduino Homepage," [Web site], [2009 Jan 20], Available: http://www.arduino.cc /.
+
+319
+
+

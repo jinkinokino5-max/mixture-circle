@@ -1,0 +1,276 @@
+Dance music, movement and tempo preferences
+Dirk Moelants IPEM-Dept. of Musicology Ghent University, Belgium
+
+ABSTRACT
+1. Background
+Research on tempo preference showed evidence for the existence of a preferred tempo slightly above 120 bpm. This tempo can be associated with the most natural speed to perform simple repetitive movements. It is as if the body acts like a resonator that starts to move under the influence of an external force: the beat of the music.
+2. Aims
+Investigating tempi as perceived in dance music, we will at the same time try to confirm the existence of a preferred tempo and to provide some nuance. Not all music has a tempo between 120 and 130 bpm. We will look if pieces with a different tempo can be grouped in certain styles and if there is an evolution in tempo preference through recent history.
+3. Method
+We collected data from so-called bpm-lists: lists used and compiled by DJs containing the tempi of their records. Since these data are necessarily perceptually relevant, the whole set of data can be seen as the results of a big experiment on tempo perception. We will take a look at the distribution of the tempi, compare lists focusing on different musical styles and to data from different time periods.
+4. Results
+We see that the general distribution of the tempi shows a clear preference for tempi around 130 bpm (close to preferred tempo) and a large majority of the tempi falls within the preferred `tempo-octave' 80-160 bpm. However some lists, associated with certain musical styles show clearly different distributions, with peaks around clearly different tempi. We also see a shift in the distribution of tempi between the years 2001 and 2002.
+5. Conclusions
+Whereas most dance music follows and evokes our natural movement, some musical styles want to elicit a different type of expression associated with longer (slower) or shorter (faster) movements. This is explained by the association of some tempi with specific types of repetitive movement. It thus provides a link between musical and gestural expression.
+6. Topic Areas
+Tempo, movement, perception, dance.
+
+1. INTRODUCTION
+In previous research on tempo preference (Moelants, 2002b) we determined the existence of a preferred tempo between 120 and 125 bpm. This is significantly faster than the 100 bpm found by Fraisse (1982). The preference for tempi around 120 bpm, was found in both the distribution of tempi found in different samples of music, as in the natural tempo of simple repeated movements (tapping, clapping, walking). This tempo can be associated with the most natural speed for repetitive movements, or the `natural frequency' of the human body. Applied to music we find it in both the speed of the beat as in repetitive tapping and dancing to the beat. Following the resonance theory of tempo perception (Van Noorden & Moelants, 1999) we can see the body as a oscillator with a fixed resonance frequency that starts moving under the influence of an external force, provided by the beat of the music. It can be strong (loud, regular) or weak (soft, variable). The probability that a piece of music will evoke movement thus depends on both the speed of the beat and its strength.
+When talking about music and movement, it seems obvious to take a look at the tempi of dance music. Contemporary (electronic) dance music has as its main purpose to accompany spontaneous, repetitive bodily movements. Dancers are not bound by specific dance patterns, but want to express themselves in a natural way. It generally has a strong, steady beat that, especially when played at a high sound level and at a rate close to preferred tempo, almost forces the dancers to start moving. We expect that in this sample of music, extreme tempi are less common, since they do not so easily evoke movement. Investigating the tempi as perceived in dance music, should thus confirm the existence of a preferred tempo.
+However, not all (dance) music has a tempo between 120 and 130 bpm. In what follows we will look if specific tempi outside this range have a prominent place in the distribution of tempi in dance music and if different tempi zones can be associated with specific musical characteristics. Finally we will see if the tempo distribution changes through time.
+The data used in the analyses are taken from so-called `bpmlists': lists containing tempi (in bpm) of large numbers of popular music pieces, especially dance music. These lists are used and compiled by DJs to help them to create fluent transitions between two pieces (`beatmatching'). To be efficient, these tempi have to correspond to the tempo as perceived by the crowd. Hence we could view the compilation of bpm-lists as an experiment on perceived tempo in music. Hence, collecting these data gives us an excellent opportunity to create a huge set of data on the distribution of perceived tempo in music that aims at evoking movement.
+
+2. ANALYSIS
+
+2.2. Categories of tempo and movement
+
+2.1. General analysis of the bpm-lists
+
+The location of the primary peak shows that most dance music provides a beat that allows a natural repetitive movement, with
+
+In total, data from 44 bpm lists were analyzed. The lists a preference for the somewhat `excited' tempi slightly faster
+
+contained between 184 and 19211 entries with an average of than preferred tempo. However, the existence of a preferred
+
+2046, giving a total number of 90008 tempi. There is a fairly tempo can not explain the secondary peak around 95 bpm.
+
+large variety within the collection of lists. The collections are Possibly an explanation for this phenomenon can be found in
+
+geographically spread (including lists from 10 European the properties of the individual lists.
+
+countries and from North-America, Japan and Australia) and they focus on different styles and periods (details of most lists are given in Moelants 2002a). Undoubtedly, a large number of pieces figures in more than one list and is thus counted multiple times in the global analysis. This seems not to be a problem, on the contrary, it is a natural way to give more prominence to those pieces that have the largest spread and popularity, thus creating a more representative sample. Anyway, the differences
+
+Differences between the lists are obvious, with means ranging from 92.1 to 203.9 bpm and standard deviations ranging between 5.5 and 38.6 bpm. Thus both the peak and the spread of the tempi in the different lists are highly variable. Applying a cluster analysis on the normalized tempo distributions of the individual bpm-lists reveals four groups that differ considerably from the main cluster of 30 lists.
+
+in style and origin still guarantee a large variety in content.
+
+A first group consist of four lists (2687 pieces) with a relatively
+
+The distribution of the tempi is shown in figure 1. The mean tempo is 124.7 bpm, with a standard deviation of 23.6 bpm. This coincides with preferred tempo as determined in Moelants (2001). Additionally we see that about 94% of the pieces has a tempo that falls within the preferred `tempo-octave' 80-160 bpm. But as shown in figure 1, there is clearly a bi-modal distribution, with a main peak between 120 and 140 bpm and a secondary peak between 90 and 100 bpm. The largest concentration of tempi is found near the zone of preferred tempo: 57.2% of the tempi lies within the interval 120-140 bpm. Within this area, the peak lies at 128 bpm. The importance of the tempi drops steeply to both sides, especially beyond 120 and 140 bpm. On the `fast' side, there is a gradual diminution, tempi above 200 bpm are scarce, but occasionally tempi up to 300 bpm are reported (cf. Van Noorden & Moelants, 1999). At the `slow' side of the main peak, the situation is more complicated. The distribution shows a local minimum between 110 and 115 bpm, but then rises to the secondary peak found at 95 bpm. Beyond that point we see a similar profile as that on the `fast' side, with tempi becoming scarce below 60 bpm, but occasional tempi down to 40 bpm.
+
+high average (mean = 141.0) and a relatively small standard
+
+deviation (mean sd = 10.6). These lists concentrate on `trance'
+
+music, an uplifting type of dance music, often associated with
+
+the use of XTC (for more details on the properties of the
+
+different
+
+contemporary
+
+dance
+
+styles
+
+see:
+
+http://www.clubdjforum.com/genreintro.html). A second group
+
+unites six lists (7072 pieces), their standard deviations are
+
+comparable to those of the first group (mean sd = 9.9), but their
+
+mean tempo is much lower (mean = 95.9). These lists seem to
+
+concentrate on different styles: hip-hop, R&B and soul. These
+
+three styles can be characterized as `Afro-American' and are
+
+apparently also linked by a common distribution of tempi. The
+
+third group contains only two lists (4929 pieces) having a high
+
+standard deviation (mean sd = 31.1) and a high mean tempo
+
+(mean = 178.6). This group is the least homogenous of all four.
+
+Within the lists there is a large spread of tempi and the two lists
+
+concentrate on styles that have apparently nothing to do with
+
+each other: boogie-woogie (dance music based on old-style rock
+
+& roll) and hardcore-techno (the fastest style in contemporary
+
+dance music, characterized by a loud repetitive, often distorted,
+
+bass and beat). The only thing both have in common is their
+
+general characterization as `fast'. Finally the fourth category of
+
+lists is also limited to two lists (844 pieces). Their averages
+
+4500
+
+(mean = 126.7) coincide with the main peak near preferred
+
+4000
+
+tempo, but their standard deviations (mean sd = 7.1) are much
+
+3500
+
+lower than those of the `general' lists (mean sd = 17.0). These
+
+3000
+
+lists concentrate on house music, the mother of all
+
+2500
+
+contemporary electronic dance music. A comparison of the
+
+tempo distributions of the different styles is shown in figure 2.
+
+2000
+
+1500
+
+The `general' lists usually contain pieces belonging to different
+
+1000
+
+substyles. The characteristics of the tempo distributions in the
+
+style-specific lists provides the basis for a thorough explanation
+
+500
+
+of the shape of the general distribution of tempi found in dance
+
+0
+
+music. Each of the categories could be linked with specific
+
+musical styles, and thus also to specific dance styles related to
+
+tempo (in bpm)
+
+it. Reviewing the general distribution starting from the low
+
+tempi, the first peak is found at 95 bpm. It coincides with the
+
+Figure 1: Distribution of tempi in dance music (N of pieces for each tempo in gray, black line shows average over five bpms)
+
+tempo of the Afro-American music. Movements associated with it are not so much related to the repetitive up-down or left-right movements found in tapping or walking, they rather have a
+
+circular shape, both when involving the whole body or when
+
+number of pieces
+
+performed only with the arms. This type of movement has a longer repetition period and thus corresponds to slower tempi. Around 110 the general distribution of tempi shows a local minimum, none of the different categories has a mean in this region. This area lies just below preferred tempo, it thus corresponds to a type of movement that seems quite natural, but is probably not very `exciting'. These tempi are common in other styles of music (Moelants, 2002a) but seem not so suitable for dance music. The main peak of the general lists falls, together with the peak of the `house' related lists, between 125 and 130 bpm. This corresponds to a slightly fastened version of the preferred tempo rate, a natural movement style providing a certain `excitement', ideal for the contemporary style of dancing. Around 140 bpm there is a small bulb that extends the main peak to the right (see figure 1). This coincides with the peak of the trance related lists. Movements found in this style of dancing are often smaller, enabling a faster repetition rate. Moreover this music has a strong association with the use of stimulating drugs. Finally, the long `tail' at the right can be explained by the `fast' tempi of boogie-woogie and hardcoretechno. The fastest tempi (up to 300 bpm) are found in the hardcore-techno style or `gabber', here we find the characteristics of trance dancing, but in an extreme way. Movements are very small, typical is the fast foot movement called `hakkuh' and the use of XTC and amphetamines is wide spread among the fans. The perception of a fast beat, rather than the more natural half tempo is forced by making it very monotonous and giving it a dominant, loud, distorted sound. In boogie-woogie dancing the situation is clearly different. The tempo is assigned to the basic unit of movement, which is also often danced in small foot movements, but over this tempo larger movements are superimposed. Thus the dance combines a fast tempo with large swinging movements.
+
+10
+
+9
+
+8
+
+trance afro-american
+
+7
+
+fast
+
+house
+
+6
+
+general
+
+5
+
+4
+
+3
+
+2
+
+1
+
+0 0 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230 240 250 260 270 280 290 300
+
+Figure 2: Distribution of tempi in different categories of dance music: each line shows a normalized distribution of one of the four categories with distinctive tempo profiles, as a comparison the tempo distribution of the 30 remaining lists is added. To enhance clarity, the data are averaged over 5 bpms.
+
+2.3. Evolution through time
+Apart from differences between styles, we can investigate if there are differences in the distribution of tempi related to the
+
+period. Unfortunately only a few lists list the dates of the pieces. One list, however, is particularly interesting for investigating these aspects, that of the `Scandinavian dance charts', based on the reports of 290 DJs in Sweden, Norway and Finland. These charts are published weekly including the bpms of most pieces. They thus give a detailed view on the tempi heard in discos in Scandinavia on a weekly basis. These data were collected starting in spring 1998 and are now give an evolution over five years.
+The complete list shows a tempo distribution that closely resembles the distribution found in the `general' lists from the analysis in the previous section. The mean tempo is 124.4 bpm, with a standard deviation of 12.7, the slowest tempo in the list is located at 70, the fastest at 200 bpm. The main peak lies at 128 ms, there is a local minimum around 115 ms and a secondary peak around 95 bpm. The only distinctive property is the existence of an additional local minimum at 134 bpm and a new local maximum at 138 bpm. Comparing this with the style analysis from the previous chapter it is possible to connect this gap with the transition between classical dance music tempi and the faster tempi of `trance'.
+Two types of evolution through time can be investigated: periodic and linear evolutions. The first possibility is the existence of a link between the time of the year and the tempo preference. Therefore the data were labeled by month and season. ANOVA on using these categories shows absolutely no effect. The tempi heard in different seasons are intriguingly similar with means of 124.2, 124.7, 124.2 and 124.6 for spring, summer, autumn and winter respectively. Also the division in months shows no effect of tempo, with means varying between 123.5 (October) and 125.2 (June). The linear evolution in tempo is shown in figure 3. Plots of means and medians on a weekly basis show and up-and-down going movement, but not regularity can be seen. Nevertheless, ANOVA shows a highly significant effect of year (F(5,9917) = 4.184, p < 0.001). Posthoc tests show a contrast between the last two years (2002 and 2003) with the previous years (1998-2001). While the means lay between 124.5 and 125.0 in the period 1998-2001, it drops to 123.5 in 2002 and the (very partial) data for 2003 only reach a mean of 122.4.
+Such a shift can have two main causes: a movement of the main peak, or a change in the relative importance of different styles belonging to different tempo zones. Comparing the tempo distributions of the consecutive years, the position of the main peak hardly moves, it is fixed at 128 bpm, only shifting to 127 bpm in 2000. In figure 4, the relative importance of different tempo zones during different years is illustrated. It shows a slight increase of the slower tempi (< 110 bpm), related to AfroAmerican music, containing an average of 17.9% of the pieces in the first period against 20.5% for the last two years. Also the relative importance of the main peak (120-130 bpm) increases (from 37.9% to 46.4%). The other zones decrease in importance: the fast tempi (>135 bpm) from 25.5% to 20.0%, and the areas of transition: 3.5% to 2.8% for the 110-120 area and 15.2% to 10.2% for the area between 130 and 135 bpm.
+
+134
+132
+130
+128
+126
+124
+122
+120
+118
+Figure 3: Evolution of the mean (black line) and median (grey line) tempo in the Scandinavian dance charts from the 15th week of 1998 to the 12th week of 2003. Absolute data (thin lines) are showed together with averages over five weeks (thick lines)
+
+100
+
+90
+
+80
+
+70
+
+60
+
+50
+
+tempo category
+
+40
+
+130-135 bpm
+
+30
+
+110-120 bpm
+
+20
+
+> 135 bpm
+
+10
+
+120-130 bpm
+
+0
+
+1998
+
+1999
+
+2000
+
+2001
+
+2002
+
+2003
+
+< 110 bpm
+
+Figure 4: Comparison of the shares of the different tempo zones in the Scandinavian dance charts in the different years from 1998 to 2003.
+
+3. CONCLUSIONS
+The distribution of tempi in dance music as collected from bpmlists confirms the existence of a preferred tempo around 120 bpm. The main peak in the distribution lies around 128 bpm, which a little bit higher than what was found in other experiments on tempo preference (Van Noorden & Moelants, 1999; Moelants, 2002ab). Clearly tempi slightly above natural tempo are preferred over tempi slightly under natural tempo, this can be related to the need for a certain `excitement' in dance music, more than in `listening music'.
+
+Within the data some lists were showed to have characteristics that are very different from the main tendency. These lists could be related to specific styles of music, and the distinct tempo classes to movement types associated with those styles. Dance music with faster tempi is usually associated with smaller, excited movements, sometimes connected with the use of drugs. At the other side the secondary peak around 95 bpm that appears in the general tempo distribution, could be related to Afro-American pop music, associated with broader, circular movements. This provides a clear link between gestural expression as shown in spontaneous dance movements with different characteristics, and the basic musical movement found in the beat.
+Analyzing the tempi of the Scandinavian dance charts, collected since 1998, no differences in tempo were found between different seasons and months. Tempo preferences in dance music hence seem not influenced by atmospheric conditions. However, there is an evolution through the years. Within the period of five years that was investigated there has been a shift between 2001 and 2002, with a switch from faster tempi to the two peak areas and an additional sharpening of these peaks at the expense of the transition zones. Rather than showing gradual shifts in the preferred tempo, the change can be related to the relative importance of different styles in the dance music scene. Thus, similar analyses over longer periods should reveal longer term evolutions in stylistic preferences in dance music.
+4. REFERENCES
+1. Moelants, D. (2002a). Een model voor ritmeperceptie toegepast op de muziek van de 20ste eeuw [A Model for rhythm perception applied to the music of the 20th century]. Unpublished Ph.D. Thesis, Ghent University. Available: http://www.moelants.net/.
+2. Moelants, D. (2002b). Preferred tempo reconsidered. In C. Stevens, D. Burnham, G. McPherson, E. Schubert, J. Renwick (eds.), Proceedings of the 7th International Conference on Music Perception and Cognition, Sydney, 2002 (pp. 580-583). Adelaide: Causal Productions.
+3. Fraisse, P. (1982). Rhythm and Tempo. In D. Deutsch (ed.), The Psychology of Music (pp. 149-180). New York: Academic Press.
+4. Van Noorden, L. & Moelants, D. (1999). Resonance in the Perception of Musical Tempo, Journal of New Music Research, 28(1), 43-66.
+
+
