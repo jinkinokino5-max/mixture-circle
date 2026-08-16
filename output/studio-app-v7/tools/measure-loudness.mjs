@@ -275,6 +275,75 @@ function lufs(x) {
 }
 const peakOf = x => { let p = 0; for (let i = 0; i < x.length; i++) p = Math.max(p, Math.abs(x[i])); return p; };
 
+/* =====================================================================
+   スペクトル重心（＝そのカードの「明るさ」）
+   ---------------------------------------------------------------------
+   後から足す音は、すでに鳴っている音と「同じかそれより下」の重心で
+   なければ溶けない。上回った瞬間に blend が急落する（非対称）。
+   → reference/音源と楽器リサーチ.md §3-2（Lembke & McAdams 2015）
+
+   書き出した波形そのものから測るので、gain・hp・lp・oct・案C（強さで
+   lp が動く）まで全部入った「実際に聞こえる明るさ」になる。
+   楽器の素の重心ではなく、そのカードとして鳴ったときの値を使うのが要点。
+   ===================================================================== */
+const N_FFT = 2048;
+
+/* 実数信号用に、素直な繰り返し radix-2 FFT を1つ置く（外部依存を増やさない）*/
+function fftMag(re) {
+  const n = re.length;
+  const im = new Float64Array(n);
+  /* ビット反転並べ替え */
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { const t = re[i]; re[i] = re[j]; re[j] = t; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len;
+    const wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const ur = re[i + k],           ui = im[i + k];
+        const vr = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci;
+        const vi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr;
+        re[i + k] = ur + vr;            im[i + k] = ui + vi;
+        re[i + k + len / 2] = ur - vr;  im[i + k + len / 2] = ui - vi;
+        const nr = cr * wr - ci * wi;   ci = cr * wi + ci * wr; cr = nr;
+      }
+    }
+  }
+  const mag = new Float64Array(n / 2);
+  for (let i = 0; i < n / 2; i++) mag[i] = Math.hypot(re[i], im[i]);
+  return mag;
+}
+
+function centroidHz(x) {
+  const hop = N_FFT / 2;
+  const win = new Float64Array(N_FFT);
+  for (let i = 0; i < N_FFT; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N_FFT - 1));
+
+  /* 無音のフレームを混ぜると重心が意味を失うので、ピークの 5% でゲート */
+  const peak = peakOf(x);
+  if (peak < 1e-6) return 0;
+  const gate = peak * 0.05;
+
+  const vals = [];
+  for (let st = 0; st + N_FFT <= x.length; st += hop) {
+    let mx = 0;
+    for (let i = st; i < st + N_FFT; i++) mx = Math.max(mx, Math.abs(x[i]));
+    if (mx < gate) continue;                       // 鳴っていないフレーム
+    const buf = new Float64Array(N_FFT);
+    for (let i = 0; i < N_FFT; i++) buf[i] = x[st + i] * win[i];
+    const mag = fftMag(buf);
+    let num = 0, den = 0;
+    for (let k = 1; k < mag.length; k++) { num += (k * SR / N_FFT) * mag[k]; den += mag[k]; }
+    if (den > 1e-9) vals.push(num / den);
+  }
+  return vals.length ? med(vals) : 0;
+}
+
 /* ---------- 実行 ---------- */
 const n = await decodeAll();
 analyzeLoudness();
@@ -284,7 +353,8 @@ const rows = [];
 for (const rk of ROLE_ORDER) {
   for (const id of CARD_ORDER[rk]) {
     const pcm = await renderCard(id);
-    rows.push({ id, role: rk, inst: CARDS[id].inst, n: CARDS[id].n, lufs: lufs(pcm), peak: peakOf(pcm) });
+    rows.push({ id, role: rk, inst: CARDS[id].inst, n: CARDS[id].n,
+                lufs: lufs(pcm), peak: peakOf(pcm), centroid: centroidHz(pcm) });
   }
 }
 
@@ -316,6 +386,16 @@ const bad = rows.filter(r => isFinite(r.lufs) && Math.abs(r.lufs - roleMed[r.rol
 if (!bad.length) console.log('  なし');
 bad.forEach(r => console.log(
   `  ${r.id.padEnd(22)} ${f(r.lufs)} LUFS   中央値との差 ${(r.lufs - roleMed[r.role] > 0 ? '+' : '')}${(r.lufs - roleMed[r.role]).toFixed(1)} dB`));
+
+console.log('\n【明るさ＝スペクトル重心（低いほど溶ける・楽器ごとの中央値 Hz）】');
+const bright = Object.keys(INSTRUMENTS)
+  .map(iid => ({ iid, hz: med(rows.filter(r => r.inst === iid).map(r => r.centroid).filter(v => v > 0)) }))
+  .filter(x => x.hz > 0).sort((a, b) => a.hz - b.hz);
+const col = x => `${x.iid.padEnd(17)}${Math.round(x.hz).toString().padStart(5)}`;
+console.log('  ── 暗い（溶ける）──');
+bright.slice(0, 6).forEach(x => console.log('  ' + col(x)));
+console.log('  ── 明るい（立つ）──');
+bright.slice(-6).forEach(x => console.log('  ' + col(x)));
 
 const clip = rows.filter(r => r.peak > 1.0);
 console.log(`\n【パート単体で 0dBFS を超えたカード】 ${clip.length ? clip.map(r => r.id + '(' + r.peak.toFixed(2) + ')').join(', ') : 'なし'}`);

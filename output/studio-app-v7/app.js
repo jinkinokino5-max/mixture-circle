@@ -714,6 +714,64 @@ function busyness() {
   return clamp(notes / 34, 0, 1);
 }
 
+/* =====================================================================
+   案3-a：「立てる群」は全 ROLE を通じて同時1枚まで
+   ---------------------------------------------------------------------
+   Lembke が6つの管楽器のフォルマント卓立スコアを実測した表（→
+   reference/音源と楽器リサーチ.md §3-1）では、卓立が高い楽器ほど
+   「混ざらない」。オーボエについては "its utility in orchestration
+   could be more towards contrast than blend" とまで書かれている。
+   本アプリの編成にこれを当てはめたのが同 §3-4 の3分類で、
+   そこでの結論が「立てる群は全 ROLE を通じて同時1枚まで」。
+
+   ここが横断制約でなければならない理由：現行の上限は
+   MELODY 2 / CHORD 2 と **ROLE ごと**なので、サックス・トランペット・
+   シンセリード（MELODY）とカッティング（CHORD）が同時に4枚出せてしまう。
+   ROLE の中だけ見ていても防げない。
+
+   ただし止めるのは「提案」まで。カードゲームである以上、人が出したい
+   カードを engine が拒否してはいけない。                            */
+const STANDOUT = new Set(['melody-sax', 'melody-trumpet', 'melody-lead', 'chord-cutting']);
+
+/* =====================================================================
+   案3-b：後から足す音は「同じか、より下」（方向のある非対称ルール）
+   ---------------------------------------------------------------------
+   Lembke & McAdams (2015) は、溶けるかどうかが「近いかどうか」ではなく
+   **上に出たかどうか**で決まることを実測した。合成音のフォルマントが
+   基準を超えた瞬間に blend が急落し、同じか下ならよく溶ける。
+   プロの奏者も伴奏に回るとき無意識に暗い音にしている（Lembke 2017）。
+   → 同 §3-2・優先度3
+
+   基準にするのは MELODY と CHORD だけ。この2つが「溶け合ってほしい層」
+   だからで、
+     ・BASS はつねに最も暗く（実測 67〜509Hz）、これを基準にすると
+       すべての候補が等しく減点されてルールが意味を失う
+     ・RHYTHM は金物を含み本来いちばん明るい層（実測 3000〜7800Hz）。
+       打楽器は溶けないことが役目なので、ここに blend を求めるのは誤り
+   資料の設計指針は「鳴っている音の最も低い重心を基準に」だが、
+   全 ROLE を含めると上記のとおり退化する。溶けるべき層の中で適用する。
+
+   減点は段階的にする（何オクターブ上回ったか）。超えた瞬間に候補から
+   消すのではなく、同じ条件なら暗いほうが選ばれる、という重みにする。
+   重みは既存の「音源がかぶる」減点（1.4）と同程度に置く。ここを強くし
+   すぎると、暗いカードが1枚入った時点でメロディがいつまでも提案されなく
+   なる（MELODY の roleNeed は最大 4.2 点しかない）。狙いは順位の傾きで
+   あって拒否権ではないので、上限もつけておく。                        */
+const BLEND_ROLES = new Set(['melody', 'chord']);
+const BLEND_PENALTY = 1.0;        // 1オクターブ上回るごとに引く点
+const BLEND_PENALTY_MAX = 2.5;
+
+function blendRefHz() {
+  let lo = Infinity;
+  State.order.forEach(id => {
+    const c = CARDS[id];
+    if (!BLEND_ROLES.has(c.role)) return;
+    const hz = c.sound.centroid;
+    if (hz > 0 && hz < lo) lo = hz;
+  });
+  return isFinite(lo) ? lo : 0;
+}
+
 function suggestCards() {
   const sec = currentSection();
   const busy = busyness();
@@ -722,6 +780,11 @@ function suggestCards() {
   /* いま鳴っている音源（音色のかぶりを避けるため） */
   const usedSets = new Set();
   State.order.forEach(id => usedSets.add(CARDS[id].sound.set));
+
+  /* 案3-a：「立てる群」がもう1枚鳴っているか（ROLE をまたいで数える） */
+  const standoutOn = State.order.some(id => STANDOUT.has(CARDS[id].inst));
+  /* 案3-b：溶け合わせたい層の中で、いま最も暗い重心 */
+  const refHz = blendRefHz();
 
   const scored = [];
   Object.values(CARDS).forEach(card => {
@@ -747,6 +810,17 @@ function suggestCards() {
 
     /* 音色がかぶるものは下げる（同じ音源が2枚鳴ると混ざる） */
     if (usedSets.has(card.sound.set)) s -= 1.4;
+
+    /* 案3-a：「立てる群」がすでに1枚鳴っていたら、2枚目は強く下げる。
+       混ざらない音どうしが2枚立つと、どちらも中途半端になる。      */
+    if (STANDOUT.has(card.inst) && standoutOn) s -= 4.0;
+
+    /* 案3-b：溶け合わせたい層では、いま鳴っている中でいちばん暗い音を
+       上回るほど下げる。上回った側が溶けなくなるのであって、
+       下回るぶんには罰しない（非対称）。                            */
+    if (refHz > 0 && BLEND_ROLES.has(card.role) && card.sound.centroid > refHz) {
+      s -= Math.min(BLEND_PENALTY_MAX, BLEND_PENALTY * Math.log2(card.sound.centroid / refHz));
+    }
 
     /* リズムが1枚も無いときは、キック持ちを強く推す（土台が先） */
     if (card.role === 'rhythm') {
