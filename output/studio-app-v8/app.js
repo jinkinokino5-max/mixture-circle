@@ -2219,10 +2219,12 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   /* v8：進行が1つになったので Tab の切り替えは廃止した。
-     空いた分、M をメロディの音づかいの切り替えに使う（案N）。
-     M は RHYTHM のキーではないので取り合いにならない…のではなく、
-     m は rhythm-xylo のキーなので Shift+M にしてある。            */
-  if (e.key === 'M' && e.shiftKey) {
+     空いた分を、メロディの音づかいの切り替えに使う（案N）。
+     m は rhythm-xylo のキーなので Shift+M にしてある。
+     e.key が 'M' になるか 'm'+shiftKey になるかは環境で変わるので、
+     小文字にそろえてから見る。ここを 'M' 固定にしていて、
+     実機で木琴が鳴ってしまった。                                  */
+  if (k === 'm' && e.shiftKey) {
     e.preventDefault();
     setMelodyMode(State.melodyTones === 'scale' ? 'chord' : 'scale');
     return;
