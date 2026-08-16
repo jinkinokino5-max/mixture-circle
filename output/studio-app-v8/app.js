@@ -1,0 +1,2300 @@
+/* =====================================================================
+   app.js — STUDIO PULSE III（v6）の音響エンジンと画面
+   ---------------------------------------------------------------------
+   music.js が「何を鳴らすか」を持ち、このファイルが「どう鳴らすか」を持つ。
+
+   v6 で新しく入れた5つ：
+     案1 パートが互いを聴く   … 小節ごとに占有表を作り、後から入った
+                                パートが空いている位置へ自動で逃げる
+     案2 生成パターン         … music.js の generateBar を毎小節呼ぶ。
+                                固定配列の再生ではなくなった
+     案3 アレンジ・エンジン   … 導入→展開→山→終息を時間で自動進行
+     案4 グルーヴ             … 楽器ごとの前ノリ／後ノリ・ゆらぎ・アクセント
+     案5 自動ミックス         … ROLE ごとのバスを4帯域メーターで自動補正
+
+   v5 から引き継いでいるもの：
+     コード進行の共有／サイドチェイン／キック権／ビルド＆ドロップ／
+     ラウドネス実測にもとづく音量／ビジュアライザ
+   ===================================================================== */
+
+const MAX_PARTS = 8;                 // 安全弁。実際は ROLE ごとの上限が先に効く
+const RETRIGGER_GUARD_MS = 420;      // 同一カードの連続読み取りを無視する時間
+const BASE_KIT = 'acoustic-kit';     // 演出（フィル・DROP・終止）用の予備キット
+
+/* =====================================================================
+   ★ 好みの音量（ここだけ触ればよい）★
+   ---------------------------------------------------------------------
+   役割ごとの音量の足し引き。単位は dB。＋で大きく、－で小さく。
+   3dB でだいたい「ひとまわり変わった」と分かる量。
+
+   使い方は2通りある。
+     1. 耳で探す … アプリ画面の「音量（役割ごと）」のつまみを、鳴らし
+        ながら動かす。決まったら「いまの値をコピー」を押すと、
+        下と同じ形の1行が出るので、それをここへ貼れば次からその音量で
+        始まる。
+     2. 直接書く … 下の数字を書き換えて保存し、ブラウザを再読み込みする。
+
+   なぜここが「音量の調整場所」なのか：
+     各カードの gain（music.js）は、書き出して LUFS で実測した
+     **較正値**で、tools が自動計算している。手で触ると次に
+     npm run balance を回した時に上書きされてしまう。
+     こちらは較正の上に乗る**好み**の層なので、上書きされない。
+
+   0 以外にした役割は、自動ミックスの対象から外れる（自分で決めた値が
+   勝手に動かされないように）。だから既定は全部 0 にしてある。
+   「旋律をもっと前へ・打楽器を引く」という全体の方向は、較正の側
+   （tools/apply-gain.mjs の ROLE_TARGET）に入れてあるので、
+   ここは純粋にその日の好みで動かす場所として空けてある。
+   ===================================================================== */
+const ROLE_TRIM_DB = {
+  melody: 0.0,       // 旋律。曲の「顔」
+  chord:  0.0,       // 和音。空間の土台
+  bass:   0.0,       // 低音。足元
+  rhythm: 0.0,       // 打楽器
+};
+
+/* ============ 1. 音の出口 ============
+   parts ─→ roleBus[役割] ─┬→ duckBus（キックでへこむ組）┐
+                           └→ dryBus （ドラムなど）      ├→ partsBus → sweep → master
+   send  ─→ reverb / delay → fxBus ──────────────────────┘
+   master → glue(圧縮) → limiter(ハードニー) → safety(ソフトクリッパ) → スピーカー
+          └→ analyser（画面用）／bandMeter（自動ミックス用）／recorder
+   limiter → outMeter（頭上の余裕を見張る目）
+
+   v6 で ROLE ごとのバスを挟んだ。案5（自動ミックス）が
+   「メロディだけ少し下げる」といった操作をできるようにするため。
+
+   v6.1 音割れ対策（3段構え）
+     1. Tone.Limiter は内部が knee 30dB・attack 3ms の圧縮器で、
+        ブリックウォールではない。キックやクラッシュの立ち上がりが
+        素通りして 0dBFS を超え、出力段でデジタルクリップしていた。
+        → hard knee の速い圧縮＋最終段のソフトクリッパに置き換えた。
+     2. reverb / delay が partsBus を通らず master に直結していたため、
+        カードが増えるほど残響だけが積み上がった（＝「途中から」割れる）。
+        → fxBus 経由で partsBus に入れ、枚数ぶんの絞りが効くようにした。
+     3. それでも上限に張り付くなら master を静かに下げる見張り番を置いた。  */
+let master, limiter, glue, safety, sweep, partsBus, duckBus, dryBus, baseBus, fxBus,
+    reverb, delay, analyser, recorder, outMeter;
+let roleBus = {};                    // 'melody' → Tone.Gain
+let bandMeter = {};                  // 'low' → Tone.Meter（自動ミックスの目）
+
+/* マスターの基準ゲイン（見張り番がここから下げる）。
+   6枚＋DROP の実測ピークが 0.39〜0.52／上限 0.93 と余裕があったので、
+   v6 の 0.9 より少し上げてある。割れる方向の余地は見張り番が持つ。   */
+const MASTER_BASE = 0.95;
+let headroomDb = 0;                  // 見張り番がいま下げている量(dB, 0〜-6)
+
+/* 最終安全弁のカーブ。|x| <= KNEE までは完全に素通り（＝音を変えない）、
+   そこから上だけ tanh でなめらかに寝かせて 1.0 に到達させない。
+   WaveShaper は入力を ±1 に丸めてから引くので、どれだけ突っ込んでも
+   出力がこの上限を超えることは原理的にない。                        */
+const SOFT_KNEE = 0.7;
+function softClip(x) {
+  const ax = Math.abs(x);
+  if (ax <= SOFT_KNEE) return x;                       // 素通り＝音を変えない
+  const range = 1 - SOFT_KNEE;
+  const y = SOFT_KNEE + range * (Math.tanh((ax - SOFT_KNEE) / range) / Math.tanh(1));
+  return x < 0 ? -y : y;                               // 上限は約 0.929
+}
+
+async function buildMaster() {
+  /* 出口から順に組む。safety が最後の砦 */
+  safety = new Tone.WaveShaper(softClip, 8192).toDestination();
+
+  /* Tone.Limiter は使わない（上の注記の理由）。knee 0 で「しきい値を
+     超えたぶんだけ」を素早く押さえる。attack 1ms なら打楽器の頭も掴む。 */
+  limiter = new Tone.Compressor({ threshold: -3, ratio: 20, attack: 0.001, release: 0.05, knee: 0 })
+    .connect(safety);
+
+  /* いまどれだけ出口に張り付いているかを見る目 */
+  outMeter = new Tone.Meter({ smoothing: 0.2 });
+  limiter.connect(outMeter);
+
+  glue = new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.006, release: 0.12, knee: 6 }).connect(limiter);
+  master = new Tone.Gain(MASTER_BASE).connect(glue);
+  headroomDb = 0;
+
+  analyser = new Tone.Analyser('waveform', 512);
+  master.connect(analyser);
+
+  /* ビルドアップで開く／閉じるハイパスフィルタ。ふだんは開けっぱなし。
+     アレンジ・エンジンも「章ごとの空気感」をここで作る。           */
+  sweep = new Tone.Filter({ type: 'highpass', frequency: 20, rolloff: -24, Q: 1 }).connect(master);
+
+  partsBus = new Tone.Gain(1).connect(sweep);
+  duckBus  = new Tone.Gain(1).connect(partsBus);   // キックでへこむ側
+  dryBus   = new Tone.Gain(1).connect(partsBus);   // へこまない側
+  baseBus  = new Tone.Gain(1).connect(sweep);
+  /* 送り返しの合流点。partsBus の下に入れることで、
+     枚数が増えたときの絞り（duckByCount）が残響にも同じだけ効く。 */
+  fxBus    = new Tone.Gain(1).connect(partsBus);
+
+  /* ROLE ごとのバス。duck するかは ROLE ではなくカードごとに決まるので、
+     duck 用と dry 用の2本ずつ用意して、パートは自分に合うほうへ挿す。 */
+  ROLE_ORDER.forEach(rk => {
+    const g0 = Tone.dbToGain(State.roleTrim[rk] || 0);
+    roleBus[rk] = {
+      duck: new Tone.Gain(g0).connect(duckBus),
+      dry:  new Tone.Gain(g0).connect(dryBus),
+      corr: 0,                                     // 自動ミックスの現在の補正(dB)
+    };
+    /* 案J：ROLEごとの書き出し（stem）。duck/dry の両方を合流させて
+       専用の Recorder へ流す。持ち場（duckBus/dryBus）への配線は
+       そのまま残るので、聞こえ方には一切影響しない。
+       注：reverb/delay の送りはパートごとに共有バスへ直結しているため、
+       この stem には乗らない（＝残響のぶんだけドライに聞こえる）。   */
+    try {
+      const stemSum = new Tone.Gain(1);
+      roleBus[rk].duck.connect(stemSum);
+      roleBus[rk].dry.connect(stemSum);
+      roleBus[rk].rec = new Tone.Recorder();
+      stemSum.connect(roleBus[rk].rec);
+    } catch (e) { roleBus[rk].rec = null; }
+  });
+
+  /* 自動ミックスの目：master を4つの帯域に分けて音量を見る */
+  const BANDS = { low: [20, 200], lowmid: [200, 800], himid: [800, 4000], high: [4000, 16000] };
+  Object.entries(BANDS).forEach(([k, [lo, hi]]) => {
+    const hp = new Tone.Filter({ type: 'highpass', frequency: lo, rolloff: -24 });
+    const lp = new Tone.Filter({ type: 'lowpass', frequency: hi, rolloff: -24 });
+    const m = new Tone.Meter({ smoothing: 0.85 });
+    master.connect(hp); hp.connect(lp); lp.connect(m);
+    bandMeter[k] = m;
+  });
+
+  reverb = new Tone.Reverb({ decay: 2.6, preDelay: 0.02, wet: 1 }).connect(fxBus);
+  try { await reverb.generate(); } catch (e) { /* 生成に失敗しても音は出る */ }
+  delay = new Tone.PingPongDelay({ delayTime: '8n.', feedback: 0.26, wet: 1 }).connect(fxBus);
+
+  try {
+    recorder = new Tone.Recorder();
+    master.connect(recorder);
+  } catch (e) { recorder = null; }
+}
+
+/* ---------------------------------------------------------------------
+   ROLE バスに実際に置くゲイン。2つの層を足して1つにする。
+     好み（State.roleTrim）… 人が決める。上書きされない
+     自動（rb.corr）        … 自動ミックスが帯域の釣り合いから決める
+   どちらも dB なので、足してから 1 回だけリニアに直す。            */
+function applyRoleGain(rk, ramp = 0.25) {
+  const rb = roleBus[rk];
+  if (!rb) return;
+  const g = Tone.dbToGain((State.roleTrim[rk] || 0) + (rb.corr || 0));
+  try { rb.duck.gain.rampTo(g, ramp); rb.dry.gain.rampTo(g, ramp); } catch (e) {}
+}
+
+/* キックが鳴るたびに、上ものを一瞬へこませて戻す＝グルーヴの脈
+   ---------------------------------------------------------------------
+   v7.1：へこませ量を 0.42（-4.7dB）から 0.30（-3.1dB）へ浅くした。
+   duck するのは「kit 以外で duck:true のカード」＝メロディ・コード・
+   ベースのほぼ全部で、**ドラムだけは沈まない**。つまりキックが鳴るたび
+   ドラム以外だけが 4.7dB 下がっていた。8ビートならキックは1小節に3回、
+   戻りきる前に次が来るので、実質ずっと沈みっぱなしに近い。
+   ROLE の音量差（別途 apply-gain.mjs で修正）と合わせて、
+   「ドラムばかり鳴って他が聞こえない」を作っていた片側がこれ。
+   3dB あれば脈は十分感じられるので、グルーヴは残したまま浅くする。   */
+const PUMP_DEPTH = 0.30;
+function pump(time, strength = 1) {
+  if (!duckBus) return;
+  const beat = 60 / Tone.Transport.bpm.value;
+  const depth = 1 - PUMP_DEPTH * strength * (State.pumpOn ? 1 : 0);
+  try {
+    duckBus.gain.cancelScheduledValues(time);
+    duckBus.gain.setValueAtTime(depth, time);
+    duckBus.gain.linearRampToValueAtTime(1, time + Math.min(0.34, beat * 0.55));
+  } catch (e) {}
+}
+
+/* ============ 2. 合成音（実録音が無いとき／シンセ専用カード） ============ */
+function makeSynthVoice(fb, dest) {
+  switch (fb) {
+    case 'mono':
+      return new Tone.MonoSynth({
+        oscillator: { type: 'sawtooth' },
+        filter: { Q: 1.4, type: 'lowpass', rolloff: -24 },
+        envelope: { attack: 0.006, decay: 0.2, sustain: 0.55, release: 0.2 },
+        filterEnvelope: { attack: 0.006, decay: 0.18, sustain: 0.3, release: 0.25, baseFrequency: 150, octaves: 3 },
+      }).connect(dest);
+    case 'fuzz':
+      return new Tone.MonoSynth({
+        oscillator: { type: 'square' },
+        filter: { Q: 2, type: 'lowpass', rolloff: -12 },
+        envelope: { attack: 0.004, decay: 0.24, sustain: 0.7, release: 0.2 },
+        filterEnvelope: { attack: 0.004, decay: 0.2, sustain: 0.5, release: 0.2, baseFrequency: 200, octaves: 2.4 },
+      }).connect(dest);
+    case 'sub':
+      return new Tone.MonoSynth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.01, decay: 0.3, sustain: 0.9, release: 0.3 },
+        filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 1, release: 0.3, baseFrequency: 90, octaves: 1.2 },
+      }).connect(dest);
+    case 'lead':
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'square' },
+        envelope: { attack: 0.004, decay: 0.12, sustain: 0.08, release: 0.16 },
+      }).connect(dest);
+    case 'pad':
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'fatsawtooth', count: 3, spread: 30 },
+        envelope: { attack: 0.6, decay: 0.5, sustain: 0.75, release: 1.8 },
+      }).connect(dest);
+    case 'bow':
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'fatsawtooth', count: 2, spread: 18 },
+        envelope: { attack: 0.18, decay: 0.3, sustain: 0.6, release: 0.9 },
+      }).connect(dest);
+    case 'brass':
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'fatsawtooth', count: 3, spread: 25 },
+        envelope: { attack: 0.012, decay: 0.16, sustain: 0.24, release: 0.22 },
+      }).connect(dest);
+    case 'bell':
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.002, decay: 0.35, sustain: 0.02, release: 0.5 },
+      }).connect(dest);
+    case 'pluck': {
+      const g = new Tone.PluckSynth({ attackNoise: 1.1, dampening: 4000, resonance: 0.94 });
+      g.connect(dest);
+      g.__mono = true;
+      return g;
+    }
+    default:
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.004, decay: 0.5, sustain: 0.12, release: 1.0 },
+      }).connect(dest);
+  }
+}
+
+/* 合成音のドラム（実録音キットが読めなかったときの予備）。
+   v5：シンバル類とタム3種を実録音キットと同じ顔ぶれでそろえる。       */
+function makeSynthKit(dest, level) {
+  const out = new Tone.Gain(Tone.dbToGain(level)).connect(dest);
+  const cym = makeCymbals(out);
+  const kick = new Tone.MembraneSynth({
+    pitchDecay: 0.045, octaves: 6,
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.001, decay: 0.34, sustain: 0, release: 0.1 },
+  }).connect(out);
+  const snareFilt = new Tone.Filter(1800, 'bandpass').connect(out);
+  const snare = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.14, sustain: 0 } }).connect(snareFilt);
+  const hatFilt = new Tone.Filter(7500, 'highpass').connect(out);
+  const hat = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.035, sustain: 0 } }).connect(hatFilt);
+  const tomS = new Tone.MembraneSynth({ pitchDecay: 0.08, octaves: 3, envelope: { attack: 0.001, decay: 0.3, sustain: 0 } }).connect(out);
+  return {
+    sampled: false, out,
+    nodes: [kick, snare, hat, tomS, snareFilt, hatFilt, ...cym.nodes, out],
+    kick:  (t, v) => kick.triggerAttackRelease('C1', '8n', t, v),
+    snare: (t, v) => snare.triggerAttackRelease('16n', t, v),
+    hat:   (t, v) => hat.triggerAttackRelease('32n', t, v),
+    /* タムは同じ胴を音程違いで叩く。高 → 低 */
+    tom:   (t, v) => tomS.triggerAttackRelease('A1', '8n', t, v),
+    tom2:  (t, v) => tomS.triggerAttackRelease('F1', '8n', t, v),
+    tom3:  (t, v) => tomS.triggerAttackRelease('D1', '4n', t, v),
+    crash: cym.crash,
+    ride:  cym.ride,
+    open:  cym.open,
+  };
+}
+
+/* ---- 案D：同じ ROLE の何枚目か。2枚目は左右を反転して置く -----------
+   MELODY を2枚重ねたときに、両方とも同じ場所から鳴ると混ざってしまう。
+   1枚目は定義どおり、2枚目は左右反転、3枚目は中央寄りにする。       */
+function seatIndexOf(cardId) {
+  const role = cardId.split('-')[0];
+  return State.order.filter(id => id.split('-')[0] === role && id !== cardId).length;
+}
+function seatFlipOf(cardId) {
+  return [1, -1, 0.35][seatIndexOf(cardId)] != null ? [1, -1, 0.35][seatIndexOf(cardId)] : 0;
+}
+
+/* =====================================================================
+   案2：同時に鳴る上ものの発音を 30〜50ms ばらけさせる
+   ---------------------------------------------------------------------
+   Rasch の実験（Huron 2001 p.39 が引く）によれば、合奏で「同時」に
+   鳴らされた音の発音は実際には 30〜50ms に散らばっており、この程度の
+   ずれは音を**別々の音に割らずに「透明感」を足す**。別々の音として
+   聞こえ始めるのは 100ms を超えてから。
+   → reference/音の重ね方リサーチ.md §4-4・提案B
+
+   これは「グルーヴを出すため」の揺らぎでは**ない**（そちらは非音楽家に
+   は逆効果の可能性があり根拠も弱い → 同 §5-5）。目的は
+   「重ねたとき、自分が入れたカードの音が聞き取れること」ひとつ。
+   したがって値は 30〜50ms に厳密に収め、それ以上には広げない。
+
+   誰をずらすか：
+     ・MELODY と CHORD だけ。max 2 枚ずつ＝最大4パートが中音域で
+       ぶつかる、まさにマスキングが起きる組み合わせだから
+     ・RHYTHM は動かさない。キック／スネアは 12〜20ms の精度で
+       聞かれる「拍そのもの」で、ここを濁らせてはいけない
+       （→ reference/音源と楽器リサーチ.md §6-1）
+     ・BASS も動かさない。max:1 で他の低音と競合せず、
+       キックとの密着が土台の要だから
+
+   どうずらすか：席順で 15ms 刻みに配る。MELODY と CHORD を交互に
+   置くので、いちばんぶつかりやすい「メロディ2枚」「コード2枚」が
+   必ず 30ms 離れる。
+     melody 1枚目  0ms   chord 1枚目 15ms
+     melody 2枚目 30ms   chord 2枚目 45ms                            */
+const ONSET_SLOT_MS = { melody: 0, chord: 15 };
+const ONSET_STEP_MS = 30;
+const ONSET_MAX_MS = 45;
+
+function onsetSlotMs(cardId) {
+  const role = cardId.split('-')[0];
+  const base = ONSET_SLOT_MS[role];
+  if (base == null) return 0;                      // rhythm / bass は動かさない
+  return Math.min(ONSET_MAX_MS, base + seatIndexOf(cardId) * ONSET_STEP_MS);
+}
+
+/* テンポが速いと 45ms が16分音符の中で無視できない割合になり、
+   「透明感」ではなく「もたつき」に聞こえる。ずれの幅が16分の 40% を
+   超えないところで頭打ちにする（100BPM では 45ms がそのまま通る）。 */
+function onsetSpreadSec(slotMs) {
+  if (!slotMs) return 0;
+  const step16 = 60 / Tone.Transport.bpm.value / 4;      // 16分1つぶんの秒数
+  const span = Math.min(ONSET_MAX_MS, step16 * 1000 * 0.40);
+  return (slotMs / ONSET_MAX_MS) * span / 1000;
+}
+
+/* ============ 3. いま何小節目・どのコードか ============ */
+function barAtTime(time) {
+  const ticks = Tone.Transport.getTicksAtTime(time);
+  return Math.floor(ticks / (Tone.Transport.PPQ * 4));
+}
+function chordAtBar(bar) {
+  const prog = PROGRESSIONS[State.prog];
+  const c = prog.bars[((bar % prog.bars.length) + prog.bars.length) % prog.bars.length];
+  /* 案A：いまの章の調へ移調する。全パートが同じものを見ているので、
+     ここ1か所で全員がいっせいに転調する。                          */
+  return State.keyOn ? shiftChord(c, State.keySemi || 0) : c;
+}
+function isFillBar(bar) { return bar % 8 === 7; }
+
+/* ============ 4. パート（カード1枚ぶん） ============ */
+class Part {
+  constructor(cardId) {
+    const card = CARDS[cardId];
+    this.id = cardId;
+    this.card = card;
+    this.role = cardId.split('-')[0];
+    const s = card.sound;
+    this.s = s;
+
+    /* v6：ROLE ごとのバスを経由する（自動ミックスが役割単位で効くように）。
+       案D：さらにその手前に定位（左右）を挟む。                        */
+    const rb = roleBus[this.role];
+    const busIn = (s.duck && s.kind !== 'kit') ? rb.duck : rb.dry;
+    const sp = card.space || { pan: 0, depth: 0 };
+    /* 同じ ROLE の2枚目は左右を反転して置く。重ねたとき混ざらないように。
+       いま何枚目かは投入時に決まるので、ここでは席番号だけ受け取る。   */
+    const seatFlip = seatFlipOf(cardId);
+    /* 案2：この席の発音オフセット（ms）。席と同じく投入時に決まる */
+    this.onsetMs = onsetSlotMs(cardId);
+    const depth = State.space ? clamp(sp.depth || 0, 0, 1) : 0;
+    /* 案5：定義上の立ち位置＝「本来いたい場所」。実際にどこへ置くかは
+       枚数を見て respreadPan() が決める（増えるほど左右へ開く）。   */
+    this.homePan = clamp((sp.pan || 0) * seatFlip, -0.85, 0.85);
+    const pan = State.space ? this.homePan : 0;
+
+    /* 信号の道すじ（手前 → 奥）
+         voice → hp → lp（音色） → gain（音量） → air（距離） → panner（左右） → roleBus
+                                        └→ revSend / dlySend
+       air は depth があるときだけ挟む。順番を後から変えないよう、
+       挿す先（chainOut）を先に決めてから gain を作る。               */
+    this.panner = new Tone.Panner(pan).connect(busIn);
+    if (depth > 0.05) {
+      /* 奥ほど高域が落ちる＝空気による減衰。これが「遠さ」の正体 */
+      this.air = new Tone.Filter({ type: 'lowpass', frequency: 16000 - depth * 8500, rolloff: -12 })
+        .connect(this.panner);
+    }
+    const chainOut = this.air || this.panner;
+
+    /* v5：実録音の楽器には samples.js が実測した「録音レベル差の補正」を足す。
+       これで music.js の gain は純粋に「どのくらい前に出したいか」になる。
+       実録音が読めず合成音に落ちる場合は補正しない（測る対象が無いため）。 */
+    const trim = (s.kind === 'sampler' && samplerUrls(s.set)) ? setTrimDb(s.set) : 0;
+    this.gain = new Tone.Gain(Tone.dbToGain(s.gain + trim)).connect(chainOut);
+
+    /* 案4：グルーヴのゆらぎは前の音を引きずる（1次自己回帰）。その保持 */
+    this.wander = 0;
+    /* 案2：この小節ぶんの生成済み音符。regenerateBar が入れる */
+    this.curPat = [];
+    this.curBar = -1;
+    this.lp = new Tone.Filter(s.lp || 16000, 'lowpass').connect(this.gain);
+    this.hp = new Tone.Filter(s.hp || 20, 'highpass').connect(this.lp);
+
+    /* 送り。奥にあるものほど残響を多く送る＝遠くに聞こえる */
+    const revAmt = (s.rev || 0) + depth * 0.30;
+    if (revAmt > 0.001) { this.revSend = new Tone.Gain(revAmt).connect(reverb); this.gain.connect(this.revSend); }
+    if (s.dly) { this.dlySend = new Tone.Gain(s.dly).connect(delay);  this.gain.connect(this.dlySend); }
+    this.depth = depth;
+
+    if (s.kind === 'kit') {
+      this.kit = makeSampleKit(this.hp, s.set, 0) || makeSynthKit(this.hp, 0);
+      this.sampled = this.kit.sampled;
+      this.hasKick = card.drum.hasKick && card.drum.k.length > 0;
+      this.seq = new Tone.Sequence((t, step) => this.tickDrum(t, step), STEPS, '16n');
+    } else {
+      this.voice = this.makeVoice();
+      this.seq = new Tone.Sequence((t, step) => this.tickPitched(t, step), STEPS, '16n');
+    }
+  }
+
+  makeVoice() {
+    const s = this.s;
+    let dest = this.hp;
+    if (s.drive) {
+      this.drive = new Tone.Distortion({ distortion: s.drive, wet: 0.45 }).connect(this.hp);
+      dest = this.drive;
+    }
+    if (s.kind === 'sampler') {
+      const smp = makeSampleVoice(s.set, s.env || {});
+      if (smp) { this.sampled = true; smp.connect(dest); return smp; }
+    }
+    this.sampled = false;
+    return makeSynthVoice(s.fb, dest);
+  }
+
+  /* --- 案4：グルーヴ。この一撃を「いつ」鳴らすか -------------------
+     push  … 楽器ごとの平均のずれ（前ノリ／後ノリ）
+     tight … ばらつきの大きさ
+     drag  … 直前のずれをどれだけ引きずるか（1次自己回帰）
+     独立乱数ではなく引きずらせるのが肝。人の揺れは相関があるので、
+     毎回まっさらに振り直すとかえって機械的に聞こえる。            */
+  groovedTime(time) {
+    const g = this.card.groove || GROOVE.default;
+    const r = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;   // 正規分布に寄せる
+    this.wander = this.wander * g.drag + r * g.tight * (1 - g.drag);
+    /* 案2：席ごとの固定オフセット。rhythm / bass は 0 なので影響しない */
+    return time + (g.push + this.wander) / 1000 + onsetSpreadSec(this.onsetMs);
+  }
+
+  /* --- 音階のあるパート ---------------------------------------------
+     v6：ここではもう「パターン配列を読む」ことしかしない。
+     何を鳴らすかは regenerateBar() が小節の頭で生成して curPat に入れる。 */
+  tickPitched(time, step) {
+    const bar = barAtTime(time);
+    if (bar !== this.curBar) ensureBar(bar);        // 取りこぼし保険
+    const chord = chordAtBar(bar);
+    /* 8小節に1回だけ旋律を1段持ち上げる。ずっと同じに聞こえないための仕掛け */
+    const lift = (this.role === 'melody' && bar % 8 === 7) ? 1 : 0;
+
+    this.curPat.forEach(ev => {
+      if (ev.s !== step) return;
+      const notes = resolveNotes(this.role, chord, ev, this.s.oct, lift);
+      const v = clamp(ev.v * State.velScale, 0.05, 1);
+      this.play(notes, ev.l, this.groovedTime(time), v);
+      this.flash(time, ev.v);
+    });
+  }
+
+  /* --- 案C：この一撃を「どんな音色で」鳴らすか ----------------------
+     lp を「いちばん開いたときの明るさ」と読み替え、弱い音ほど閉じる。
+     フィルタはパートに1つしか無いので、音符ごとにその時刻へ値を置く。
+     ひとつのパート内で音が重なることは稀なので、これで十分効く。   */
+  applyTimbre(time, v) {
+    if (!State.timbre || !this.lp) return;
+    const t = this.card.timbre;
+    if (!t) return;
+    const lp = this.s.lp || 16000;
+    const k = t.open + (1 - t.open) * Math.pow(clamp(v, 0, 1), t.curve);
+    try { this.lp.frequency.setValueAtTime(clamp(lp * k, 180, 18000), time); } catch (e) {}
+  }
+
+  play(notes, dur, time, v) {
+    const voice = this.voice;
+    if (!voice) return;
+    this.applyTimbre(time, v);
+    try {
+      if (voice.__mono) { notes.forEach((n, i) => voice.triggerAttack(n, time + i * 0.012)); return; }
+      if (voice instanceof Tone.MonoSynth) { voice.triggerAttackRelease(notes[0], dur, time, v); return; }
+      voice.triggerAttackRelease(notes.length === 1 ? notes[0] : notes, dur, time, v);
+    } catch (e) { /* 同時発音の取りこぼしで演奏を止めない */ }
+    this.applyExpression(dur, time, v);
+  }
+
+  /* --- 案H：この一音を「鳴っている間、どう揺らすか」 ------------------
+     四分音符以上に伸びる音だけが対象。新しいノードは作らない。
+     すでにある this.gain（音量）と this.lp（明るさ）に、
+     時間差の値を後から置いていくだけで脈動を作る。
+     ひとつのパート内で音が重なることは稀なので、これで十分効く
+     （applyTimbre と同じ前提）。 */
+  applyExpression(dur, time, v) {
+    if (!State.expression) return;
+    const ex = this.card.expr;
+    if (!ex || !this.gain || !this.lp) return;
+    const steps = LEN_STEPS[dur] || 2;
+    if (steps < 4) return;                              // 四分音符未満は対象外
+
+    const stepSec = (60 / Tone.Transport.bpm.value) / 4;
+    const total = steps * stepSec;
+    const start = time + Math.min(ex.delay, total * 0.4);
+    if (start >= time + total) return;
+
+    const quarter = 1 / (ex.rate * 4);                   // 1周期を4点の折れ線で近似
+    const n = Math.floor((time + total - start) / quarter);
+    if (n < 4) return;                                   // 1周期に満たなければ揺らさない
+
+    try {
+      const g0 = this.gain.gain.value;
+      const l0 = this.lp.frequency.value;
+      this.gain.gain.setValueAtTime(g0, start);
+      this.lp.frequency.setValueAtTime(l0, start);
+      for (let i = 1; i <= n; i++) {
+        const tt = start + i * quarter;
+        if (tt >= time + total) break;
+        const ph = Math.sin(i * (Math.PI / 2));           // 4点で1周期
+        this.gain.gain.linearRampToValueAtTime(g0 * (1 + ex.amp * ph), tt);
+        this.lp.frequency.linearRampToValueAtTime(clamp(l0 * (1 + ex.bright * ph), 180, 18000), tt);
+      }
+      this.gain.gain.linearRampToValueAtTime(g0, time + total);
+      this.lp.frequency.linearRampToValueAtTime(l0, time + total);
+    } catch (e) { /* 揺らせなくても演奏は止めない */ }
+  }
+
+  /* --- ドラムのパート -------------------------------------------------
+     ドラムは固定配列のまま（四つ打ちは 0/4/8/12 でなければ四つ打ちでない）。
+     v6 で変わったのは3つ：
+       ・グルーヴ（前ノリ／後ノリ・ゆらぎ）が乗る
+       ・ハットは占有表を見て自動で間引かれる（案1）
+       ・フィルが毎回ちがう形で生成される（案2）                      */
+  tickDrum(time, step) {
+    const bar = barAtTime(time);
+    if (bar !== this.curBar) ensureBar(bar);
+    const d = this.card.drum;
+    const owner = State.kickOwner === this.id;
+    const fill = isFillBar(bar) && owner;
+    const gt = () => this.groovedTime(time);
+    /* 案C：太鼓も強打ほど明るく。ゴーストノートやハットの表裏で効く。
+       あわせて、打つたびに再生速度を ±0.3% 動かす（ラウンドロビンの
+       代用。同じ波形の反復に気づかれないため → samples.js の hit）。
+       カードID・小節・ステップから決まるので、毎回同じ演奏は再現される。 */
+    const dh = (fn, v) => {
+      const t = gt();
+      this.applyTimbre(t, v);
+      fn.call(this.kit, t, v, this.drumRate(bar, step));
+    };
+
+    /* フィル：8小節目の4拍目。v6 は generateFill が毎回ちがう形を作る */
+    if (fill && step >= 12) {
+      const sub = (60 / Tone.Transport.bpm.value) / 4;        // 16分ぶんの秒数
+      (this.fillPlan || []).forEach(f => {
+        if (Math.floor(f.s) !== step) return;
+        const t = time + (f.s - Math.floor(f.s)) * sub;
+        const fn = this.kit[f.voice] || this.kit.snare;
+        /* フィルは同じ太鼓を短い間に何度も叩くので、反復がいちばん
+           目立つ場所。ここにも同じ揺らぎを入れる。               */
+        try { fn.call(this.kit, t, f.v, this.drumRate(bar, f.s * 4)); } catch (e) {}
+      });
+      this.flash(time, 0.8);
+      if (step === 12) pump(time, 0.6);
+      return;
+    }
+
+    if (d.k.includes(step)) {
+      /* キックを出せるのは「最初に入ったリズムカード」だけ。土台を1枚に絞る */
+      if (owner) { dh(this.kit.kick, 0.92); pump(time); this.flash(time, 1); UI.kickPulse(); }
+    }
+    if (d.s.includes(step)) { dh(this.kit.snare, 0.56); this.flash(time, 0.7); }
+    /* 案1：ハットは他のパートが埋めている位置ほど間引く。
+       上ものが16分を刻んでいるところにハットも刻むと団子になるため。 */
+    if (d.h.includes(step) && !this.hatMuted(step)) {
+      dh(this.kit.hat, d.hv * (step % 4 === 0 ? 1.15 : 0.85));
+    }
+    if (State.energy >= 3 && d.h3 && d.h3.includes(step) && !this.hatMuted(step)) dh(this.kit.hat, d.hv * 0.55);
+    if (State.energy >= 2 && d.ghost && d.ghost.includes(step)) dh(this.kit.snare, 0.16);
+
+    /* --- v5 で足した語彙 --- */
+    if (d.t  && d.t.includes(step))  { dh(this.kit.tom, 0.50);  this.flash(time, 0.5); }
+    if (d.t2 && d.t2.includes(step)) { dh(this.kit.tom2, 0.52); this.flash(time, 0.5); }
+    if (d.t3 && d.t3.includes(step)) { dh(this.kit.tom3, 0.56); this.flash(time, 0.5); }
+    if (d.oh && d.oh.includes(step)) dh(this.kit.open, 0.55);                // オープンハット
+    if (d.rd && d.rd.includes(step)) {                                       // ライド
+      dh(this.kit.ride, (d.rv || 0.5) * (step % 4 === 0 ? 1.15 : 0.85));
+      this.flash(time, 0.45);
+    }
+    /* クラッシュは crEvery 小節に1回だけ。土台役か、キックを持たない薄い層のみ
+       （キック持ちが複数いるときに2枚ぶん重なって鳴るのを避ける）。
+       v6：章が変わった小節にも1発入れる（アレンジ・エンジンからの合図）  */
+    const sectionHit = State.sectionCrashBar === bar && (owner || !this.hasKick);
+    if (sectionHit || (d.cr && d.cr.includes(step) && (owner || !this.hasKick)
+        && bar % (d.crEvery || 8) === (d.crPhase || 0))) {
+      if (step === 0) { this.kit.crash(time, sectionHit ? 0.85 : 0.72); this.flash(time, 0.9); }
+    }
+  }
+
+  /* --- 打楽器のばらつき（ラウンドロビンの代用）------------------------
+     まったく同じ波形の反復は「機械だ」と気づかれる。1本しか持っていない
+     サンプルの再生速度を ±0.3%（≒±0.05半音）だけ動かして、毎回わずかに
+     違う波形にする。音程の変化としては知覚できない大きさ。
+     → reference/音源と楽器リサーチ.md §4-3・優先度4
+     カードID・小節・ステップから決まるので、同じ演奏は同じように再現される。 */
+  drumRate(bar, step) {
+    if (!this.sampled) return 1;                    // 合成音は毎回波形が違う
+    const r = makeRng(hashSeed(this.id, bar, Math.round(step) + 101))();
+    return 1 + (r * 2 - 1) * 0.003;
+  }
+
+  /* 案1：このステップは他のパートで埋まりすぎているか？
+     金物は「隙間を埋める」役なので、埋まっているところでは引く。   */
+  hatMuted(step) {
+    if (!State.autoAvoid) return false;
+    const o = State.occ.mid[step] + State.occ.high[step];
+    return o > 1.15 && (step % 4 !== 0);        // 表拍は残す。骨格まで消さない
+  }
+
+  flash(time, v) { Tone.Draw.schedule(() => UI.flashCell(this.id, v), time); }
+
+  start(ticks) { this.seq.start(ticks + 'i'); }
+
+  fadeOutAndDispose(sec = 1.0) {
+    try { this.gain.gain.rampTo(0, sec); } catch (e) {}
+    try { this.seq.stop(); } catch (e) {}
+    setTimeout(() => this.dispose(), sec * 1000 + 150);
+  }
+
+  dispose() {
+    try { this.seq.stop(); this.seq.dispose(); } catch (e) {}
+    const nodes = [this.voice, this.drive, ...(this.kit ? this.kit.nodes : []),
+                   this.hp, this.lp, this.revSend, this.dlySend, this.gain,
+                   this.air, this.panner];
+    nodes.forEach(n => { try { n && n.dispose(); } catch (e) {} });
+  }
+}
+const STEPS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+
+/* =====================================================================
+   4b. 小節ごとの再生成 ── 案1（衝突回避）と案2（生成）の心臓部
+   ---------------------------------------------------------------------
+   小節が変わった最初の tick で1回だけ走る。
+
+     1. まずドラムが16ステップのどこを鳴らすかを占有表に書き込む
+        （ドラムは骨格なので、上ものが避けるべき対象）
+     2. 続いて音階のあるパートを **投入順** に生成する。
+        先に入ったパートほど好きな場所を取れて、後から入ったパートは
+        埋まっていない場所へ逃げる ＝ 自動的に掛け合いになる。
+     3. 生成しながら自分の占有も足していくので、3枚目は1枚目と2枚目の
+        両方を避ける。
+
+   ここが v5 との決定的な違い。v5 では120枚全部が「耳の聞こえない演奏者」で、
+   同じ16分の位置に平気で音を置いていた。                            */
+function ensureBar(bar) {
+  if (State.genBar === bar) return;
+  State.genBar = bar;
+
+  const occ = { low: new Float32Array(16), mid: new Float32Array(16), high: new Float32Array(16) };
+
+  /* --- 1. ドラム（骨格）を先に占有表へ --- */
+  State.order.forEach(id => {
+    const p = State.parts.get(id);
+    if (!p || !p.kit) return;
+    p.curBar = bar;
+    if (isFillBar(bar) && State.kickOwner === id) p.fillPlan = generateFill(p.card, bar);
+    const d = p.card.drum;
+    (d.k || []).forEach(s => { occ.low[s] += 1.0; occ.mid[s] += 0.4; });
+    (d.s || []).forEach(s => { occ.mid[s] += 0.9; });
+    (d.t || []).forEach(s => { occ.mid[s] += 0.5; });
+    (d.h || []).forEach(s => { occ.high[s] += 0.5; });
+    (d.rd || []).forEach(s => { occ.high[s] += 0.6; });
+  });
+
+  /* --- 2. 音階のあるパートを投入順に生成 --- */
+  const sec = currentSection();
+  const thin = State.autoArrange ? sec.thin : 1;
+  State.order.forEach(id => {
+    const p = State.parts.get(id);
+    if (!p || p.kit) return;
+    p.curBar = bar;
+    const band = ROLES[p.role].band;
+    const seen = State.autoAvoid ? occ[band] : null;
+    p.curPat = generateBar(p.card, bar, State.energy, seen, thin);
+    /* 3. 自分の占有を足す。次のパートはこれも避ける */
+    const mine = occupancyOf(p.curPat, p.role === 'bass' ? 1.0 : 0.85);
+    for (let i = 0; i < 16; i++) occ[band][i] += mine[i];
+  });
+
+  State.occ = occ;
+  Tone.Draw.schedule(() => UI.drawOccupancy(occ), Tone.now());
+}
+
+/* =====================================================================
+   4b-2. 提案エンジン（案B）── 「シンプルな操作で」の中核
+   ---------------------------------------------------------------------
+   40キー × 3変化＝120枚は、覚えることが多すぎる。
+   このアプリのビジョン「芸術的な音楽をシンプルな操作で」といちばん
+   矛盾していたのがここ。
+
+   そこで engine 側が **いま足すと良い候補を3つだけ** 出す。
+   遊ぶ人は左・中・右のどれかを押すだけでよい（キー: J / K / L の代わりに
+   ← ↓ → の3つ）。40個を覚える必要がなくなる。
+
+   点数の付け方（高いほど「いま欲しい」）
+     ・空いている ROLE を強く推す（土台が無いのに飾りを足しても始まらない）
+     ・いまの密度と反対の変化を推す（賑やかなら余白、寂しいなら刻み）
+     ・章に合う密度を推す（導入は薄く、山は厚く）
+     ・すでに鳴っている楽器と音色がかぶるものは下げる
+     ・直前に出した候補は少し下げる（同じ提案を繰り返さない）
+   ===================================================================== */
+const SUGGEST_N = 3;
+
+function roleNeed(role) {
+  const cur = State.order.filter(id => CARDS[id].role === role).length;
+  const max = ROLES[role].max;
+  if (cur >= max) return -Infinity;                       // もう入らない
+  /* 埋まっていない ROLE ほど欲しい。特に土台（rhythm→bass）が先 */
+  const priority = { rhythm: 3.0, bass: 2.6, chord: 1.8, melody: 1.4 }[role] || 1;
+  return priority * (1 - cur / max);
+}
+
+/* いま全体がどれくらい賑やかか（0=無音 1=満杯） */
+function busyness() {
+  let notes = 0;
+  State.parts.forEach(p => {
+    if (p.kit) {
+      const d = p.card.drum;
+      notes += ['k', 's', 'h', 't', 'rd'].reduce((a, f) => a + (d[f] || []).length, 0) * 0.5;
+    } else notes += (p.curPat || []).length;
+  });
+  return clamp(notes / 34, 0, 1);
+}
+
+/* =====================================================================
+   案3-a：「立てる群」は全 ROLE を通じて同時1枚まで
+   ---------------------------------------------------------------------
+   Lembke が6つの管楽器のフォルマント卓立スコアを実測した表（→
+   reference/音源と楽器リサーチ.md §3-1）では、卓立が高い楽器ほど
+   「混ざらない」。オーボエについては "its utility in orchestration
+   could be more towards contrast than blend" とまで書かれている。
+   本アプリの編成にこれを当てはめたのが同 §3-4 の3分類で、
+   そこでの結論が「立てる群は全 ROLE を通じて同時1枚まで」。
+
+   ここが横断制約でなければならない理由：現行の上限は
+   MELODY 2 / CHORD 2 と **ROLE ごと**なので、サックス・トランペット・
+   シンセリード（MELODY）とカッティング（CHORD）が同時に4枚出せてしまう。
+   ROLE の中だけ見ていても防げない。
+
+   ただし止めるのは「提案」まで。カードゲームである以上、人が出したい
+   カードを engine が拒否してはいけない。                            */
+const STANDOUT = new Set(['melody-sax', 'melody-trumpet', 'melody-lead', 'chord-cutting']);
+
+/* =====================================================================
+   案3-b：後から足す音は「同じか、より下」（方向のある非対称ルール）
+   ---------------------------------------------------------------------
+   Lembke & McAdams (2015) は、溶けるかどうかが「近いかどうか」ではなく
+   **上に出たかどうか**で決まることを実測した。合成音のフォルマントが
+   基準を超えた瞬間に blend が急落し、同じか下ならよく溶ける。
+   プロの奏者も伴奏に回るとき無意識に暗い音にしている（Lembke 2017）。
+   → 同 §3-2・優先度3
+
+   基準にするのは MELODY と CHORD だけ。この2つが「溶け合ってほしい層」
+   だからで、
+     ・BASS はつねに最も暗く（実測 67〜509Hz）、これを基準にすると
+       すべての候補が等しく減点されてルールが意味を失う
+     ・RHYTHM は金物を含み本来いちばん明るい層（実測 3000〜7800Hz）。
+       打楽器は溶けないことが役目なので、ここに blend を求めるのは誤り
+   資料の設計指針は「鳴っている音の最も低い重心を基準に」だが、
+   全 ROLE を含めると上記のとおり退化する。溶けるべき層の中で適用する。
+
+   減点は段階的にする（何オクターブ上回ったか）。超えた瞬間に候補から
+   消すのではなく、同じ条件なら暗いほうが選ばれる、という重みにする。
+   重みは既存の「音源がかぶる」減点（1.4）と同程度に置く。ここを強くし
+   すぎると、暗いカードが1枚入った時点でメロディがいつまでも提案されなく
+   なる（MELODY の roleNeed は最大 4.2 点しかない）。狙いは順位の傾きで
+   あって拒否権ではないので、上限もつけておく。                        */
+const BLEND_ROLES = new Set(['melody', 'chord']);
+const BLEND_PENALTY = 1.0;        // 1オクターブ上回るごとに引く点
+const BLEND_PENALTY_MAX = 2.5;
+
+function blendRefHz() {
+  let lo = Infinity;
+  State.order.forEach(id => {
+    const c = CARDS[id];
+    if (!BLEND_ROLES.has(c.role)) return;
+    const hz = c.sound.centroid;
+    if (hz > 0 && hz < lo) lo = hz;
+  });
+  return isFinite(lo) ? lo : 0;
+}
+
+function suggestCards() {
+  const sec = currentSection();
+  const busy = busyness();
+  /* 章が求める密度。導入は薄く、山は厚く */
+  const wantThin = sec.thin == null ? 1 : sec.thin;
+  /* いま鳴っている音源（音色のかぶりを避けるため） */
+  const usedSets = new Set();
+  State.order.forEach(id => usedSets.add(CARDS[id].sound.set));
+
+  /* 案3-a：「立てる群」がもう1枚鳴っているか（ROLE をまたいで数える） */
+  const standoutOn = State.order.some(id => STANDOUT.has(CARDS[id].inst));
+  /* 案3-b：溶け合わせたい層の中で、いま最も暗い重心 */
+  const refHz = blendRefHz();
+
+  const scored = [];
+  Object.values(CARDS).forEach(card => {
+    if (State.parts.has(card.id)) return;                 // すでに鳴っている
+    /* 同じ楽器が鳴っていたら、その楽器は候補にしない（差し替えは手動で） */
+    if (State.order.some(id => CARDS[id].inst === card.inst)) return;
+
+    const need = roleNeed(card.role);
+    if (need === -Infinity) return;
+
+    let s = need * 3.0;
+
+    /* 賑やかなら「余白」、寂しいなら「刻み」を推す。
+       ただし始めたばかり（1枚以下）のときは必ず「基本」から。
+       何も無いところへいきなり刻みを入れても曲は始まらない。      */
+    const wantVar = State.order.length < 2 ? 1
+                  : busy > 0.62 ? 2 : busy < 0.28 ? 3 : 1;
+    s += (card.n === wantVar) ? 1.6 : (card.n === 1 ? 0.5 : 0);
+
+    /* 章が薄いところでは密度の高いカードを下げる */
+    const dens = card.shape ? (card.shape.d || 6) : 8;
+    s -= Math.abs(dens * (card.shape ? (card.shape.poly || 1) : 1) / 10 - wantThin) * 0.5;
+
+    /* 音色がかぶるものは下げる（同じ音源が2枚鳴ると混ざる） */
+    if (usedSets.has(card.sound.set)) s -= 1.4;
+
+    /* 案3-a：「立てる群」がすでに1枚鳴っていたら、2枚目は強く下げる。
+       混ざらない音どうしが2枚立つと、どちらも中途半端になる。      */
+    if (STANDOUT.has(card.inst) && standoutOn) s -= 4.0;
+
+    /* 案3-b：溶け合わせたい層では、いま鳴っている中でいちばん暗い音を
+       上回るほど下げる。上回った側が溶けなくなるのであって、
+       下回るぶんには罰しない（非対称）。                            */
+    if (refHz > 0 && BLEND_ROLES.has(card.role) && card.sound.centroid > refHz) {
+      s -= Math.min(BLEND_PENALTY_MAX, BLEND_PENALTY * Math.log2(card.sound.centroid / refHz));
+    }
+
+    /* リズムが1枚も無いときは、キック持ちを強く推す（土台が先） */
+    if (card.role === 'rhythm') {
+      const hasKick = State.order.some(id => CARDS[id].drum && CARDS[id].drum.hasKick);
+      const cardHasKick = card.drum && card.drum.hasKick && card.drum.k.length;
+      s += (!hasKick && cardHasKick) ? 2.2 : (hasKick && cardHasKick) ? -1.8 : 0.4;
+    }
+
+    /* 直前に出した候補は少し下げる（同じ提案の繰り返しを防ぐ） */
+    if (State.lastSuggest && State.lastSuggest.includes(card.id)) s -= 1.2;
+
+    /* 決定的な小さなゆらぎ。毎回まったく同じ順にならないように */
+    const r = makeRng(hashSeed(card.id, State.bar, 13))();
+    s += r * 0.7;
+
+    scored.push({ id: card.id, s });
+  });
+
+  scored.sort((a, b) => b.s - a.s);
+  /* 出す3つの中身も整える
+       ・同じ ROLE は最大2つまで（3つとも同じ役割だと選ぶ意味がない）
+       ・キック持ちは1つまで（土台は1枚なので、2つ並べても片方は死ぬ） */
+  const out = [], perRole = {};
+  let kickShown = 0;
+  for (const x of scored) {
+    const c = CARDS[x.id];
+    if ((perRole[c.role] || 0) >= 2) continue;
+    const isKick = !!(c.drum && c.drum.hasKick && c.drum.k.length);
+    if (isKick && kickShown >= 1) continue;
+    if (isKick) kickShown++;
+    perRole[c.role] = (perRole[c.role] || 0) + 1;
+    out.push(x.id);
+    if (out.length >= SUGGEST_N) break;
+  }
+  State.lastSuggest = out;
+  return out;
+}
+
+/* 提案を採用する（0=左 1=中 2=右） */
+function takeSuggestion(i) {
+  const list = State.suggest || [];
+  if (!list[i]) return;
+  insertCard(list[i]);
+  refreshSuggestions();
+}
+function refreshSuggestions() {
+  if (!State.playing) return;
+  State.suggest = suggestCards();
+  UI.drawSuggestions();
+}
+
+/* =====================================================================
+   4c. アレンジ・エンジン（案3）
+   ---------------------------------------------------------------------
+   v5 は4小節ループが延々と続くだけで、4分回しても「曲」にならなかった。
+   経過割合から章を決め、ENERGY・密度・空気感（ハイパスと残響）を動かす。
+   手で ENERGY を触ったら 30 秒だけ自動をやめる（人の操作を上書きしない）。 */
+function currentSection() {
+  if (!State.autoArrange) return { key: 'manual', label: '手動', thin: 1, hp: 20, wet: 1, energy: State.energy };
+  const total = State.durationSec > 0 ? State.durationSec : 300;
+  return sectionAt(Math.min(0.999, State.elapsed / total));
+}
+
+function updateArrangement() {
+  if (!State.playing || !State.autoArrange) return;
+  const sec = currentSection();
+  if (sec.key === State.section) return;
+  State.section = sec.key;
+
+  /* 章が変わったら、次の小節の頭にクラッシュを1発入れる合図を出す */
+  State.sectionCrashBar = State.bar + 1;
+
+  /* 案A：章に割り当てられた調へ移る。共通音が2つ以上ある移動しか
+     計画に入っていないので、切り替わっても濁らない。               */
+  if (State.keyOn) {
+    if (!State.keyPlan) State.keyPlan = keyPlanFor(State.prog, State.keySeed || 1);
+    const step = State.keyPlan.find(p => p.key === sec.key);
+    const next = step ? step.semi : 0;
+    if (next !== State.keySemi) {
+      State.keySemi = next;
+      State.genBar = -1;                                  // 音域が変わるので作り直す
+      UI.toast(`— ${sec.label}（${keyLabel(next)}）—`);
+      UI.syncSection();
+      return;                                             // トーストが二重にならないように
+    }
+  }
+
+  /* ENERGY は人が最近さわっていなければ自動で動かす */
+  if (performance.now() - (State.lastManualEnergy || 0) > 30000) {
+    State.energy = sec.energy;
+    State.velScale = [0.86, 1, 1.08][State.energy - 1];
+    UI.syncEnergy();
+  }
+  /* 空気感：ハイパスと残響の深さ */
+  try {
+    sweep.frequency.rampTo(sec.hp, 2.5);
+    reverb.wet.rampTo(Math.min(1, 0.85 * sec.wet), 2.5);
+  } catch (e) {}
+  UI.toast(`— ${sec.label} —`);
+  UI.syncSection();
+}
+
+/* =====================================================================
+   4d. 自動ミックス（案5）
+   ---------------------------------------------------------------------
+   120枚を1枚ずつ測って音量はそろえたが、実際に鳴るのは組み合わせ。
+   組み合わせの数は事前に測り切れないので、鳴っている音を4帯域で見て
+   目標カーブとのズレを ROLE ごとのバスへ静かに戻す。
+
+   ・時定数は 2.5 秒（速いとポンピングする）
+   ・補正は ±4dB まで（暴れさせない。あくまで釣り合いの微調整）
+   ・帯域と ROLE の対応はおおまかだが、実用上はこれで足りる          */
+const BAND_TO_ROLE = { low: 'bass', lowmid: 'chord', himid: 'melody', high: 'rhythm' };
+/* 帯域どうしの「あるべき高低差」(dB)。絶対値ではなく傾きだけを決める。
+   低いほうを少し強く、高いほうを少し弱く、というのが自然な音の傾き。  */
+const BAND_TILT = { low: +4, lowmid: 0, himid: -1, high: -3 };
+const AUTOMIX_MAX = 4;
+
+/* ---------------------------------------------------------------------
+   絶対レベルを目標にすると、鳴っているパートの枚数で全体が上下するたび
+   4本とも同じ方向へ振り切れてしまい、ただの音量調整になってしまう。
+   ここで直したいのは「帯域どうしの釣り合い」なので、
+   4帯域の平均からのズレだけを見る（＝全体の音量には手を出さない）。
+   全体の音量は duckByCount() とマスターのリミッタが持つ。            */
+function updateAutoMix() {
+  if (!State.playing || !State.autoMix) return;
+
+  const active = {};
+  State.order.forEach(id => { active[CARDS[id].role] = true; });
+
+  /* いま鳴っている帯域のレベルを集める */
+  const lv = {};
+  Object.keys(BAND_TO_ROLE).forEach(band => {
+    const m = bandMeter[band];
+    if (!m) return;
+    let v = m.getValue();
+    if (Array.isArray(v)) v = v[0];
+    if (isFinite(v) && v > -70) lv[band] = v;
+  });
+  const bands = Object.keys(lv);
+  if (bands.length < 2) return;                       // 比べる相手がいない
+
+  /* --- 人が決めた役割からは手を引く -------------------------------------
+     好みの音量（つまみ）を 0 以外にした ROLE は、自動ミックスの対象から
+     完全に外す。理由は実測で分かった：帯域と ROLE の対応はおおまかで、
+     たとえば高域はリズムだけでなく上ものも含む。そのため
+     「つまみでリズムを -8dB」にしても高域はその分は下がらず、
+     自動側が差を埋めようと上限の +4dB まで戻してしまう。
+     つまみは「自動に任せず自分で決める」という意思表示なので、
+     打ち消し合うのではなく、その ROLE は自動の輪から抜くのが正しい。
+     触っていない ROLE では自動ミックスはこれまでどおり働く。        */
+  const manual = rk => (State.roleTrim[rk] || 0) !== 0;
+  ROLE_ORDER.forEach(rk => {
+    const rb = roleBus[rk];
+    if (rb && manual(rk) && rb.corr !== 0) { rb.corr = 0; applyRoleGain(rk, 1.5); }
+  });
+  const auto = bands.filter(b => !manual(BAND_TO_ROLE[b]));
+  if (auto.length < 2) { UI.syncAutoMix(); return; }    // 比べる相手がいない
+
+  /* 傾きを差し引いたうえでの平均。ここが「釣り合いの基準」になる */
+  const mean = auto.reduce((a, b) => a + (lv[b] - BAND_TILT[b]), 0) / auto.length;
+
+  auto.forEach(band => {
+    const rk = BAND_TO_ROLE[band], rb = roleBus[rk];
+    if (!rb || !active[rk]) return;
+    const err = (mean + BAND_TILT[band]) - lv[band];    // ＋なら上げたい
+    /* 一気に動かさず毎回2割だけ近づける（＝時定数のかわり） */
+    const next = clamp(rb.corr + err * 0.20, -AUTOMIX_MAX, AUTOMIX_MAX);
+    if (Math.abs(next - rb.corr) < 0.05) return;
+    rb.corr = next;
+    applyRoleGain(rk, 2.5);
+  });
+  UI.syncAutoMix();
+}
+
+/* =====================================================================
+   4e. 頭上の余裕の見張り番（v6.1）
+   ---------------------------------------------------------------------
+   ソフトクリッパを最後に置いたので「割れて汚くなる」ことはもう無いが、
+   上限に張り付き続ければ音は詰まって聞こえる。出口のレベルを見て、
+   詰まっているならマスターを静かに下げ、余裕が戻ったらゆっくり戻す。
+
+   ・下げるのは速く（0.5dB刻み）、戻すのは遅く（0.15dB刻み）。
+     これは「リミッタが働いた直後にすぐ持ち上げてポンピングする」のを
+     避けるための、ふつうのオートゲインの作法。
+   ・下げ幅は最大 6dB まで。それ以上は曲そのものが破綻している。       */
+const HEADROOM_MIN_DB = -6;
+let guardTimer = null;
+
+function guardHeadroom() {
+  if (!State.playing || State.paused || !outMeter || !master) return;
+  let v = outMeter.getValue();
+  if (Array.isArray(v)) v = v[0];
+  if (!isFinite(v)) return;
+
+  let next = headroomDb;
+  if (v > -0.7)      next = Math.max(HEADROOM_MIN_DB, headroomDb - 0.5);   // 張り付いている
+  else if (v < -4.0) next = Math.min(0, headroomDb + 0.15);                // 余裕がある
+  else return;
+
+  if (Math.abs(next - headroomDb) < 0.01) return;
+  headroomDb = next;
+  try { master.gain.rampTo(MASTER_BASE * Tone.dbToGain(headroomDb), 0.5); } catch (e) {}
+}
+
+/* ============ 5. 予備のドラム音源 ============
+   v7.1：カードが1枚も入っていないときに鳴っていた「基礎ビート」
+   （キック 0/8＋8分ハット）を廃止した。
+   カードを入れる前から拍が刻まれていると、
+     ・最初の1枚を入れても「自分が音を足した」感じが薄れる
+     ・リズムカードを入れないという選択（静かな編成）ができない
+   の2点で体験を損なう。無音から始めて、鳴っているのは
+   必ず「誰かが入れたカードの音だけ」という状態にする。
+
+   ただしキットそのものは残す。フィル・DROP・ブレイク・終止は
+   「リズムカードのキットを借りて」鳴らす作りで、リズムカードが
+   1枚も無いときの借り先がこの baseKit だから。
+   ここから音が出るのはそれらの演出の瞬間だけで、拍は刻まない。   */
+let baseKit;
+
+function buildBaseKit() {
+  baseKit = makeSampleKit(baseBus, BASE_KIT, -9) || makeSynthKit(baseBus, -8);
+}
+
+/* ============ 6. 進行の状態 ============ */
+const State = {
+  playing: false, paused: false,
+  quantize: 'beat',        // 'beat' | 'bar'
+  prog: MAIN_PROG,                               // v8：固定（終止のときだけ 'cadence'）
+  energy: 2,               // 1=静 2=走 3=熱
+  velScale: 1,
+  pumpOn: true,
+  durationSec: 240,
+  elapsed: 0,
+  parts: new Map(),        // cardId -> Part
+  order: [],               // 投入順（古い順）
+  lastInput: new Map(),
+  pending: new Set(),
+  queue: [],               // 開始前に押されたカードの控え
+  kickOwner: null,
+  building: false,
+  breaking: false,                               // 案I：ブレイク中か
+  bar: 0, step: 0,
+
+  /* --- v6 で足した状態 --- */
+  genBar: -1,                                    // 生成済みの小節
+  occ: { low: new Float32Array(16), mid: new Float32Array(16), high: new Float32Array(16) },
+  autoAvoid: true,                               // 案1：衝突回避
+  autoArrange: true,                             // 案3：アレンジ・エンジン
+  autoMix: true,                                 // 案5：自動ミックス
+  /* 好みの音量（dB）。初期値は上の ROLE_TRIM_DB、画面のつまみで動く */
+  roleTrim: Object.assign({}, ROLE_TRIM_DB),
+  timbre: true,                                  // 案C：ベロシティで音色が変わる
+  space: true,                                   // 案D：左右と奥行き
+  cadenceOn: true,                               // 案E：終わりを「終止」にする
+  cadence: false,                                // いま終止の最中か
+  expr: true,                                    // 案H：ロングトーンの脈動
+  keyOn: true,                                   // 案A：章ごとに転調する
+  keySemi: 0,                                    // いまの調（原調からの半音）
+  keyPlan: null,                                 // 章 → 調の計画
+  suggest: [],                                   // 案B：いまの3つの候補
+  lastSuggest: null,                             // 直前の候補（繰り返し防止）
+  section: null,                                 // いまの章
+  sectionCrashBar: -1,                           // 章の変わり目に鳴らすクラッシュ
+  lastManualEnergy: 0,                           // 手で ENERGY を触った時刻
+};
+
+function nextBoundaryTicks() {
+  const ppq = Tone.Transport.PPQ;
+  const q = State.quantize === 'bar' ? ppq * 4 : ppq;
+  const cur = Tone.Transport.ticks;
+  const lead = Math.max(2, Math.round(ppq * 0.08));
+  return Math.ceil((cur + lead) / q) * q;
+}
+
+/* リズムカードのうち「最初に入ったキック持ち」を土台に決める */
+function recomputeKickOwner() {
+  State.kickOwner = null;
+  for (const id of State.order) {
+    const p = State.parts.get(id);
+    if (p && p.hasKick) { State.kickOwner = id; break; }
+  }
+  /* v7.1：基礎ビートを廃止したので、baseBus を絞る必要が無くなった。
+     ここを通るのは演出（フィル・DROP・終止）の一発だけで、
+     しかもリズムカードがあるときはそちらのキットを使うため、
+     baseBus は開けたままでよい。                                  */
+}
+
+/* パートが増えても全体の音量感が破綻しないように少しずつ下げる。
+   独立した n 個の音が重なると振幅は概ね √n 倍になるので、
+   釣り合いを取るなら指数は -0.5。v6 の -0.32 は「増えたら賑やかに
+   聞こえてほしい」ぶん甘くしてあったが、8枚まで積むと頭上の余裕を
+   食い潰して割れていた。賑やかさを残しつつ余裕が残る -0.42 にする。  */
+function partsBusLevel() {
+  return Math.pow(Math.max(1, State.parts.size), -0.42);
+}
+
+function duckByCount() {
+  partsBus.gain.rampTo(partsBusLevel(), 0.4);
+}
+
+/* =====================================================================
+   案5：枚数に応じてステレオ定位を自動で押し広げる
+   ---------------------------------------------------------------------
+   Huron の第10原理（音源位置）は、パートを独立させる5本のレバーのうち
+   いちばん実装が軽いもの。Liu ら (AES 2022) の自動ミックスも、同時に
+   話す声を聞き分けさせるためにフォース・ディレクテッド模型で各音源の
+   仮想位置を自動配置している（問題設定は本アプリと同じ）。
+   → reference/音の重ね方リサーチ.md §7・提案D
+
+   v7 までは card.space.pan の固定値と「同じ ROLE の2枚目は左右反転」
+   だけで、6枚積んでも広がらなかった。
+
+   ここでは「本来いたい場所（homePan）の順番は守ったまま、枚数が
+   増えるほど等間隔に開く」という配り方をする。
+     ・順番を守る … 定義した左右の性格（アコギは右、サックスは左…）が
+       枚数で入れ替わらない
+     ・等間隔    … 押しのけ合った結果と同じ配置に、反復計算なしで届く
+     ・幅は枚数で決まる … 2枚なら軽く、6枚なら目一杯に開く
+
+   参加するのは「本来の立ち位置を持つ」パートだけ。ベースとキックの
+   ある太鼓は homePan が 0 で、ここでは動かさない。低音と拍の芯を
+   中央から動かさないのは、定位の実務でも守られている作法。       */
+const PAN_LIMIT = 0.85;
+
+function respreadPan() {
+  if (!State.parts.size) return;
+  const movers = [];
+  State.parts.forEach(p => { if (Math.abs(p.homePan || 0) > 0.05) movers.push(p); });
+
+  /* 「左右と奥行きに置く」を切っているときは全員まん中へ */
+  if (!State.space) {
+    State.parts.forEach(p => { try { p.panner.pan.rampTo(0, 0.6); } catch (e) {} });
+    return;
+  }
+
+  const n = movers.length;
+  if (n === 0) return;
+  if (n === 1) {
+    try { movers[0].panner.pan.rampTo(movers[0].homePan, 0.6); } catch (e) {}
+    return;
+  }
+
+  /* 幅は枚数で開く。2枚 ±0.44 → 4枚で上限 ±0.85 */
+  const width = clamp(0.22 * n, 0.30, PAN_LIMIT);
+  movers.sort((a, b) => a.homePan - b.homePan);
+  movers.forEach((p, i) => {
+    const pos = -width + (2 * width * i) / (n - 1);
+    try { p.panner.pan.rampTo(pos, 0.6); } catch (e) {}
+  });
+}
+
+function labelOf(id) {
+  const role = id.split('-')[0];
+  const c = CARDS[id];
+  return `${ROLES[role].jp}の${c.label}${c.n}`;
+}
+
+/* ---- カード投入（Phase 1 のリーダーもここを呼ぶだけでよい） ------------
+   v5.1：同じ楽器の別バリエーション（ギター1が鳴っているところへギター3）が
+   来たら、足すのではなく **差し替える**。物理カードでも同じ挙動になる。  */
+function insertCard(cardId) {
+  if (!CARDS[cardId]) return;
+  /* 「はじめる」直後は音の準備（残響の生成など）に1秒ほどかかる。
+     その間に押されたカードは捨てずに覚えておき、開始後に流し込む */
+  if (!State.playing) { if (State.queue.length < MAX_PARTS) State.queue.push(cardId); return; }
+  if (State.paused) return;
+  const role = cardId.split('-')[0];
+  const inst = CARDS[cardId].inst;
+
+  /* 連打よけは「楽器」単位。バリエーションを巡回しても弾かれないよう、
+     同じカードの再投入だけを見る */
+  const now = performance.now();
+  if (now - (State.lastInput.get(cardId) || 0) < RETRIGGER_GUARD_MS) return;
+  State.lastInput.set(cardId, now);
+
+  /* 同じカードをもう一度 → 引っ込める（トグル） */
+  if (State.parts.has(cardId)) { removeCard(cardId); UI.toast(`${labelOf(cardId)} を止めました`); return; }
+
+  /* 同じ楽器の別バリエーションが鳴っていたら、それと入れ替える */
+  const sibling = State.order.find(id => CARDS[id].inst === inst);
+  if (sibling) dropPart(sibling);
+
+  /* ROLE ごとの上限。超えたらその ROLE のいちばん古い音と入れ替える */
+  const sameRole = State.order.filter(id => id.split('-')[0] === role);
+  while (sameRole.length >= ROLES[role].max) {
+    const out = sameRole.shift();
+    dropPart(out);
+    UI.toast(`${ROLES[role].jp}は${ROLES[role].max}枚まで。${labelOf(out)} と交代しました`);
+  }
+  while (State.order.length >= MAX_PARTS) dropPart(State.order[0]);
+
+  const part = new Part(cardId);
+  const ticks = nextBoundaryTicks();
+  part.start(ticks);
+
+  State.parts.set(cardId, part);
+  State.order.push(cardId);
+  State.pending.add(cardId);
+  UI.setCell(cardId, 'pending');
+  recomputeKickOwner();
+  duckByCount();
+  respreadPan();                        // 案5：枚数が変わったので定位を配り直す
+  UI.refreshNow();
+  refreshSuggestions();                 // 案B：入れたら候補を出し直す
+
+  Tone.Transport.scheduleOnce((t) => {
+    Tone.Draw.schedule(() => {
+      if (!State.pending.has(cardId)) return;
+      State.pending.delete(cardId);
+      UI.setCell(cardId, 'active');
+    }, t);
+  }, ticks + 'i');
+}
+
+function dropPart(cardId) {
+  const p = State.parts.get(cardId);
+  if (p) p.fadeOutAndDispose(1.1);
+  State.parts.delete(cardId);
+  State.pending.delete(cardId);
+  State.order = State.order.filter(x => x !== cardId);
+  UI.setCell(cardId, '');
+}
+
+function removeCard(cardId) {
+  if (!State.parts.has(cardId)) return;
+  dropPart(cardId);
+  recomputeKickOwner();
+  duckByCount();
+  respreadPan();                        // 案5：枚数が変わったので定位を配り直す
+  UI.refreshNow();
+  refreshSuggestions();
+}
+
+/* ---- 楽器キーを押したとき（キーボード・セル本体のクリック）------------
+   1回目 → 変化1 が入る
+   2回目 → 変化2 に差し替わる
+   3回目 → 変化3 に差し替わる
+   4回目 → 止まる
+   「同じカードをもう一度押すと止まる」を、バリエーションを一巡してから
+   止まる形に伸ばしただけ。物理カードでは1枚ずつが独立したカードなので、
+   この巡回はキーボード（とクリック）だけの都合。                      */
+function pressInstrument(instId) {
+  const playing = State.order.find(id => CARDS[id].inst === instId);
+  if (!playing) { insertCard(`${instId}-1`); return; }
+  const n = CARDS[playing].n;
+  if (n < VARIATIONS.length) insertCard(`${instId}-${n + 1}`);
+  else { removeCard(playing); UI.toast(`${labelOf(playing)} を止めました`); }
+}
+
+/* ============ 7. ビルドアップ＆ドロップ ============
+   スペースキーで発動。2小節かけて持ち上げ、次の小節頭で落とす。
+   ・ハイパスを上げていく（低音が抜けて宙に浮く）
+   ・ノイズのライザーが上昇する
+   ・スネアが細かくなっていく
+   ・落とす直前に一瞬だけ無音 → 頭で全部戻る                        */
+function triggerBuild() {
+  if (!State.playing || State.paused || State.building) return;
+  State.building = true;
+
+  const ppq = Tone.Transport.PPQ;
+  const barTicks = ppq * 4;
+  const startTicks = Math.ceil((Tone.Transport.ticks + ppq * 0.2) / barTicks) * barTicks;
+  const dropTicks = startTicks + barTicks * 2;
+
+  UI.toast('ビルドアップ！ 2小節で落ちます');
+  UI.setBuild(true);
+
+  /* --- 立ち上がり：フィルタとライザーを仕込む --- */
+  Tone.Transport.scheduleOnce((time) => {
+    const beat = 60 / Tone.Transport.bpm.value;
+    const len = beat * 8;                       // 2小節ぶんの秒数
+    try {
+      sweep.frequency.cancelScheduledValues(time);
+      sweep.frequency.setValueAtTime(24, time);
+      sweep.frequency.exponentialRampToValueAtTime(1100, time + len * 0.98);
+    } catch (e) {}
+
+    /* ノイズのライザー。master 直結だと枚数ぶんの絞りが効かないので
+       fxBus（＝partsBus の下）へ入れ、頂点の量も 0.22 → 0.14 に抑える。
+       ライザーはスネアロールと同時に最大になるので、ここが割れやすい。 */
+    const rg = new Tone.Gain(0).connect(fxBus || master);
+    const rf = new Tone.Filter({ type: 'bandpass', frequency: 400, Q: 2.2 }).connect(rg);
+    const noise = new Tone.Noise('white').connect(rf);
+    noise.start(time);
+    rg.gain.setValueAtTime(0.0001, time);
+    rg.gain.exponentialRampToValueAtTime(0.14, time + len * 0.95);
+    rf.frequency.setValueAtTime(400, time);
+    rf.frequency.exponentialRampToValueAtTime(6000, time + len * 0.95);
+    rg.gain.exponentialRampToValueAtTime(0.0005, time + len + 0.05);
+    setTimeout(() => { try { noise.stop(); noise.dispose(); rf.dispose(); rg.dispose(); } catch (e) {} }, (len + 0.6) * 1000);
+
+    /* スネアロール：8分 → 16分 → 32分 と細かくなる */
+    const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
+    let t = time, i = 0;
+    while (t < time + len - 0.02) {
+      const prog = (t - time) / len;                       // 0→1
+      const div = prog < 0.5 ? beat / 2 : prog < 0.85 ? beat / 4 : beat / 8;
+      try { kit.snare(t, clamp(0.18 + prog * 0.65, 0.1, 0.95)); } catch (e) {}
+      t += div; i++;
+      if (i > 200) break;
+    }
+  }, startTicks + 'i');
+
+  /* --- 落とす瞬間 --- */
+  Tone.Transport.scheduleOnce((time) => {
+    const beat = 60 / Tone.Transport.bpm.value;
+    const gap = beat / 4;                                   // 16分1つぶんの静寂
+    try {
+      sweep.frequency.cancelScheduledValues(time - gap);
+      sweep.frequency.setValueAtTime(1100, time - gap);
+      partsBus.gain.cancelScheduledValues(time - gap);
+      partsBus.gain.setValueAtTime(0.0001, time - gap);
+      sweep.frequency.setValueAtTime(24, time);
+      partsBus.gain.setValueAtTime(partsBusLevel(), time);
+    } catch (e) {}
+
+    const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
+    /* v5：落ちる瞬間にクラッシュを重ねる。ここが「開けた」と感じる正体。
+       3つが完全に同時だと振幅がそのまま足し算になるので、
+       トムとクラッシュを数ミリ秒ずらして頭をぶつけない（音の印象は変わらない）。 */
+    try {
+      kit.kick(time, 0.95);
+      kit.tom3(time + 0.006, 0.72);
+      kit.crash(time + 0.012, 0.85);
+    } catch (e) {}
+    pump(time, 1.2);
+
+    /* 状態そのものは音のタイミングで戻す。描画（Tone.Draw）は
+       タブが裏に回ると止まるので、そこに状態管理を任せてはいけない */
+    State.energy = 3;
+    State.velScale = 1.08;
+    State.building = false;
+    Tone.Draw.schedule(() => {
+      UI.setBuild(false);
+      UI.dropFlash();
+      UI.syncEnergy();
+    }, time);
+  }, dropTicks + 'i');
+}
+
+/* =====================================================================
+   案I：ブレイク（サイクル3・v7で追加）
+   ---------------------------------------------------------------------
+   これまで演奏中に起きる「事件」はビルド→ドロップの1種類しか無かった。
+   ブレイクはその逆：**盛り上げず、抜いて溜める**。
+   1小節、ドラム以外を静める。ドラムも4拍目の裏にスネア1発だけを残して
+   「止まっていることを分からせる目印」にする。戻りはクラッシュを使わず
+   キック1発だけで静かに再開する（ビルドの戻り方と対にして単調を避ける）。
+   triggerBuild と同じ partsBus 操作の型を流用しているので、
+   信号の道すじは増えない。                                           */
+function triggerBreak() {
+  if (!State.playing || State.paused || State.building || State.breaking) return;
+  State.breaking = true;
+
+  const ppq = Tone.Transport.PPQ;
+  const barTicks = ppq * 4;
+  const startTicks = Math.ceil((Tone.Transport.ticks + ppq * 0.2) / barTicks) * barTicks;
+  const endTicks = startTicks + barTicks;
+
+  UI.toast('ブレイク！ 1小節、抜きます');
+  UI.setBreak(true);
+
+  /* --- 抜く瞬間 --- */
+  Tone.Transport.scheduleOnce((time) => {
+    try {
+      partsBus.gain.cancelScheduledValues(time);
+      partsBus.gain.setValueAtTime(partsBusLevel(), time);
+      partsBus.gain.linearRampToValueAtTime(partsBusLevel() * 0.12, time + 0.05);
+    } catch (e) {}
+  }, startTicks + 'i');
+
+  /* --- 4拍目の裏：止まっている合図のスネア --- */
+  Tone.Transport.scheduleOnce((time) => {
+    const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
+    try { kit.snare(time, 0.5); } catch (e) {}
+  }, startTicks + Math.round(ppq * 3.5) + 'i');
+
+  /* --- 静かに戻す --- */
+  Tone.Transport.scheduleOnce((time) => {
+    try {
+      partsBus.gain.cancelScheduledValues(time);
+      partsBus.gain.setValueAtTime(partsBusLevel() * 0.12, time);
+      partsBus.gain.linearRampToValueAtTime(partsBusLevel(), time + 0.08);
+    } catch (e) {}
+    const kit = (State.kickOwner && State.parts.get(State.kickOwner)) ? State.parts.get(State.kickOwner).kit : baseKit;
+    try { kit.kick(time, 0.9); } catch (e) {}
+    State.breaking = false;
+    Tone.Draw.schedule(() => { UI.setBreak(false); }, time);
+  }, endTicks + 'i');
+}
+
+/* ============ 8. 開始・停止 ============ */
+async function startGame(bpm) {
+  await Tone.start();
+  await buildMaster();
+  Tone.Transport.bpm.value = bpm;
+  Tone.Transport.timeSignature = 4;
+  Tone.Transport.swingSubdivision = '16n';
+  Tone.Transport.swing = State.swing || 0;
+
+  buildBaseKit();          // 拍は刻まない。演出用の予備キットを用意するだけ
+
+  /* 1ステップごとに画面のステップ表示を進める */
+  Tone.Transport.scheduleRepeat((time) => {
+    const ticks = Tone.Transport.getTicksAtTime(time);
+    const step = Math.round(ticks / (Tone.Transport.PPQ / 4)) % 16;
+    const bar = Math.floor(ticks / (Tone.Transport.PPQ * 4));
+    Tone.Draw.schedule(() => { State.step = step; State.bar = bar; UI.stepTick(step, bar); }, time);
+  }, '16n', 0);
+
+  /* v6：小節の頭でパターンを作り直す（案1＋案2の入口） */
+  Tone.Transport.scheduleRepeat((time) => {
+    ensureBar(barAtTime(time));
+  }, '1m', 0);
+
+  /* 残り時間 ＋ アレンジ・エンジン（案3）＋ 自動ミックス（案5） */
+  Tone.Transport.scheduleRepeat((time) => {
+    Tone.Draw.schedule(() => {
+      State.elapsed++;
+      UI.time();
+      updateArrangement();
+      updateAutoMix();
+      /* 候補は4秒ごとに出し直す。曲が進めば「いま欲しいもの」も変わる */
+      if (State.elapsed % 4 === 0) refreshSuggestions();
+      if (State.durationSec > 0 && State.elapsed >= State.durationSec) endGame();
+    }, time);
+  }, 1, 0);
+
+  /* 頭上の余裕の見張り番（v6.1）。1秒に1回では遅すぎるので別立てにする。
+     Tone.Draw に載せるとタブが裏に回った瞬間に止まってしまうため、
+     素の setInterval で回す（メーターを読んでゲインを動かすだけ）。   */
+  clearInterval(guardTimer);
+  guardTimer = setInterval(guardHeadroom, 200);
+
+  Tone.Transport.start('+0.12');
+  if (recorder) { try { recorder.start(); } catch (e) {} }
+  /* 案J：ROLEごとの4トラックも同時に回す */
+  ROLE_ORDER.forEach(rk => { const r = roleBus[rk] && roleBus[rk].rec; if (r) { try { r.start(); } catch (e) {} } });
+  State.playing = true;
+  State.paused = false;
+  UI.startViz();
+
+  /* 準備中に押されていたカードをここで入れる */
+  const q = State.queue.splice(0);
+  q.forEach(id => insertCard(id));
+  refreshSuggestions();                    // 案B：最初の候補を出す
+}
+
+/* =====================================================================
+   案E：終止 ── 曲を「止める」のではなく「終わらせる」
+   ---------------------------------------------------------------------
+   v6 まで endGame() は 3.2 秒でマスターを絞るだけだった。
+   フェードアウトは「録音を止めた」だけで、曲が終わった感じがしない。
+   「作品になった」という感覚はここで決まる。
+
+   やること（次の小節の頭から4小節かけて）
+     1. コード進行をトニック（Cm）へ寄せる ＝ 帰ってきた感じ
+     2. リタルダンド（だんだん遅く）
+     3. 最後の小節でリズムを抜き、上ものだけ残す
+     4. 一撃（クラッシュ＋キック）を置いて、残響だけ残して消える
+   ===================================================================== */
+const CADENCE_BARS = 4;
+
+function playCadence() {
+  return new Promise(resolve => {
+    const ppq = Tone.Transport.PPQ, barTicks = ppq * 4;
+    const startTicks = Math.ceil((Tone.Transport.ticks + ppq * 0.25) / barTicks) * barTicks;
+    const bpm0 = Tone.Transport.bpm.value;
+    const beat = 60 / bpm0;
+
+    State.cadence = true;
+    UI.toast('— 終わりへ —');
+
+    /* 1. トニックへ帰る。全パートが同じ進行を見ているので、
+          進行を差し替えるだけで一斉に解決へ向かう。               */
+    Tone.Transport.scheduleOnce(() => {
+      State.prog = 'cadence';                // A♭→B♭7→E♭ ＝ トニックへ着地する
+      State.genBar = -1;
+      Tone.Draw.schedule(() => { UI.syncProg(); UI.chordMap(); }, Tone.now());
+    }, startTicks + 'i');
+
+    /* 2. リタルダンド。最後の2小節で 25% ゆっくりになる */
+    Tone.Transport.scheduleOnce(() => {
+      try { Tone.Transport.bpm.rampTo(bpm0 * 0.75, beat * 8); } catch (e) {}
+    }, (startTicks + barTicks * 2) + 'i');
+
+    /* 3. 最後の小節でリズムを抜く（上ものだけ残ると「締め」に聞こえる） */
+    Tone.Transport.scheduleOnce(() => {
+      State.parts.forEach(p => { if (p.kit) { try { p.gain.gain.rampTo(0, beat * 1.5); } catch (e) {} } });
+    }, (startTicks + barTicks * (CADENCE_BARS - 1)) + 'i');
+
+    /* 4. 終わり方（案K：終止のバリエーション）
+       ずっと同じ「一撃で締める」だけだと、静かな曲まで無理に締めた感じに
+       なる。そのとき ENERGY にいた場所で、終わり方そのものを変える。
+         熱（3）／走（2） … 従来どおり。クラッシュ＋キックで締める
+         静（1）          … 一撃を使わず、キック1発だけで静かに溶ける。
+                            画面のフラッシュも出さない（静かな曲の余韻を壊さない） */
+    const soft = State.energy <= 1;
+    const endTicks = startTicks + barTicks * CADENCE_BARS;
+    Tone.Transport.scheduleOnce((time) => {
+      const owner = State.kickOwner && State.parts.get(State.kickOwner);
+      const kit = owner ? owner.kit : baseKit;
+      if (soft) {
+        try { kit.kick(time, 0.55); } catch (e) {}
+        pump(time, 0.5);
+        try { partsBus.gain.rampTo(0, beat * 3.5); baseBus.gain.rampTo(0, beat * 2.2); } catch (e) {}
+      } else {
+        try { kit.kick(time, 1); kit.crash(time, 0.9); } catch (e) {}
+        pump(time, 1.2);
+        /* 一撃のあとは、残響を残したまま本体だけ落とす */
+        try { partsBus.gain.rampTo(0, beat * 2.2); baseBus.gain.rampTo(0, beat * 1.2); } catch (e) {}
+        Tone.Draw.schedule(() => UI.dropFlash(), time);
+      }
+      setTimeout(resolve, (beat * 4) * 1000);
+    }, endTicks + 'i');
+
+    /* 万一 Transport が止まっていても、必ず終わるようにする保険 */
+    setTimeout(resolve, (beat * 4 * (CADENCE_BARS + 2)) * 1000 + 1500);
+  });
+}
+
+async function endGame(opts) {
+  if (!State.playing) return;
+  State.playing = false;
+  clearInterval(guardTimer); guardTimer = null;
+
+  /* 終止を鳴らしてから片付ける。Esc の連打や時間切れでも1回だけ */
+  if (State.cadenceOn && !(opts && opts.immediate) && !State.cadence) {
+    try { await playCadence(); } catch (e) {}
+  }
+  master.gain.rampTo(0, 3.2);
+  setTimeout(async () => {
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    State.parts.forEach(p => p.dispose());
+    State.parts.clear(); State.order = []; State.pending.clear();
+    try { baseKit.nodes.forEach(n => n.dispose()); } catch (e) {}
+
+    let url = null;
+    if (recorder && recorder.state === 'started') {
+      try { url = URL.createObjectURL(await recorder.stop()); } catch (e) { url = null; }
+    }
+    /* 案J：ROLEごとの4トラックも一緒に書き出す */
+    const stemUrls = {};
+    for (const rk of ROLE_ORDER) {
+      const r = roleBus[rk] && roleBus[rk].rec;
+      if (r && r.state === 'started') {
+        try { stemUrls[rk] = URL.createObjectURL(await r.stop()); } catch (e) {}
+      }
+    }
+    UI.showFinish(url, stemUrls);
+  }, 3300);
+}
+
+/* ============ 9. 画面 ============ */
+const UI = {
+  cells: {},
+  viz: null,
+  pulse: 0,
+
+  init() {
+    /* --- 好みの音量のつまみ（音を出す前から触れるようにここで作る） --- */
+    UI.buildTrims();
+
+    /* --- カードのグリッド --- */
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    ROLE_ORDER.forEach(rk => {
+      const r = ROLES[rk];
+      const lab = el('div', 'role-label', '');
+      lab.style.setProperty('--r', `var(--${rk})`);
+      lab.innerHTML = `<div class="rl-en">${r.label}</div>
+                       <div class="rl-jp">${r.role}</div>
+                       <small>${r.desc}</small>
+                       <div class="rl-max">同時${r.max}枚まで</div>`;
+      grid.appendChild(lab);
+
+      /* セルは「楽器」1つぶん。中の 1/2/3 がバリエーション。 */
+      INSTRUMENT_ORDER[rk].forEach((instId, i) => {
+        const inst = INSTRUMENTS[instId];
+        const cell = el('div', 'cell', '');
+        cell.style.setProperty('--r', `var(--${rk})`);
+        cell.style.setProperty('--ra', `var(--${rk}-a)`);
+        cell.dataset.inst = instId;
+        cell.innerHTML =
+          `<div class="top"><span class="key">${(r.keys[i] || '').toUpperCase()}</span><span class="src"></span></div>
+           <div class="name">${inst.label}</div>
+           <div class="tag">${inst.variants[0].tag}</div>
+           <div class="vars">` +
+          inst.variants.map((va, k) =>
+            `<button class="vb" data-n="${k + 1}" title="${VARIATIONS[k].label}：${va.tag}">${k + 1}</button>`
+          ).join('') +
+          `</div><div class="bar"></div>`;
+
+        /* セル本体 → バリエーションを巡回。番号ボタン → その変化を直接 */
+        cell.addEventListener('click', (ev) => {
+          const b = ev.target.closest('.vb');
+          if (b) { ev.stopPropagation(); insertCard(`${instId}-${b.dataset.n}`); return; }
+          pressInstrument(instId);
+        });
+        /* 番号にさわると、その変化の説明が下の tag に出る */
+        cell.querySelectorAll('.vb').forEach((b, k) => {
+          b.addEventListener('mouseenter', () => UI.showTag(instId, k + 1));
+        });
+        cell.addEventListener('mouseleave', () => UI.showTag(instId, null));
+
+        grid.appendChild(cell);
+        UI.cells[instId] = cell;
+      });
+    });
+
+    /* --- 16ステップの目盛り --- */
+    const ladder = document.getElementById('ladder');
+    ladder.innerHTML = '';
+    for (let i = 0; i < 16; i++) {
+      const d = el('i', 'st' + (i % 4 === 0 ? ' down' : ''), '');
+      ladder.appendChild(d);
+    }
+
+    /* v8：進行の選択は撤去した（PROGRESSIONS は main ひとつ）。
+       選択肢を出さないぶん、遊ぶ側は「何を足すか」だけを考えればよい。 */
+
+    /* --- 変化1/2/3 が何なのかの凡例 --- */
+    const leg = document.getElementById('varlegend');
+    if (leg) {
+      leg.innerHTML = VARIATIONS
+        .map(v => `<span><b>${v.n}</b>${v.label}／${v.desc}</span>`).join('');
+    }
+
+    UI.chordMap();
+    UI.time();
+  },
+
+  /* 各楽器が実録音か合成音かを表示する。バリエーションで音源が変わる楽器
+     （ドラムのキット差し替えなど）は、ひとつでも合成に落ちたら「一部合成」 */
+  markSources() {
+    Object.keys(INSTRUMENTS).forEach(instId => {
+      const cell = UI.cells[instId]; if (!cell) return;
+      const reals = INSTRUMENTS[instId].variants.map((_, k) => {
+        const s = CARDS[`${instId}-${k + 1}`].sound;
+        if (s.kind === 'kit') return !!kitUrls(s.set);
+        if (s.kind === 'sampler') return !!samplerUrls(s.set);
+        return false;
+      });
+      const all = reals.every(Boolean), none = !reals.some(Boolean);
+      const e = cell.querySelector('.src');
+      e.textContent = all ? '実録音' : none ? '合成音' : '一部合成';
+      e.className = 'src' + (all ? ' real' : '');
+    });
+  },
+
+  /* cardId を渡すと、その楽器のセルに印をつけ、何番の変化かも示す */
+  setCell(cardId, cls) {
+    const card = CARDS[cardId]; if (!card) return;
+    const c = UI.cells[card.inst]; if (!c) return;
+    c.classList.remove('pending', 'active');
+    if (cls) c.classList.add(cls);
+    c.querySelectorAll('.vb').forEach(b =>
+      b.classList.toggle('on', !!cls && Number(b.dataset.n) === card.n));
+    UI.showTag(card.inst, cls ? card.n : null);
+  },
+
+  /* セルの説明文を「いま鳴っている変化」または「さわっている変化」にする */
+  showTag(instId, n) {
+    const c = UI.cells[instId]; if (!c) return;
+    const inst = INSTRUMENTS[instId];
+    let k = n;
+    if (k == null) {
+      const on = c.querySelector('.vb.on');
+      k = on ? Number(on.dataset.n) : 1;
+    }
+    c.querySelector('.tag').textContent = inst.variants[k - 1].tag;
+  },
+
+  flashCell(cardId, v) {
+    const card = CARDS[cardId]; if (!card) return;
+    const c = UI.cells[card.inst]; if (!c) return;
+    const bar = c.querySelector('.bar');
+    bar.style.transition = 'none'; bar.style.width = Math.round(v * 100) + '%';
+    requestAnimationFrame(() => { bar.style.transition = 'width .26s ease-out'; bar.style.width = '0%'; });
+  },
+  kickPulse() { UI.pulse = 1; },
+
+  stepTick(step, bar) {
+    const dots = document.querySelectorAll('#ladder .st');
+    dots.forEach((d, i) => d.classList.toggle('on', i === step));
+    UI.chordMap();
+    document.getElementById('barnum').textContent = (bar % 8) + 1;
+  },
+
+  /* コード表示。作り直すのは進行が変わったときだけで、
+     毎ステップは「いまどれか」の印を付け替えるだけにする */
+  chordMap() {
+    const box = document.getElementById('chordmap');
+    const prog = PROGRESSIONS[State.prog];
+    if (box.dataset.prog !== State.prog) {
+      box.dataset.prog = State.prog;
+      box.innerHTML = '';
+      prog.bars.forEach(c => box.appendChild(el('div', 'ch', c.label)));
+    }
+    const cur = State.playing ? ((State.bar % prog.bars.length) + prog.bars.length) % prog.bars.length : 0;
+    [...box.children].forEach((d, i) => d.classList.toggle('on', i === cur));
+  },
+
+  time() {
+    const left = State.durationSec > 0 ? Math.max(0, State.durationSec - State.elapsed) : State.elapsed;
+    const m = Math.floor(left / 60), s = left % 60;
+    document.getElementById('timeleft').textContent = `${m}:${String(s).padStart(2, '0')}`;
+    document.getElementById('partcount').textContent = State.parts.size;
+    const pct = State.durationSec > 0 ? (State.elapsed / State.durationSec) * 100 : 0;
+    document.querySelector('#progress > div').style.width = Math.min(100, pct) + '%';
+  },
+
+  refreshNow() {
+    const box = document.getElementById('nowlist');
+    box.innerHTML = '';
+    UI.time();
+    if (State.order.length === 0) {
+      box.innerHTML = '<div class="empty">まだ音はありません。カードを入れて積み上げてください。</div>';
+      return;
+    }
+    State.order.forEach(id => {
+      const role = id.split('-')[0];
+      const card = CARDS[id];
+      const p = el('div', 'pill', '');
+      p.style.setProperty('--r', `var(--${role})`);
+      p.style.setProperty('--ra', `var(--${role}-a)`);
+      const tag = (State.kickOwner === id) ? ' ★土台' : '';
+      p.innerHTML = `<span>${card.label}<b class="vn">${card.n}</b>`
+                  + `<i class="vk">${VARIATIONS[card.n - 1].label}</i>${tag}</span>`;
+      const b = el('button', '', '×');
+      b.title = 'この音を止める';
+      b.addEventListener('click', () => removeCard(id));
+      p.appendChild(b);
+      box.appendChild(p);
+    });
+  },
+
+  syncEnergy() {
+    document.querySelectorAll('#energychips .chip').forEach(c =>
+      c.setAttribute('aria-pressed', String(Number(c.dataset.e) === State.energy)));
+  },
+  /* v8：進行を選ぶ UI が無くなったので、同期する対象も無い。
+     playCadence など呼び出し側を壊さないために空で残してある。 */
+  syncProg() {},
+
+  /* --- 案B：いま足すと良い3枚を大きく出す ------------------------
+     40個のキーを覚えなくても、← ↓ → の3つだけで遊べるようにする。 */
+  drawSuggestions() {
+    const box = document.getElementById('suggest');
+    if (!box) return;
+    const list = State.suggest || [];
+    box.innerHTML = '';
+    const KEYS = ['←', '↓', '→'];
+    list.forEach((id, i) => {
+      const c = CARDS[id];
+      const b = el('button', 'sug', '');
+      b.style.setProperty('--r', `var(--${c.role})`);
+      b.style.setProperty('--ra', `var(--${c.role}-a)`);
+      b.innerHTML =
+        `<span class="sk">${KEYS[i]}</span>` +
+        `<span class="sr">${ROLES[c.role].jp}</span>` +
+        `<span class="sn">${c.label}<b>${c.n}</b></span>` +
+        `<span class="st">${c.tag}</span>`;
+      b.addEventListener('click', () => takeSuggestion(i));
+      box.appendChild(b);
+    });
+    if (!list.length) box.innerHTML = '<div class="empty">これ以上は足せません（各役割が上限です）</div>';
+  },
+
+  /* --- v6：いまの章を出す（案3） --- */
+  syncSection() {
+    const el = document.getElementById('sectionname');
+    if (!el) return;
+    const sec = currentSection();
+    const k = (State.keyOn && State.keySemi) ? `・${keyLabel(State.keySemi)}` : '';
+    el.textContent = sec.label + k;
+    el.className = 'secbadge s-' + sec.key;
+  },
+
+  /* --- 好みの音量：役割ごとのつまみ -----------------------------------
+     鳴らしながら動かせるように、値を変えたら即座にバスへ反映する。
+     決まった値は「いまの値をコピー」で app.js に貼れる形にして渡す。 */
+  buildTrims() {
+    const box = document.getElementById('trims');
+    if (!box || box.children.length) return;
+    ROLE_ORDER.forEach(rk => {
+      const row = el('div', 'trimrow', '');
+      row.style.setProperty('--r', `var(--${rk}-a)`);
+      row.innerHTML =
+        `<i>${ROLES[rk].jp}</i>` +
+        `<input type="range" min="-12" max="12" step="0.5" value="${State.roleTrim[rk] || 0}" data-trim="${rk}">` +
+        `<b></b>`;
+      row.querySelector('input').addEventListener('input', (e) => {
+        State.roleTrim[rk] = Number(e.target.value);
+        applyRoleGain(rk, 0.15);                 // すぐ反映（耳で探せるように）
+        UI.syncTrims();
+        UI.trimMsg('');
+      });
+      box.appendChild(row);
+    });
+    const copy = document.getElementById('trimcopy');
+    const reset = document.getElementById('trimreset');
+    if (copy) copy.addEventListener('click', () => UI.copyTrims());
+    if (reset) reset.addEventListener('click', () => {
+      ROLE_ORDER.forEach(rk => { State.roleTrim[rk] = 0; applyRoleGain(rk, 0.3); });
+      UI.syncTrims();
+      UI.trimMsg('すべて 0dB にしました');
+    });
+    UI.syncTrims();
+  },
+  syncTrims() {
+    const box = document.getElementById('trims');
+    if (!box) return;
+    ROLE_ORDER.forEach((rk, i) => {
+      const row = box.children[i];
+      if (!row) return;
+      const v = State.roleTrim[rk] || 0;
+      row.querySelector('input').value = v;
+      const b = row.querySelector('b');
+      b.textContent = (v > 0 ? '+' : '') + v.toFixed(1) + ' dB';
+      b.className = v > 0 ? 'up' : v < 0 ? 'dn' : '';
+      /* 0 以外にした ROLE は自動ミックスの対象から外れる。それが
+         見て分かるようにしておく（勝手に戻らない理由の説明）。   */
+      row.title = v === 0
+        ? '0dB のあいだは自動ミックスがこの役割の釣り合いを見ています'
+        : '自分で決めた値です。この役割は自動ミックスの対象から外れます';
+      row.style.opacity = v === 0 ? '' : '1';
+    });
+  },
+  trimMsg(t) {
+    const m = document.getElementById('trimmsg');
+    if (m) m.textContent = t;
+  },
+  /* app.js の ROLE_TRIM_DB にそのまま貼れる形で書き出す */
+  copyTrims() {
+    const f = rk => {
+      const v = State.roleTrim[rk] || 0;
+      return `${rk}: ${v > 0 ? '+' : v < 0 ? '' : ' '}${v.toFixed(1)}`;
+    };
+    const text = 'const ROLE_TRIM_DB = { '
+      + ROLE_ORDER.map(f).join(', ') + ' };';
+    const done = () => UI.trimMsg('コピーしました。app.js の ROLE_TRIM_DB に貼ってください');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, () => UI.trimMsg(text));
+    } else {
+      /* file:// で開いたときなど、クリップボードが使えない場合は表示する */
+      UI.trimMsg(text);
+    }
+  },
+
+  /* --- v6：自動ミックスがいまどれだけ補正しているか（案5） --- */
+  syncAutoMix() {
+    const box = document.getElementById('mixbars');
+    if (!box) return;
+    if (!box.children.length) {
+      ROLE_ORDER.forEach(rk => {
+        const d = el('div', 'mixbar', '');
+        d.style.setProperty('--r', `var(--${rk}-a)`);
+        d.innerHTML = `<i>${ROLES[rk].jp}</i><span><b></b></span>`;
+        box.appendChild(d);
+      });
+    }
+    ROLE_ORDER.forEach((rk, i) => {
+      const b = box.children[i].querySelector('b');
+      const c = roleBus[rk] ? roleBus[rk].corr : 0;
+      /* 中央が0dB、左右に±4dB */
+      b.style.left = (50 + (c / AUTOMIX_MAX) * 50 * 0.9) + '%';
+      b.title = (c >= 0 ? '+' : '') + c.toFixed(1) + 'dB';
+    });
+  },
+
+  /* --- v6：占有表の可視化（案1）。どの16分が埋まっているかが見える --- */
+  drawOccupancy(occ) {
+    const box = document.getElementById('occgrid');
+    if (!box) return;
+    if (!box.children.length) {
+      ['low', 'mid', 'high'].forEach(band => {
+        const row = el('div', 'occrow', '');
+        row.dataset.band = band;
+        for (let i = 0; i < 16; i++) row.appendChild(el('i', '', ''));
+        box.appendChild(row);
+      });
+    }
+    ['low', 'mid', 'high'].forEach((band, r) => {
+      const row = box.children[r];
+      for (let i = 0; i < 16; i++) {
+        row.children[i].style.opacity = Math.min(1, 0.08 + occ[band][i] * 0.55);
+      }
+    });
+  },
+
+  setBuild(on) { document.body.classList.toggle('building', on); },
+  setBreak(on) { document.body.classList.toggle('breaking', on); },
+  dropFlash() {
+    const f = document.getElementById('dropflash');
+    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  },
+
+  toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(UI._tt);
+    UI._tt = setTimeout(() => t.classList.remove('show'), 1700);
+  },
+
+  /* --- ビジュアライザ：波形のリングと、キックで広がる円 --- */
+  startViz() {
+    /* 二重起動よけ。描画ループは自分で自分を予約し続けるので、
+       2回呼ぶと rAF が2本回りっぱなしになり、そのぶん CPU を食う。
+       食われた CPU は音声スレッドの取り分を削り、音の途切れにつながる。 */
+    if (UI._vizOn) return;
+    UI._vizOn = true;
+    const cv = document.getElementById('viz');
+    const ctx = cv.getContext('2d');
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const resize = () => {
+      cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const roleColor = { melody: '#ffc45e', chord: '#b39bff', bass: '#59a6ff', rhythm: '#3ce0b0' };
+
+    const draw = () => {
+      requestAnimationFrame(draw);
+      const w = cv.clientWidth, h = cv.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+
+      const wave = analyser ? analyser.getValue() : null;
+      let rms = 0;
+      if (wave) { for (let i = 0; i < wave.length; i++) rms += wave[i] * wave[i]; rms = Math.sqrt(rms / wave.length); }
+
+      UI.pulse *= 0.90;
+      const base = Math.min(w, h) * 0.22;
+      const R = base * (1 + rms * 1.6 + UI.pulse * 0.35);
+
+      /* キックの衝撃波 */
+      if (UI.pulse > 0.02) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, R + (1 - UI.pulse) * base * 1.9, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${UI.pulse * 0.28})`;
+        ctx.lineWidth = 2 + UI.pulse * 3;
+        ctx.stroke();
+      }
+
+      /* 鳴っている ROLE の色を混ぜてリングを描く */
+      const roles = [...new Set(State.order.map(id => id.split('-')[0]))];
+      const cols = roles.length ? roles.map(r => roleColor[r]) : ['#5b6478'];
+      const grad = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+      cols.forEach((c, i) => grad.addColorStop(cols.length === 1 ? i : i / (cols.length - 1), c));
+
+      if (wave) {
+        ctx.beginPath();
+        const N = 180;
+        for (let i = 0; i <= N; i++) {
+          const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+          const s = wave[Math.floor(i / N * (wave.length - 1))] || 0;
+          const r = R + s * base * 1.15;
+          const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2.2;
+        ctx.shadowBlur = 22; ctx.shadowColor = cols[0];
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      /* 4小節サイクルの進み具合を弧で示す */
+      const prog = PROGRESSIONS[State.prog];
+      const cycle = ((State.bar % prog.bars.length) + (State.step / 16)) / prog.bars.length;
+      ctx.beginPath();
+      ctx.arc(cx, cy, base * 1.62, -Math.PI / 2, -Math.PI / 2 + cycle * Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      /* 真ん中にいまのコード */
+      const ch = chordAtBar(State.bar);
+      ctx.fillStyle = 'rgba(232,236,244,.92)';
+      ctx.font = `600 ${Math.round(base * 0.42)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(ch.label, cx, cy);
+    };
+    draw();
+  },
+
+  showFinish(url, stemUrls) {
+    const f = document.getElementById('finish');
+    const audio = document.getElementById('playback');
+    const dl = document.getElementById('dl');
+    if (url) {
+      audio.src = url; audio.style.display = '';
+      dl.href = url; dl.style.display = '';
+    } else {
+      audio.style.display = 'none'; dl.style.display = 'none';
+      document.getElementById('finishmsg').textContent =
+        'おつかれさまでした。（このブラウザでは録音を保存できませんでした）';
+    }
+    /* 案J：ROLEごとのリンクは、実際に録れたものだけ出す */
+    const stemsBox = document.getElementById('stems');
+    let any = false;
+    (ROLE_ORDER || []).forEach(rk => {
+      const a = document.getElementById('dl-' + rk);
+      if (!a) return;
+      if (stemUrls && stemUrls[rk]) { a.href = stemUrls[rk]; a.style.display = ''; any = true; }
+      else a.style.display = 'none';
+    });
+    if (stemsBox) stemsBox.style.display = any ? '' : 'none';
+    f.classList.add('show');
+  },
+};
+function el(tag, cls, txt) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt) e.textContent = txt;
+  return e;
+}
+
+/* ============ 10. グローバル操作 ============ */
+/* v8：setProgression() は撤去した。進行は main 固定で、
+   切り替わるのは終止（playCadence）のときだけ。 */
+function setEnergy(n) {
+  State.energy = clamp(n, 1, 3);
+  State.velScale = [0.86, 1, 1.08][State.energy - 1];
+  /* 手で触ったら、アレンジ・エンジンは30秒だけ ENERGY に手を出さない */
+  State.lastManualEnergy = performance.now();
+  State.genBar = -1;                       // 密度が変わるので作り直す
+  UI.syncEnergy();
+  if (State.playing) UI.toast(`ENERGY ${['静', '走', '熱'][State.energy - 1]}`);
+}
+function setSwing(v) {
+  State.swing = v;
+  if (Tone.Transport) Tone.Transport.swing = v;
+  document.getElementById('swingv').textContent = Math.round(v * 100) + '%';
+}
+
+/* ============ 11. キーボード（＝カードの代わり） ============
+   キーは「楽器」に対応する。同じキーを押すたびに変化1→2→3→止まる。
+   数字キー（Shift＋）ではなく巡回にしたのは、40楽器ぶんのキーで
+   手いっぱいだから。物理カードでは変化ごとに別のカードになる。      */
+const KEYMAP = {};
+ROLE_ORDER.forEach(rk => {
+  ROLES[rk].keys.forEach((k, i) => {
+    const id = INSTRUMENT_ORDER[rk][i];
+    if (id) KEYMAP[k] = id;
+  });
+});
+
+/* Phase 1（RFIDリーダー）用：打ち込まれるUIDを拾うバッファ */
+let uidBuf = '', uidTimer = null;
+
+document.addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+
+  /* Esc は終止つきで終わる。すぐ止めたいときは Shift+Esc */
+  if (e.key === 'Escape') { endGame({ immediate: e.shiftKey }); return; }
+  /* スペースはビルド、Shift+スペースはその逆＝ブレイク。
+     B はすでに RHYTHM 楽器（rhythm-linn）のキーなので使えない。 */
+  if (e.key === ' ') { e.preventDefault(); if (e.shiftKey) triggerBreak(); else triggerBuild(); return; }
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    const last = State.order[State.order.length - 1];
+    if (last) removeCard(last);
+    return;
+  }
+  /* 案B：← ↓ → で提案を採用。これだけで遊べるのが「シンプルな操作」。
+     ENERGY は Shift+↑↓ へ移した（↓が提案の真ん中とぶつかるため）。   */
+  if (e.key === 'ArrowUp')   { e.preventDefault(); setEnergy(State.energy + 1); return; }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); takeSuggestion(0); return; }
+  if (e.key === 'ArrowRight'){ e.preventDefault(); takeSuggestion(2); return; }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (e.shiftKey) setEnergy(State.energy - 1); else takeSuggestion(1);
+    return;
+  }
+  /* v8：進行が1つになったので Tab の切り替えは廃止した */
+  if (e.key === 'Enter') {                    // HIDリーダーは末尾にEnterを打つ
+    if (uidBuf.length >= 6 && CARD_MAP[uidBuf]) insertCard(CARD_MAP[uidBuf]);
+    uidBuf = '';
+    return;
+  }
+  if (/^[0-9]$/.test(e.key)) {
+    uidBuf += e.key;
+    clearTimeout(uidTimer);
+    uidTimer = setTimeout(() => { uidBuf = ''; }, 400);
+  }
+  const instId = KEYMAP[k];
+  if (instId) { e.preventDefault(); pressInstrument(instId); }
+});
+
+/* ============ 12. 起動時：音源の読み込み ============ */
+async function bootSamples() {
+  const bar = document.querySelector('#loadbar > div');
+  const msg = document.getElementById('loadmsg');
+  const btn = document.getElementById('startbtn');
+
+  if (location.protocol === 'file:') {
+    msg.innerHTML = '<b>「はじめる.bat」から開いてください。</b><br>'
+      + 'ファイルを直接開くと、ブラウザの制限で音源を読み込めません（全パートが合成音になります）。';
+    document.getElementById('loadbar').style.display = 'none';
+    btn.disabled = false; btn.textContent = 'このまま合成音ではじめる';
+    return;
+  }
+
+  btn.disabled = true;
+  const res = await preloadSamples((done, total) => {
+    if (total === 0) return;
+    bar.style.width = (done / total * 100) + '%';
+    msg.textContent = `本格音源を読み込んでいます… ${done} / ${total}`;
+  });
+
+  UI.markSources();
+  document.getElementById('loadbar').style.display = 'none';
+  btn.disabled = false;
+
+  if (res.loaded === 0) {
+    msg.innerHTML = '<b>音源が見つかりませんでした。</b><br>'
+      + '「音源をダウンロード.bat」を先に1度だけ実行してください。<br>'
+      + 'このまま始めた場合は、全パートが合成音になります。';
+    btn.textContent = 'このまま合成音ではじめる';
+  } else {
+    const sets = Object.keys((window.SAMPLE_MANIFEST || {}).pitched || {}).length;
+    msg.innerHTML = `本格音源 ${res.loaded} 個を読み込みました。`
+      + `<br>${sets}種類の楽器が<b>実録音</b>、シンセ系だけ<b>合成音</b>です。`
+      + '<br>音源ごとの録音レベル差は、読み込み時に実測してそろえてあります。';
+  }
+}
+
+/* ============ 13. 画面まわりの配線 ============ */
+document.addEventListener('DOMContentLoaded', () => {
+  UI.init();
+  UI.syncEnergy();
+  UI.syncProg();
+  bootSamples();
+
+  const bpm = document.getElementById('bpm');
+  bpm.addEventListener('input', () => { document.getElementById('bpmv').textContent = bpm.value; });
+
+  const swing = document.getElementById('swing');
+  swing.addEventListener('input', () => setSwing(Number(swing.value) / 100));
+  setSwing(Number(swing.value) / 100);
+
+  document.querySelectorAll('#durchips .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#durchips .chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      c.setAttribute('aria-pressed', 'true');
+      State.durationSec = Number(c.dataset.sec);
+      State.elapsed = 0; UI.time();
+    });
+  });
+  document.querySelectorAll('#quantchips .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#quantchips .chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      c.setAttribute('aria-pressed', 'true');
+      State.quantize = c.dataset.q;
+    });
+  });
+  document.querySelectorAll('#energychips .chip').forEach(c => {
+    c.addEventListener('click', () => setEnergy(Number(c.dataset.e)));
+  });
+
+  /* v6：3つの自動機能のトグル。既定は全部オン */
+  document.querySelectorAll('#autochips .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      const k = c.dataset.auto;
+      State[k] = !State[k];
+      c.setAttribute('aria-pressed', String(State[k]));
+      if (k === 'autoAvoid' || k === 'autoArrange') State.genBar = -1;   // 作り直す
+      if (k === 'timbre' && !State.timbre) {
+        /* 切ったらフィルタを本来の明るさへ戻す */
+        State.parts.forEach(p => { try { p.lp.frequency.rampTo(p.s.lp || 16000, .3); } catch (e) {} });
+      }
+      if (k === 'keyOn') {
+        State.keySemi = 0; State.keyPlan = null; State.genBar = -1;
+        UI.toast(State.keyOn ? '章ごとに転調します' : '調を固定します');
+      }
+      if (k === 'space') {
+        /* 定位は配線なので、鳴っているカードを入れ直して反映する */
+        const ids = State.order.slice();
+        ids.forEach(id => dropPart(id));
+        ids.forEach(id => insertCard(id));
+        UI.toast(State.space ? '左右と奥行きを使います' : '全部を中央に置きます');
+      }
+      if (k === 'autoMix' && !State.autoMix) {
+        /* 切ったら補正を戻す */
+        ROLE_ORDER.forEach(rk => {
+          roleBus[rk].corr = 0;
+          applyRoleGain(rk, 1);          // 自動ぶんは 0 に。好みの音量は残す
+        });
+        UI.syncAutoMix();
+      }
+      if (k === 'autoArrange' && !State.autoArrange) {
+        try { sweep.frequency.rampTo(20, 1.5); reverb.wet.rampTo(0.85, 1.5); } catch (e) {}
+        State.section = null;
+      }
+      UI.syncSection();
+    });
+  });
+
+  document.getElementById('startbtn').addEventListener('click', async () => {
+    const v = Number(bpm.value);
+    document.getElementById('bpmshow').textContent = v;
+    document.getElementById('setup').classList.add('hidden');
+    State.elapsed = 0; UI.time();
+    await startGame(v);
+    UI.refreshNow();
+  });
+
+  document.getElementById('dropbtn').addEventListener('click', () => triggerBuild());
+  document.getElementById('pausebtn').addEventListener('click', (e) => {
+    if (!State.playing) return;
+    State.paused = !State.paused;
+    if (State.paused) { Tone.Transport.pause(); e.target.textContent = '再開'; }
+    else { Tone.Transport.start(); e.target.textContent = '一時停止'; }
+  });
+  document.getElementById('stopbtn').addEventListener('click', () => endGame());
+  document.getElementById('againbtn').addEventListener('click', () => location.reload());
+});
+
+/* Phase 1（RFID）で使う入口 */
+window.insertCard = insertCard;
+window.removeCard = removeCard;
