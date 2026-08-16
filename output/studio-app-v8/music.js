@@ -202,7 +202,13 @@ function toneMidi(chord, idx, oct) {
   return midiOf(oct, chord.voiced[k] + 12 * up);
 }
 function toneName(chord, idx, oct) { return midiToName(toneMidi(chord, idx, oct)); }
-function scaleName(chord, deg, oct) { return midiToName(midiOf(oct, scaleSemi(deg))); }
+/* v8：スケール上の音を返す。keySemi は案A（転調）のずらし量。
+   v7 まで sd 指定は実際には使われておらず、この関数が chord も転調も
+   見ていないことが表に出なかった。案N でメロディがスケール度を使うように
+   なったので、ここを通さないとメロディだけ元の調に取り残される。      */
+function scaleName(chord, deg, oct, keySemi) {
+  return midiToName(midiOf(oct, scaleSemi(deg) + (keySemi || 0)));
+}
 
 /* =====================================================================
    3b. 和音の積み方 ── 臨界帯域（ERB）で決まる最小間隔（案1）
@@ -948,6 +954,10 @@ ROLE_ORDER.forEach(rk => {
         id, inst: instId, n: i + 1, role: instId.split('-')[0],
         label: inst.label, tag: va.tag,
         sound, shape: va.shape, drum: va.drum,
+        /* v8：楽器の系統そのもの（'key' 'pluck' 'wind' 'bow' 'machine'…）。
+           これまでは GROOVE/TIMBRE/EXPR を引くのに使うだけで捨てていたが、
+           旋律の癖（案N）もここで分かれるので、名前のまま持っておく。 */
+        family: inst.groove,
         groove: GROOVE[inst.groove] || GROOVE.default,
         /* 音色の変化のしかたも、グルーヴと同じ「楽器の系統」で決まる。
            楽器ごとに書き分けなくてよいように groove 名を流用している。 */
@@ -1056,6 +1066,252 @@ const LEN_STEPS = { '1n': 16, '2n': 8, '4n': 4, '8n': 2, '16n': 1 };
 const STEPS_LEN = { 16: '1n', 8: '2n', 4: '4n', 2: '8n', 1: '16n' };
 
 /* =====================================================================
+   9b. 案N（v8）── メロディを「歌」にする
+   ---------------------------------------------------------------------
+   なぜ要るか。v7 までのメロディは、小節ごとに乱数の種を作り直していた
+   （generateBar の seedBar）。つまり1小節目と2小節目は互いに何の関係も
+   ない音の列で、人の耳には「外れてはいないが覚えられない音」に聞こえる。
+   旋律を旋律として認識させるのは音の美しさではなく **同じものが返って
+   くること** なので、そこが無い限り何を鳴らしても習作の響きになる。
+
+   そこで melody だけ、専用の作り方に分ける。
+
+   ■ 4小節で ひとつのフレーズ（a → a' → a → b）
+       1小節目 a  … 動機（モチーフ）を出す
+       2小節目 a' … 同じリズムのまま、高さだけ上げて返す
+       3小節目 a  … もう一度おなじものを出す（ここで耳が覚える）
+       4小節目 b  … 応答。音数を減らし、長い音で着地する
+     人が口ずさめるのは、この「2回返ってくる」形がいちばん強い。
+
+   ■ 音の高さは「絶対位置」ではなく「動きの列」で持つ
+     v7 は輪郭カーブ（contourAt）の上の点を読むだけだったので、
+     音と音のつながりが偶然でしかなかった。ここでは
+     「隣へ動く（順次）」を主、「跳ぶ」を従にして、
+     **跳んだ次の音は反対向きに戻る** という歌の基本則を入れる。
+
+   ■ 楽器の系統ごとに癖を変える（原因C への対策）
+     v7 は35楽器すべてが contourAt ひとつを共有していた＝
+     音色だけ違う同じ演奏者が並んでいた。MELODY_STYLE で分ける。
+   ===================================================================== */
+
+/* 楽器の系統ごとの「歌い方」。数値はすべて 0..1 -----------------------
+     leap   跳ぶ確率。高いほど音が飛ぶ
+     rest   休みたがる度合い。高いほど音数が減り、息継ぎが入る
+     rep    同じ音を繰り返す確率。リフらしさ
+     hold   フレーズの終わりを長く伸ばす度合い
+     span   動機のなかで動ける幅（音度）                              */
+const MELODY_STYLE = {
+  /* 鍵盤：手が広いので跳べる。休みは少なく、粒が続く */
+  key:     { leap: .38, rest: .10, rep: .10, hold: .45, span: 5 },
+  /* 撥弦：同じ音を弾き返すのが得意。跳躍はほどほど */
+  pluck:   { leap: .24, rest: .18, rep: .32, hold: .30, span: 4 },
+  /* 管：息継ぎが要る。だから休みが多く、終わりを長く伸ばす */
+  wind:    { leap: .16, rest: .34, rep: .06, hold: .95, span: 4 },
+  /* 弓：切れ目なくつながる。跳ばず、同音反復もしない */
+  bow:     { leap: .12, rest: .10, rep: .04, hold: 1.0, span: 4 },
+  /* 機械：短い音型を執拗に繰り返す。息継ぎの概念がない */
+  machine: { leap: .30, rest: .04, rep: .48, hold: .10, span: 3 },
+  default: { leap: .25, rest: .16, rep: .14, hold: .50, span: 4 },
+};
+
+/* メロディが使う音を、スケール（7音）で作るか和音（構成音のみ）で作るか。
+   'scale' … 強拍は和音の音、弱拍は隣の音も通る＝旋律が歩くように動く
+   'chord' … v7 と同じ。絶対に濁らないが、跳ね回るアルペジオになる
+   実際に鳴らして選べるよう、両方を残してある（既定は scale）。       */
+let MELODY_TONES = 'scale';
+function setMelodyTones(mode) { MELODY_TONES = (mode === 'chord') ? 'chord' : 'scale'; }
+
+/* スケール度 → いちばん近い和音構成音のスケール度へ吸着させる ---------
+   強拍だけこれを通すので、経過音を許しても和音とぶつからない。      */
+function snapToChord(sd, chordDegs) {
+  let best = sd, diff = 99;
+  for (let k = -1; k <= 1; k++) {
+    for (const cd of chordDegs) {
+      const cand = cd + 7 * k;
+      const d = Math.abs(cand - sd);
+      if (d < diff) { diff = d; best = cand; }
+    }
+  }
+  return best;
+}
+
+/* 和音の音を dir 方向へ1つぶん動かす（a' を返すときに使う）----------
+   強拍は snapToChord で和音の音へ吸着させるので、そこへ素直に +1 を
+   足しても吸着でまた同じ音に戻ってしまい、a' が a と同じ高さになる
+   （音域の狭いクラリネットで実際に起きた）。吸着した先の「和音の音の
+   並び」の上で1つ動かせば、必ず別の音になる。                     */
+function stepChordDeg(sd, chordDegs, dir) {
+  if (!dir || !chordDegs.length) return sd;
+  const oct = Math.floor(sd / 7);
+  const pc = ((sd % 7) + 7) % 7;
+  const i = chordDegs.indexOf(pc);
+  if (i < 0) return sd + dir;
+  let j = i + dir, o = oct;
+  while (j >= chordDegs.length) { j -= chordDegs.length; o++; }
+  while (j < 0) { j += chordDegs.length; o--; }
+  return chordDegs[j] + 7 * o;
+}
+
+/* 和音の構成音を「スケールの何度目か」で表す（0..6）------------------
+   Cナチュラルマイナーの上で、その和音がスケールのどの音を含むかを見る。
+   スケールに無い音（借用和音の第3音など）は最も近い度に丸める。     */
+function chordScaleDegrees(chord) {
+  const out = [];
+  chord.voiced.forEach(v => {
+    const pc = ((v % 12) + 12) % 12;
+    let best = 0, diff = 99;
+    for (let d = 0; d < 7; d++) {
+      const s = ((SCALE[d] % 12) + 12) % 12;
+      const gap = Math.min(Math.abs(s - pc), 12 - Math.abs(s - pc));
+      if (gap < diff) { diff = gap; best = d; }
+    }
+    if (out.indexOf(best) < 0) out.push(best);
+  });
+  return out.sort((a, b) => a - b);
+}
+
+/* ---- 動機（モチーフ）を1つ作る ------------------------------------
+   返すのは「いつ鳴らすか」と「前の音からどう動くか」だけ。
+   実際の音の高さは、小節ごとに和音に合わせて解決する。            */
+function makeMotif(card, phrase, energy, occ) {
+  const shape = card.shape;
+  const sty = MELODY_STYLE[card.family] || MELODY_STYLE.default;
+  const rnd = makeRng(hashSeed(card.id + ':motif', phrase, 3));
+
+  /* 音数。系統の rest ぶんだけ減る（管は自然に息継ぎが入る） */
+  const e = [0.72, 1.0, 1.22][(energy || 2) - 1];
+  let n = Math.round((shape.d || 6) * e * (1 - sty.rest * 0.55));
+  n = Math.max(2, Math.min(12, n));
+
+  const steps = pickSteps(stepWeights(shape, occ), n, rnd);
+  if (!steps.length) return null;
+
+  /* 動きの列。0 は同じ音、±1 は隣、±2 以上は跳躍。
+     跳んだ次は必ず反対向きに戻す（歌の基本則）。             */
+  const moves = [];
+  let lastLeap = 0;
+  for (let i = 1; i < steps.length; i++) {
+    if (lastLeap !== 0) {                      // 跳んだ直後 → 戻る
+      moves.push(lastLeap > 0 ? -1 : 1);
+      lastLeap = 0;
+      continue;
+    }
+    const r = rnd();
+    if (r < sty.rep) { moves.push(0); }                      // 同じ音
+    else if (r < sty.rep + sty.leap) {                       // 跳ぶ
+      const mv = (rnd() < .5 ? -1 : 1) * (2 + Math.floor(rnd() * 2));
+      moves.push(mv); lastLeap = mv;
+    } else {                                                 // 隣へ
+      moves.push(rnd() < .5 ? -1 : 1);
+    }
+  }
+  /* 出だしの高さ。shape.rng のまんなかあたりから始める */
+  const lo = shape.rng ? shape.rng[0] : 0;
+  const hi = shape.rng ? shape.rng[1] : 4;
+  const start = Math.round((lo + hi) / 2);
+
+  return { steps, moves, start, lo, hi, sty };
+}
+
+/* ---- 動機を、フレーズの中の位置に合わせて1小節ぶんに展開する ------
+     pos 0 … そのまま          （a）
+     pos 1 … 1段上げて返す      （a'）
+     pos 2 … そのまま           （a）
+     pos 3 … 応答。音を間引き、最後を伸ばして着地（b）             */
+function generateMelodyBar(card, bar, energy, occ, thin, chord) {
+  const phrase = Math.floor(bar / 4);
+  const pos = bar % 4;
+  const m = makeMotif(card, phrase, energy, occ);
+  if (!m) return [];
+
+  const shape = card.shape;
+  const sty = m.sty;
+  const rnd = makeRng(hashSeed(card.id + ':bar', bar, 5));
+
+  /* --- この小節で使う音符の位置 --- */
+  let steps = m.steps.slice();
+  let moves = m.moves.slice();
+
+  if (pos === 3) {
+    /* 応答：前半だけ残して、あとは伸ばす。「終わった感じ」を作る */
+    const keep = Math.max(1, Math.round(steps.length * (1 - 0.45 * sty.hold)));
+    steps = steps.slice(0, keep);
+    moves = moves.slice(0, Math.max(0, keep - 1));
+  }
+  /* アレンジ・エンジンからの間引きは、動機を壊さないよう末尾から削る */
+  if (thin != null && thin < 1 && steps.length > 2) {
+    const keep = Math.max(2, Math.round(steps.length * thin));
+    steps = steps.slice(0, keep);
+    moves = moves.slice(0, Math.max(0, keep - 1));
+  }
+  if (!steps.length) return [];
+
+  /* --- 音の高さ --- */
+  const chordDegs = (MELODY_TONES === 'scale' && chord) ? chordScaleDegrees(chord) : null;
+
+  /* まず動機そのものの高さを出す。音域からはみ出したら折り返す
+     （跳びっぱなしで痩せないため）。ここは a も a' も共通。      */
+  const base = [];
+  let cur = m.start;
+  for (let i = 0; i < steps.length; i++) {
+    if (i > 0) cur += (moves[i - 1] || 0);
+    if (cur > m.hi + 1) cur = m.hi - 1;
+    if (cur < m.lo - 1) cur = m.lo + 1;
+    base.push(cur);
+  }
+
+  /* a'（2小節目）は、動機を丸ごと1段ずらして「返す」。
+     上げるのが基本だが、音域の上に余裕が無い楽器（クラリネットの
+     低音や、上端いっぱいのアルペジオ）では上げても飽和して
+     同じ高さになってしまう。そのときは下へ返す。
+     ずらす向きが変わっても「同じ形が高さを変えて返ってくる」という
+     効き目は変わらない。                                        */
+  let lift2 = 0;
+  if (pos === 1) {
+    const top = Math.max(...base), bottom = Math.min(...base);
+    lift2 = (top + 1 <= m.hi + 1) ? 1 : (bottom - 1 >= m.lo - 1) ? -1 : 0;
+  }
+  const degs = base.map(d => d + lift2);
+
+  /* --- 音価と強さ --- */
+  const effDensity = Math.max(1, (shape.d || 6));
+  const densComp = Math.pow(8 / effDensity, 0.30);
+  const baseVel = (shape.vel == null ? .7 : shape.vel) * densComp;
+  const accent = card.groove.accentTable || ACCENT[card.groove.accent] || ACCENT.straight;
+  const baseLen = LEN_STEPS[shape.len] || 2;
+
+  const out = [];
+  steps.forEach((st, k) => {
+    const isLast = k === steps.length - 1;
+    /* 次の音までの隙間を超えない。フレーズ末は系統の hold ぶん伸ばす */
+    let room;
+    if (isLast) {
+      const tail = 16 - st;
+      room = Math.max(1, Math.min(tail, Math.round(baseLen + (tail - baseLen) * sty.hold * (pos === 3 ? 1 : 0.35))));
+    } else {
+      room = Math.max(1, Math.min(baseLen, steps[k + 1] - st));
+    }
+    const l = STEPS_LEN[room] || (room >= 12 ? '1n' : room >= 6 ? '2n' : room >= 3 ? '4n' : room >= 2 ? '8n' : '16n');
+
+    const v = Math.max(.05, Math.min(1, baseVel * accent[st] * (0.92 + rnd() * 0.16)));
+
+    if (chordDegs) {
+      /* scale モード：強拍は和音の音へ吸着、弱拍は経過音のまま通す。
+         a' のずらしは、吸着してから和音の音1つぶん動かす（そうしないと
+         吸着に飲まれて a と同じ高さに戻ってしまう）。            */
+      const strong = (st % 4 === 0);
+      const sd = strong ? stepChordDeg(snapToChord(base[k], chordDegs), chordDegs, lift2)
+                        : degs[k];
+      out.push({ s: st, d: { sd }, v, l });
+    } else {
+      /* chord モード：v7 と同じく、和音の構成音インデックスとして扱う */
+      out.push({ s: st, d: degs[k], v, l });
+    }
+  });
+  return out;
+}
+
+/* =====================================================================
    generateBar — カード1枚の、1小節ぶんの音符を作る
    ---------------------------------------------------------------------
      card   … CARDS の1つ
@@ -1063,12 +1319,17 @@ const STEPS_LEN = { 16: '1n', 8: '2n', 4: '4n', 2: '8n', 1: '16n' };
      energy … 1..3。密度に効く
      occ    … 他のパートの占有表（Float32Array(16)）。無くてもよい
      thin   … アレンジ・エンジンからの間引き係数（0..1）
+     chord  … いまの和音。melody が「歌」を作るのに要る（省略可）
    戻り値は v5 と同じ形の配列 [{s, d, v, l}, ...] なので、
    app.js の再生側は v5 のものがほぼそのまま使える。
    ===================================================================== */
-function generateBar(card, bar, energy, occ, thin) {
+function generateBar(card, bar, energy, occ, thin, chord) {
   const shape = card.shape;
   if (!shape) return [];
+
+  /* 案N（v8）：melody だけは専用の作り方へ。
+     4小節でひとつのフレーズを組み、動機を2回返す＝口ずさめる旋律。 */
+  if (card.role === 'melody') return generateMelodyBar(card, bar, energy, occ, thin, chord);
 
   /* glue（前の小節と似せる度合い）が高いカードは、種を数小節に1回しか
      変えない。パッドのように「ずっと同じでいてほしい」音のため。      */
@@ -1196,12 +1457,16 @@ function sectionAt(pct) {
 }
 
 /* ============ 11. 音名の解決（v5 と同じ）============ */
-function resolveNotes(role, chord, ev, oct, lift) {
+function resolveNotes(role, chord, ev, oct, lift, keySemi) {
   const list = Array.isArray(ev.d) ? ev.d : [ev.d];
   const o = oct + (ev.o || 0);
 
   const one = (d) => {
-    if (d && typeof d === 'object' && 'sd' in d) return scaleName(chord, d.sd + lift, o);
+    /* v8：lift は「構成音1つぶん」＝およそ3度 という単位で呼ばれてくる
+       （8小節ごとの持ち上げも、案M の二重奏のハモリも）。スケール度で
+       数えるときは 3度 ＝ 2度ぶんなので、ここで単位をそろえる。
+       これを忘れると、ハモリが3度ではなく2度になって濁る。          */
+    if (d && typeof d === 'object' && 'sd' in d) return scaleName(chord, d.sd + (lift || 0) * 2, o, keySemi);
     if (role === 'bass') return bassName(chord, d, o);
     return toneName(chord, d + lift, o);
   };

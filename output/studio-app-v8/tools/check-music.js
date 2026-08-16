@@ -98,7 +98,9 @@ for (const [id, card] of Object.entries(CARDS)) {
       const chord = shiftChord(prog.bars[bar % prog.bars.length], semi);
       const lift = (card.role === 'melody' && bar % 8 === 7) ? 1 : 0;
       let evs;
-      try { evs = generateBar(card, bar, 2, null, 1); }
+      /* v8：melody は和音を見て歌を作るので、本番と同じく chord を渡す。
+         渡さないと chord モードに落ちて、検査が実際と別の経路になる。 */
+      try { evs = generateBar(card, bar, 2, null, 1, chord); }
       catch (e) { err.push(`${id}/${pk}/bar${bar}: 生成で例外 ${e.message}`); continue; }
       if (!evs.length) err.push(`${id}/${pk}/bar${bar}: 音がひとつも生成されなかった`);
       /* 「音数」はイベント数ではなく実際に鳴る音の数。パッド系は1発で
@@ -108,7 +110,7 @@ for (const [id, card] of Object.entries(CARDS)) {
         if (!(ev.s >= 0 && ev.s <= 15)) err.push(`${id}: step ${ev.s} が範囲外`);
         if (!(ev.v > 0 && ev.v <= 1)) err.push(`${id}: v ${ev.v} が範囲外`);
         let notes;
-        try { notes = resolveNotes(card.role, chord, ev, s.oct, lift); }
+        try { notes = resolveNotes(card.role, chord, ev, s.oct, lift, semi); }
         catch (e) { err.push(`${id}/${pk}/bar${bar}: 解決で例外 ${e.message}`); return; }
         notes.forEach(n => {
           const m = toMidi(n);
@@ -298,6 +300,9 @@ for (const [iid, inst] of Object.entries(INSTRUMENTS)) {
   Object.values(CARDS).forEach(c => {
     const shape = c.shape;
     if (!shape || c.role === 'bass') return;
+    /* v8：melody は輪郭カーブ（cont）を使わなくなった（案N）。
+       動機と応答で作るので、この検査の対象ではない。 */
+    if (c.role === 'melody') return;
     const p = period(shape.glue || 0);
     if (p <= 1) return;
     if (!['up', 'down', 'arch', 'wave'].includes(shape.cont)) return;
@@ -313,6 +318,58 @@ for (const [iid, inst] of Object.entries(INSTRUMENTS)) {
   else {
     if (arcedOk < checked) warn.push(`案G：輪郭の弧が向きどおりでないカードあり（${checked - arcedOk}/${checked}）`);
     if (densityOk < checked * 0.7) warn.push(`案G：フレーズ後半で密度が増えていないカードが多い（${checked - densityOk}/${checked}）`);
+  }
+}
+
+/* ---- 7f. 案N（v8）：メロディが「歌」になっているか ----
+   4小節でひとつのフレーズ（a → a' → a → b）を組んでいるか、
+   楽器の系統ごとに歌い方が違うか。ここが効いていないと、
+   何を鳴らしても「外れてはいないが覚えられない音」に戻る。      */
+{
+  const chord0 = PROGRESSIONS[MAIN_PROG].bars[0];
+  const stepsOf = (evs) => evs.map(e => e.s).join(',');
+  const pitchOf = (evs) => {
+    if (!evs.length) return 0;
+    const val = (e) => (e.d && typeof e.d === 'object' && 'sd' in e.d) ? e.d.sd
+                     : (Array.isArray(e.d) ? e.d[0] : e.d);
+    return evs.reduce((s, e) => s + val(e), 0) / evs.length;
+  };
+
+  let sameA = 0, lifted = 0, answered = 0, total = 0;
+  const melodyCards = Object.values(CARDS).filter(c => c.role === 'melody' && c.shape);
+  melodyCards.forEach(c => {
+    const b = [0, 1, 2, 3].map(i => generateBar(c, i, 2, null, 1, chord0));
+    total++;
+    /* a と a は同じ位置で鳴る（3小節目で動機が返ってくる） */
+    if (stepsOf(b[0]) === stepsOf(b[2])) sameA++;
+    /* a' は同じリズムのまま高さが変わる（上が詰まっている楽器は下へ返す） */
+    if (stepsOf(b[1]) === stepsOf(b[0]) && pitchOf(b[1]) !== pitchOf(b[0])) lifted++;
+    /* b（応答）は音数が減る、または最後の音が長い */
+    const lastLen = b[3].length ? b[3][b[3].length - 1].l : '16n';
+    if (b[3].length <= b[0].length || LEN_STEPS[lastLen] >= 4) answered++;
+  });
+
+  if (!total) err.push('案N：メロディカードが1枚も無い');
+  else {
+    if (sameA < total) err.push(`案N：3小節目に動機が返ってこないカード ${total - sameA}/${total}`);
+    if (lifted < total) err.push(`案N：2小節目が「同じリズムで高く」なっていないカード ${total - lifted}/${total}`);
+    if (answered < total) warn.push(`案N：4小節目が応答になっていないカード ${total - answered}/${total}`);
+  }
+
+  /* 楽器の系統ごとに歌い方が違うか（原因C：らしさ）。
+     管（息継ぎで休む）は鍵盤より音数が少ないはず。               */
+  const byFamily = {};
+  melodyCards.forEach(c => {
+    if (c.n !== 1) return;                       // 「基本」だけで比べる
+    const evs = generateBar(c, 0, 2, null, 1, chord0);
+    (byFamily[c.family] || (byFamily[c.family] = [])).push(evs.length);
+  });
+  const avgOf = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+  const famLine = Object.entries(byFamily)
+    .map(([f, a]) => `${f} ${avgOf(a).toFixed(1)}音`).join(' / ');
+  console.log(`案N 系統ごとの音数（基本）: ${famLine}`);
+  if (byFamily.wind && byFamily.key && avgOf(byFamily.wind) >= avgOf(byFamily.key)) {
+    warn.push('案N：管が鍵盤より音数が多い（息継ぎが効いていない）');
   }
 }
 

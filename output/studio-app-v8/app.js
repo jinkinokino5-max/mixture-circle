@@ -490,7 +490,10 @@ class Part {
 
     this.curPat.forEach(ev => {
       if (ev.s !== step) return;
-      const notes = resolveNotes(this.role, chord, ev, this.s.oct, lift);
+      /* 案N：スケール度で作られたメロディは、転調ぶんを自分で足す必要がある
+         （chord は shiftChord 済みだが、スケールは動かないため）。 */
+      const keySemi = State.keyOn ? (State.keySemi || 0) : 0;
+      const notes = resolveNotes(this.role, chord, ev, this.s.oct, lift, keySemi);
       const v = clamp(ev.v * State.velScale, 0.05, 1);
       this.play(notes, ev.l, this.groovedTime(time), v);
       this.flash(time, ev.v);
@@ -749,7 +752,8 @@ function ensureBar(bar) {
       }));
       melodyN++;
     } else {
-      p.curPat = generateBar(p.card, bar, State.energy, seen, thin);
+      /* 案N：melody は和音を見て「歌」を作るので chord を渡す */
+      p.curPat = generateBar(p.card, bar, State.energy, seen, thin, chordAtBar(bar));
       p.harmony = 0;
       if (p.role === 'melody') { lead = p; melodyN = 1; }
     }
@@ -1174,6 +1178,7 @@ const State = {
   expr: true,                                    // 案H：ロングトーンの脈動
   keyOn: true,                                   // 案A：章ごとに転調する
   keySemi: 0,                                    // いまの調（原調からの半音）
+  melodyTones: 'scale',                          // 案N：メロディの音づかい
   keyPlan: null,                                 // 章 → 調の計画
   suggest: [],                                   // 案B：いまの3つの候補
   lastSuggest: null,                             // 直前の候補（繰り返し防止）
@@ -2141,6 +2146,23 @@ function el(tag, cls, txt) {
 /* ============ 10. グローバル操作 ============ */
 /* v8：setProgression() は撤去した。進行は main 固定で、
    切り替わるのは終止（playCadence）のときだけ。 */
+
+/* 案N（v8）：メロディの音づかいを切り替える。
+   'scale' なめらか（強拍は和音の音、弱拍は隣の音も通る）
+   'chord' v7 と同じ（和音の構成音だけ）
+   耳で比べて決められるように、演奏中でも切り替わるようにしてある。 */
+function setMelodyMode(mode) {
+  const m = (mode === 'chord') ? 'chord' : 'scale';
+  setMelodyTones(m);
+  State.melodyTones = m;
+  State.genBar = -1;                       // 次の小節から作り直す
+  document.querySelectorAll('#tonechips .chip').forEach(c =>
+    c.setAttribute('aria-pressed', String(c.dataset.tone === m)));
+  if (State.playing) {
+    UI.toast(m === 'scale' ? 'メロディ：なめらか（となりの音も通る）'
+                           : 'メロディ：和音の音だけ');
+  }
+}
 function setEnergy(n) {
   State.energy = clamp(n, 1, 3);
   State.velScale = [0.86, 1, 1.08][State.energy - 1];
@@ -2196,7 +2218,15 @@ document.addEventListener('keydown', (e) => {
     if (e.shiftKey) setEnergy(State.energy - 1); else takeSuggestion(1);
     return;
   }
-  /* v8：進行が1つになったので Tab の切り替えは廃止した */
+  /* v8：進行が1つになったので Tab の切り替えは廃止した。
+     空いた分、M をメロディの音づかいの切り替えに使う（案N）。
+     M は RHYTHM のキーではないので取り合いにならない…のではなく、
+     m は rhythm-xylo のキーなので Shift+M にしてある。            */
+  if (e.key === 'M' && e.shiftKey) {
+    e.preventDefault();
+    setMelodyMode(State.melodyTones === 'scale' ? 'chord' : 'scale');
+    return;
+  }
   if (e.key === 'Enter') {                    // HIDリーダーは末尾にEnterを打つ
     if (uidBuf.length >= 6 && CARD_MAP[uidBuf]) insertCard(CARD_MAP[uidBuf]);
     uidBuf = '';
@@ -2280,6 +2310,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.querySelectorAll('#energychips .chip').forEach(c => {
     c.addEventListener('click', () => setEnergy(Number(c.dataset.e)));
+  });
+  /* 案N（v8）：メロディの音づかい。鳴らして選べるよう演奏中も切り替わる */
+  document.querySelectorAll('#tonechips .chip').forEach(c => {
+    c.addEventListener('click', () => setMelodyMode(c.dataset.tone));
   });
 
   /* v6：3つの自動機能のトグル。既定は全部オン */
