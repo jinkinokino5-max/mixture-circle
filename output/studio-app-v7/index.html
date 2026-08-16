@@ -241,6 +241,17 @@
   .occrow i{width:9px; height:6px; border-radius:1.5px; background:#59a6ff; opacity:.08}
   .occrow[data-band=mid] i{background:#b39bff}
   .occrow[data-band=high] i{background:#3ce0b0}
+  /* ===== 好みの音量（役割ごとのつまみ）===== */
+  .trimwrap{display:flex; flex-direction:column; gap:6px}
+  #trims{display:flex; flex-direction:column; gap:4px}
+  .trimrow{display:flex; align-items:center; gap:8px; font-size:11px}
+  .trimrow i{font-style:normal; min-width:52px; color:var(--fg-dim)}
+  .trimrow input[type=range]{flex:1; min-width:150px; max-width:260px; accent-color:var(--r)}
+  .trimrow b{font-variant-numeric:tabular-nums; min-width:52px; text-align:right; font-weight:600}
+  .trimrow b.up{color:#3ce0b0}
+  .trimrow b.dn{color:#ff9b72}
+  .trimfoot{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  #trimmsg{font-size:10.5px; color:var(--fg-dim)}
   #mixbars{display:flex; flex-direction:column; gap:3px; min-width:150px}
   .mixbar{display:flex; align-items:center; gap:6px; font-size:9.5px; color:var(--fg-dim)}
   .mixbar i{font-style:normal; min-width:38px; text-align:right}
@@ -444,6 +455,18 @@
           <button class="chip" data-auto="keyOn"       aria-pressed="true">章ごとに転調する</button>
         </div>
       </div>
+      <!-- 好みの音量。鳴らしながら動かして、決まったらコピーして app.js へ貼る -->
+      <div class="ctlrow">
+        <label>音量（役割ごと）</label>
+        <div class="trimwrap">
+          <div id="trims"></div>
+          <div class="trimfoot">
+            <button class="minibtn" id="trimcopy">いまの値をコピー</button>
+            <button class="minibtn" id="trimreset">0 に戻す</button>
+            <span id="trimmsg"></span>
+          </div>
+        </div>
+      </div>
       <div class="ctlrow">
         <label>いまの様子</label>
         <div class="watch">
@@ -510,9 +533,9 @@
 <script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
 <!-- ?v= はブラウザのキャッシュ対策。中身を直したらこの数字を上げること。
      これが無いと、修正しても古い版がそのまま使われ続ける -->
-<script src="samples.js?v=7.5"></script>
-<script src="music.js?v=7.5"></script>
-<script src="cards.js?v=7.5"></script>
-<script src="app.js?v=7.5"></script>
+<script src="samples.js?v=7.6"></script>
+<script src="music.js?v=7.6"></script>
+<script src="cards.js?v=7.6"></script>
+<script src="app.js?v=7.6"></script>
 </body>
 </html>

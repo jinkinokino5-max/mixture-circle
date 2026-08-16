@@ -21,6 +21,38 @@ const MAX_PARTS = 8;                 // 安全弁。実際は ROLE ごとの上�
 const RETRIGGER_GUARD_MS = 420;      // 同一カードの連続読み取りを無視する時間
 const BASE_KIT = 'acoustic-kit';     // 演出（フィル・DROP・終止）用の予備キット
 
+/* =====================================================================
+   ★ 好みの音量（ここだけ触ればよい）★
+   ---------------------------------------------------------------------
+   役割ごとの音量の足し引き。単位は dB。＋で大きく、－で小さく。
+   3dB でだいたい「ひとまわり変わった」と分かる量。
+
+   使い方は2通りある。
+     1. 耳で探す … アプリ画面の「音量（役割ごと）」のつまみを、鳴らし
+        ながら動かす。決まったら「いまの値をコピー」を押すと、
+        下と同じ形の1行が出るので、それをここへ貼れば次からその音量で
+        始まる。
+     2. 直接書く … 下の数字を書き換えて保存し、ブラウザを再読み込みする。
+
+   なぜここが「音量の調整場所」なのか：
+     各カードの gain（music.js）は、書き出して LUFS で実測した
+     **較正値**で、tools が自動計算している。手で触ると次に
+     npm run balance を回した時に上書きされてしまう。
+     こちらは較正の上に乗る**好み**の層なので、上書きされない。
+
+   0 以外にした役割は、自動ミックスの対象から外れる（自分で決めた値が
+   勝手に動かされないように）。だから既定は全部 0 にしてある。
+   「旋律をもっと前へ・打楽器を引く」という全体の方向は、較正の側
+   （tools/apply-gain.mjs の ROLE_TARGET）に入れてあるので、
+   ここは純粋にその日の好みで動かす場所として空けてある。
+   ===================================================================== */
+const ROLE_TRIM_DB = {
+  melody: 0.0,       // 旋律。曲の「顔」
+  chord:  0.0,       // 和音。空間の土台
+  bass:   0.0,       // 低音。足元
+  rhythm: 0.0,       // 打楽器
+};
+
 /* ============ 1. 音の出口 ============
    parts ─→ roleBus[役割] ─┬→ duckBus（キックでへこむ組）┐
                            └→ dryBus （ドラムなど）      ├→ partsBus → sweep → master
@@ -100,9 +132,10 @@ async function buildMaster() {
   /* ROLE ごとのバス。duck するかは ROLE ではなくカードごとに決まるので、
      duck 用と dry 用の2本ずつ用意して、パートは自分に合うほうへ挿す。 */
   ROLE_ORDER.forEach(rk => {
+    const g0 = Tone.dbToGain(State.roleTrim[rk] || 0);
     roleBus[rk] = {
-      duck: new Tone.Gain(1).connect(duckBus),
-      dry:  new Tone.Gain(1).connect(dryBus),
+      duck: new Tone.Gain(g0).connect(duckBus),
+      dry:  new Tone.Gain(g0).connect(dryBus),
       corr: 0,                                     // 自動ミックスの現在の補正(dB)
     };
     /* 案J：ROLEごとの書き出し（stem）。duck/dry の両方を合流させて
@@ -137,6 +170,18 @@ async function buildMaster() {
     recorder = new Tone.Recorder();
     master.connect(recorder);
   } catch (e) { recorder = null; }
+}
+
+/* ---------------------------------------------------------------------
+   ROLE バスに実際に置くゲイン。2つの層を足して1つにする。
+     好み（State.roleTrim）… 人が決める。上書きされない
+     自動（rb.corr）        … 自動ミックスが帯域の釣り合いから決める
+   どちらも dB なので、足してから 1 回だけリニアに直す。            */
+function applyRoleGain(rk, ramp = 0.25) {
+  const rb = roleBus[rk];
+  if (!rb) return;
+  const g = Tone.dbToGain((State.roleTrim[rk] || 0) + (rb.corr || 0));
+  try { rb.duck.gain.rampTo(g, ramp); rb.dry.gain.rampTo(g, ramp); } catch (e) {}
 }
 
 /* キックが鳴るたびに、上ものを一瞬へこませて戻す＝グルーヴの脈
@@ -963,19 +1008,35 @@ function updateAutoMix() {
   const bands = Object.keys(lv);
   if (bands.length < 2) return;                       // 比べる相手がいない
 
-  /* 傾きを差し引いたうえでの平均。ここが「釣り合いの基準」になる */
-  const mean = bands.reduce((a, b) => a + (lv[b] - BAND_TILT[b]), 0) / bands.length;
+  /* --- 人が決めた役割からは手を引く -------------------------------------
+     好みの音量（つまみ）を 0 以外にした ROLE は、自動ミックスの対象から
+     完全に外す。理由は実測で分かった：帯域と ROLE の対応はおおまかで、
+     たとえば高域はリズムだけでなく上ものも含む。そのため
+     「つまみでリズムを -8dB」にしても高域はその分は下がらず、
+     自動側が差を埋めようと上限の +4dB まで戻してしまう。
+     つまみは「自動に任せず自分で決める」という意思表示なので、
+     打ち消し合うのではなく、その ROLE は自動の輪から抜くのが正しい。
+     触っていない ROLE では自動ミックスはこれまでどおり働く。        */
+  const manual = rk => (State.roleTrim[rk] || 0) !== 0;
+  ROLE_ORDER.forEach(rk => {
+    const rb = roleBus[rk];
+    if (rb && manual(rk) && rb.corr !== 0) { rb.corr = 0; applyRoleGain(rk, 1.5); }
+  });
+  const auto = bands.filter(b => !manual(BAND_TO_ROLE[b]));
+  if (auto.length < 2) { UI.syncAutoMix(); return; }    // 比べる相手がいない
 
-  bands.forEach(band => {
+  /* 傾きを差し引いたうえでの平均。ここが「釣り合いの基準」になる */
+  const mean = auto.reduce((a, b) => a + (lv[b] - BAND_TILT[b]), 0) / auto.length;
+
+  auto.forEach(band => {
     const rk = BAND_TO_ROLE[band], rb = roleBus[rk];
     if (!rb || !active[rk]) return;
-    const err = (mean + BAND_TILT[band]) - lv[band];   // ＋なら上げたい
+    const err = (mean + BAND_TILT[band]) - lv[band];    // ＋なら上げたい
     /* 一気に動かさず毎回2割だけ近づける（＝時定数のかわり） */
     const next = clamp(rb.corr + err * 0.20, -AUTOMIX_MAX, AUTOMIX_MAX);
     if (Math.abs(next - rb.corr) < 0.05) return;
     rb.corr = next;
-    const g = Tone.dbToGain(next);
-    try { rb.duck.gain.rampTo(g, 2.5); rb.dry.gain.rampTo(g, 2.5); } catch (e) {}
+    applyRoleGain(rk, 2.5);
   });
   UI.syncAutoMix();
 }
@@ -1055,6 +1116,8 @@ const State = {
   autoAvoid: true,                               // 案1：衝突回避
   autoArrange: true,                             // 案3：アレンジ・エンジン
   autoMix: true,                                 // 案5：自動ミックス
+  /* 好みの音量（dB）。初期値は上の ROLE_TRIM_DB、画面のつまみで動く */
+  roleTrim: Object.assign({}, ROLE_TRIM_DB),
   timbre: true,                                  // 案C：ベロシティで音色が変わる
   space: true,                                   // 案D：左右と奥行き
   cadenceOn: true,                               // 案E：終わりを「終止」にする
@@ -1512,6 +1575,9 @@ const UI = {
   pulse: 0,
 
   init() {
+    /* --- 好みの音量のつまみ（音を出す前から触れるようにここで作る） --- */
+    UI.buildTrims();
+
     /* --- カードのグリッド --- */
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
@@ -1740,6 +1806,77 @@ const UI = {
     const k = (State.keyOn && State.keySemi) ? `・${keyLabel(State.keySemi)}` : '';
     el.textContent = sec.label + k;
     el.className = 'secbadge s-' + sec.key;
+  },
+
+  /* --- 好みの音量：役割ごとのつまみ -----------------------------------
+     鳴らしながら動かせるように、値を変えたら即座にバスへ反映する。
+     決まった値は「いまの値をコピー」で app.js に貼れる形にして渡す。 */
+  buildTrims() {
+    const box = document.getElementById('trims');
+    if (!box || box.children.length) return;
+    ROLE_ORDER.forEach(rk => {
+      const row = el('div', 'trimrow', '');
+      row.style.setProperty('--r', `var(--${rk}-a)`);
+      row.innerHTML =
+        `<i>${ROLES[rk].jp}</i>` +
+        `<input type="range" min="-12" max="12" step="0.5" value="${State.roleTrim[rk] || 0}" data-trim="${rk}">` +
+        `<b></b>`;
+      row.querySelector('input').addEventListener('input', (e) => {
+        State.roleTrim[rk] = Number(e.target.value);
+        applyRoleGain(rk, 0.15);                 // すぐ反映（耳で探せるように）
+        UI.syncTrims();
+        UI.trimMsg('');
+      });
+      box.appendChild(row);
+    });
+    const copy = document.getElementById('trimcopy');
+    const reset = document.getElementById('trimreset');
+    if (copy) copy.addEventListener('click', () => UI.copyTrims());
+    if (reset) reset.addEventListener('click', () => {
+      ROLE_ORDER.forEach(rk => { State.roleTrim[rk] = 0; applyRoleGain(rk, 0.3); });
+      UI.syncTrims();
+      UI.trimMsg('すべて 0dB にしました');
+    });
+    UI.syncTrims();
+  },
+  syncTrims() {
+    const box = document.getElementById('trims');
+    if (!box) return;
+    ROLE_ORDER.forEach((rk, i) => {
+      const row = box.children[i];
+      if (!row) return;
+      const v = State.roleTrim[rk] || 0;
+      row.querySelector('input').value = v;
+      const b = row.querySelector('b');
+      b.textContent = (v > 0 ? '+' : '') + v.toFixed(1) + ' dB';
+      b.className = v > 0 ? 'up' : v < 0 ? 'dn' : '';
+      /* 0 以外にした ROLE は自動ミックスの対象から外れる。それが
+         見て分かるようにしておく（勝手に戻らない理由の説明）。   */
+      row.title = v === 0
+        ? '0dB のあいだは自動ミックスがこの役割の釣り合いを見ています'
+        : '自分で決めた値です。この役割は自動ミックスの対象から外れます';
+      row.style.opacity = v === 0 ? '' : '1';
+    });
+  },
+  trimMsg(t) {
+    const m = document.getElementById('trimmsg');
+    if (m) m.textContent = t;
+  },
+  /* app.js の ROLE_TRIM_DB にそのまま貼れる形で書き出す */
+  copyTrims() {
+    const f = rk => {
+      const v = State.roleTrim[rk] || 0;
+      return `${rk}: ${v > 0 ? '+' : v < 0 ? '' : ' '}${v.toFixed(1)}`;
+    };
+    const text = 'const ROLE_TRIM_DB = { '
+      + ROLE_ORDER.map(f).join(', ') + ' };';
+    const done = () => UI.trimMsg('コピーしました。app.js の ROLE_TRIM_DB に貼ってください');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, () => UI.trimMsg(text));
+    } else {
+      /* file:// で開いたときなど、クリップボードが使えない場合は表示する */
+      UI.trimMsg(text);
+    }
   },
 
   /* --- v6：自動ミックスがいまどれだけ補正しているか（案5） --- */
@@ -2090,7 +2227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         /* 切ったら補正を戻す */
         ROLE_ORDER.forEach(rk => {
           roleBus[rk].corr = 0;
-          try { roleBus[rk].duck.gain.rampTo(1, 1); roleBus[rk].dry.gain.rampTo(1, 1); } catch (e) {}
+          applyRoleGain(rk, 1);          // 自動ぶんは 0 に。好みの音量は残す
         });
         UI.syncAutoMix();
       }

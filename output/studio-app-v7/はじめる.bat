@@ -1,32 +1,32 @@
 @echo off
-chcp 65001 >nul
+chcp 932 >nul
 setlocal
 cd /d "%~dp0"
 set PORT=8772
 set STARTED=
 
 echo === STUDIO PULSE IV ===
-echo ãƒ•ã‚©ãƒ«ãƒ€: %CD%
+echo ƒtƒHƒ‹ƒ_: %CD%
 echo.
 
 if not exist "index.html" (
-  echo [ã‚¨ãƒ©ãƒ¼] index.html ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚
-  echo ã“ã®ãƒãƒƒãƒã¯ studio-app-v7 ãƒ•ã‚©ãƒ«ãƒ€ã®ä¸­ã«ç½®ã„ã¦ãã ã•ã„ã€‚
+  echo [ƒGƒ‰[] index.html ‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñB
+  echo ‚±‚Ìƒoƒbƒ`‚Í studio-app-v7 ƒtƒHƒ‹ƒ_‚Ì’†‚É’u‚¢‚Ä‚­‚¾‚³‚¢B
   goto :fail
 )
 
 if not exist "samples\manifest.js" (
-  echo [æ³¨æ„] éŸ³æºãŒã¾ã ã‚ã‚Šã¾ã›ã‚“ã€‚
-  echo å…ˆã«ã€ŒéŸ³æºã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰.batã€ã‚’1åº¦ã ã‘å®Ÿè¡Œã—ã¦ãã ã•ã„ã€‚
-  echo ã“ã®ã¾ã¾é€²ã‚ã‚‹ã¨ã€å…¨ãƒ‘ãƒ¼ãƒˆãŒåˆæˆéŸ³ã«ãªã‚Šã¾ã™ã€‚
+  echo [’ˆÓ] ‰¹Œ¹‚ª‚Ü‚¾‚ ‚è‚Ü‚¹‚ñB
+  echo æ‚Éu‰¹Œ¹‚ðƒ_ƒEƒ“ƒ[ƒh.batv‚ð1“x‚¾‚¯ŽÀs‚µ‚Ä‚­‚¾‚³‚¢B
+  echo ‚±‚Ì‚Ü‚Üi‚ß‚é‚ÆA‘Sƒp[ƒg‚ª‡¬‰¹‚É‚È‚è‚Ü‚·B
   echo.
   pause
 )
 
-rem --- ãƒãƒ¼ãƒˆãŒæ—¢ã«ä½¿ã‚ã‚Œã¦ã„ãªã„ã‹ç¢ºèª ---
+rem --- ƒ|[ƒg‚ªŠù‚ÉŽg‚í‚ê‚Ä‚¢‚È‚¢‚©Šm”F ---
 netstat -ano | findstr /r /c:":%PORT% .*LISTENING" >nul 2>nul
 if %errorlevel%==0 (
-  echo [æƒ…å ±] ãƒãƒ¼ãƒˆ %PORT% ã¯æ—¢ã«ä½¿ç”¨ä¸­ã§ã™ã€‚èµ·å‹•æ¸ˆã¿ã®ã‚µãƒ¼ãƒãƒ¼ã‚’ãã®ã¾ã¾ä½¿ã„ã¾ã™ã€‚
+  echo [î•ñ] ƒ|[ƒg %PORT% ‚ÍŠù‚ÉŽg—p’†‚Å‚·B‹N“®Ï‚Ý‚ÌƒT[ƒo[‚ð‚»‚Ì‚Ü‚ÜŽg‚¢‚Ü‚·B
   set STARTED=1
 )
 
@@ -34,8 +34,8 @@ if defined STARTED goto :open
 
 where python >nul 2>nul
 if %errorlevel%==0 (
-  echo Python ã§ã‚µãƒ¼ãƒãƒ¼ã‚’èµ·å‹•ã—ã¾ã™...
-  start "STUDIO PULSE IV ã‚µãƒ¼ãƒãƒ¼" /min python -m http.server %PORT%
+  echo Python ‚ÅƒT[ƒo[‚ð‹N“®‚µ‚Ü‚·...
+  start "STUDIO PULSE IV ƒT[ƒo[" /min python -m http.server %PORT%
   set STARTED=1
 )
 
@@ -43,28 +43,28 @@ if defined STARTED goto :open
 
 where node >nul 2>nul
 if %errorlevel%==0 (
-  echo Node.js ã§ã‚µãƒ¼ãƒãƒ¼ã‚’èµ·å‹•ã—ã¾ã™...
-  start "STUDIO PULSE IV ã‚µãƒ¼ãƒãƒ¼" /min node server.js %PORT%
+  echo Node.js ‚ÅƒT[ƒo[‚ð‹N“®‚µ‚Ü‚·...
+  start "STUDIO PULSE IV ƒT[ƒo[" /min node server.js %PORT%
   set STARTED=1
 )
 
 if defined STARTED goto :open
 
-echo [ã‚¨ãƒ©ãƒ¼] Python ã‚‚ Node.js ã‚‚è¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚
-echo ã“ã®ã‚¢ãƒ—ãƒªã¯éŸ³æºãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã‚€ãŸã‚ã€ã‚µãƒ¼ãƒãƒ¼çµŒç”±ã§ãªã„ã¨æœ¬æ ¼éŸ³æºãŒä½¿ãˆã¾ã›ã‚“ã€‚
-echo   https://nodejs.org/ ã‹ã‚‰ Node.js ã‚’å…¥ã‚Œã¦ã‹ã‚‰ã€ã‚‚ã†ä¸€åº¦å®Ÿè¡Œã—ã¦ãã ã•ã„ã€‚
+echo [ƒGƒ‰[] Python ‚à Node.js ‚àŒ©‚Â‚©‚è‚Ü‚¹‚ñ‚Å‚µ‚½B
+echo ‚±‚ÌƒAƒvƒŠ‚Í‰¹Œ¹ƒtƒ@ƒCƒ‹‚ð“Ç‚Þ‚½‚ßAƒT[ƒo[Œo—R‚Å‚È‚¢‚Æ–{Ši‰¹Œ¹‚ªŽg‚¦‚Ü‚¹‚ñB
+echo   https://nodejs.org/ ‚©‚ç Node.js ‚ð“ü‚ê‚Ä‚©‚çA‚à‚¤ˆê“xŽÀs‚µ‚Ä‚­‚¾‚³‚¢B
 goto :fail
 
 :open
-rem --- ã‚µãƒ¼ãƒãƒ¼ãŒå¿œç­”ã™ã‚‹ã¾ã§æœ€å¤§15ç§’å¾…ã¤ ---
+rem --- ƒT[ƒo[‚ª‰ž“š‚·‚é‚Ü‚ÅÅ‘å15•b‘Ò‚Â ---
 set /a TRY=0
 :wait
 set /a TRY+=1
 netstat -ano | findstr /r /c:":%PORT% .*LISTENING" >nul 2>nul
 if %errorlevel%==0 goto :ready
 if %TRY% geq 15 (
-  echo [ã‚¨ãƒ©ãƒ¼] ã‚µãƒ¼ãƒãƒ¼ãŒèµ·å‹•ã§ãã¾ã›ã‚“ã§ã—ãŸï¼ˆãƒãƒ¼ãƒˆ %PORT%ï¼‰ã€‚
-  echo æœ€å°åŒ–ã•ã‚ŒãŸã€ŒSTUDIO PULSE IV ã‚µãƒ¼ãƒãƒ¼ã€ã®çª“ã‚’é–‹ã„ã¦ã€ã‚¨ãƒ©ãƒ¼å†…å®¹ã‚’ç¢ºèªã—ã¦ãã ã•ã„ã€‚
+  echo [ƒGƒ‰[] ƒT[ƒo[‚ª‹N“®‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½iƒ|[ƒg %PORT%jB
+  echo Å¬‰»‚³‚ê‚½uSTUDIO PULSE IV ƒT[ƒo[v‚Ì‘‹‚ðŠJ‚¢‚ÄAƒGƒ‰[“à—e‚ðŠm”F‚µ‚Ä‚­‚¾‚³‚¢B
   goto :fail
 )
 ping -n 2 127.0.0.1 >nul
@@ -73,8 +73,8 @@ goto :wait
 :ready
 start "" http://localhost:%PORT%/index.html
 echo.
-echo ãƒ–ãƒ©ã‚¦ã‚¶ã‚’é–‹ãã¾ã—ãŸ â†’ http://localhost:%PORT%/index.html
-echo éŠã³çµ‚ã‚ã£ãŸã‚‰ã€æœ€å°åŒ–ã•ã‚Œã¦ã„ã‚‹ã€ŒSTUDIO PULSE IV ã‚µãƒ¼ãƒãƒ¼ã€ã®çª“ã‚’é–‰ã˜ã¦ãã ã•ã„ã€‚
+echo ƒuƒ‰ƒEƒU‚ðŠJ‚«‚Ü‚µ‚½ ¨ http://localhost:%PORT%/index.html
+echo —V‚ÑI‚í‚Á‚½‚çAÅ¬‰»‚³‚ê‚Ä‚¢‚éuSTUDIO PULSE IV ƒT[ƒo[v‚Ì‘‹‚ð•Â‚¶‚Ä‚­‚¾‚³‚¢B
 ping -n 7 127.0.0.1 >nul
 goto :eof
 
