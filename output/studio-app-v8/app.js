@@ -17,7 +17,11 @@
      ラウドネス実測にもとづく音量／ビジュアライザ
    ===================================================================== */
 
-const MAX_PARTS = 8;                 // 安全弁。実際は ROLE ごとの上限が先に効く
+/* v8：ROLE ごとの枚数制限を撤廃したので、ここが唯一の上限になった。
+   音を消すためのものではなく、音声スレッドが締め切りに間に合わなくなる
+   のを防ぐための安全弁。16枚なら partsBusLevel() が -10.4dB 絞るので
+   出口は割れず、サンプラー16基は実測でも間に合う。                     */
+const MAX_PARTS = 16;
 const RETRIGGER_GUARD_MS = 420;      // 同一カードの連続読み取りを無視する時間
 const BASE_KIT = 'acoustic-kit';     // 演出（フィル・DROP・終止）用の予備キット
 
@@ -423,6 +427,7 @@ class Part {
     /* 案2：この小節ぶんの生成済み音符。regenerateBar が入れる */
     this.curPat = [];
     this.curBar = -1;
+    this.harmony = 0;          // 案M：二重奏のずらし幅（主旋律は 0）
     this.lp = new Tone.Filter(s.lp || 16000, 'lowpass').connect(this.gain);
     this.hp = new Tone.Filter(s.hp || 20, 'highpass').connect(this.lp);
 
@@ -479,8 +484,9 @@ class Part {
     const bar = barAtTime(time);
     if (bar !== this.curBar) ensureBar(bar);        // 取りこぼし保険
     const chord = chordAtBar(bar);
-    /* 8小節に1回だけ旋律を1段持ち上げる。ずっと同じに聞こえないための仕掛け */
-    const lift = (this.role === 'melody' && bar % 8 === 7) ? 1 : 0;
+    /* 8小節に1回だけ旋律を1段持ち上げる。ずっと同じに聞こえないための仕掛け。
+       案M（v8）：二重奏のずらし幅（harmony）もここで足す。主旋律は 0。 */
+    const lift = ((this.role === 'melody' && bar % 8 === 7) ? 1 : 0) + (this.harmony || 0);
 
     this.curPat.forEach(ev => {
       if (ev.s !== step) return;
@@ -705,13 +711,49 @@ function ensureBar(bar) {
   /* --- 2. 音階のあるパートを投入順に生成 --- */
   const sec = currentSection();
   const thin = State.autoArrange ? sec.thin : 1;
+
+  /* 案M（v8）：メロディが重なったら「寄り添う」＝二重奏にする。
+     ---------------------------------------------------------------
+     枚数制限を撤廃したので、メロディは何枚でも入る。それぞれが
+     勝手に歌うと、主役が何人もいる状態になって旋律が消える。
+     そこで **最初に入ったメロディだけが旋律を作り**、あとから
+     入ったメロディはその音符の位置をそのまま借りて、高さだけ
+     ずらして重なる。ハモリになるので、何枚積んでも旋律は1本に
+     聞こえる。
+
+     借りるのは「いつ鳴るか（s）」と「どれだけ伸びるか（l）」だけ。
+     強さ（v）は自分の shape のものを使うので、楽器ごとの
+     ニュアンスは残る。
+
+     ずらす量は構成音1つぶんを単位に 上・下・上2・下2… と配る。
+     上下交互なので、何枚重ねても音域が片側へ伸びていかない。   */
+  const HARMONY_OFFSETS = [0, 1, -1, 2, -2, 3, -3];
+  let lead = null, melodyN = 0;
+
   State.order.forEach(id => {
     const p = State.parts.get(id);
     if (!p || p.kit) return;
     p.curBar = bar;
     const band = ROLES[p.role].band;
     const seen = State.autoAvoid ? occ[band] : null;
-    p.curPat = generateBar(p.card, bar, State.energy, seen, thin);
+
+    if (p.role === 'melody' && lead) {
+      /* 2枚目以降のメロディ ＝ 主旋律に寄り添う */
+      p.harmony = HARMONY_OFFSETS[Math.min(melodyN, HARMONY_OFFSETS.length - 1)];
+      const myVel = p.card.shape && p.card.shape.vel != null ? p.card.shape.vel : 0.7;
+      const leadVel = lead.card.shape && lead.card.shape.vel != null ? lead.card.shape.vel : 0.7;
+      const ratio = leadVel > 0 ? myVel / leadVel : 1;
+      p.curPat = lead.curPat.map(ev => ({
+        s: ev.s, d: ev.d, l: ev.l,
+        v: clamp(ev.v * ratio, 0.05, 1),
+      }));
+      melodyN++;
+    } else {
+      p.curPat = generateBar(p.card, bar, State.energy, seen, thin);
+      p.harmony = 0;
+      if (p.role === 'melody') { lead = p; melodyN = 1; }
+    }
+
     /* 3. 自分の占有を足す。次のパートはこれも避ける */
     const mine = occupancyOf(p.curPat, p.role === 'bass' ? 1.0 : 0.85);
     for (let i = 0; i < 16; i++) occ[band][i] += mine[i];
@@ -741,13 +783,17 @@ function ensureBar(bar) {
    ===================================================================== */
 const SUGGEST_N = 3;
 
+/* v8：枚数制限を撤廃したので「もう入らない」は無くなった。
+   soft（目安）までは足りないぶんだけ強く推し、超えたぶんは
+   急速に推しにくくなる。禁止ではないので、提案が尽きることはない。 */
 function roleNeed(role) {
   const cur = State.order.filter(id => CARDS[id].role === role).length;
-  const max = ROLES[role].max;
-  if (cur >= max) return -Infinity;                       // もう入らない
+  const soft = ROLES[role].soft;
   /* 埋まっていない ROLE ほど欲しい。特に土台（rhythm→bass）が先 */
   const priority = { rhythm: 3.0, bass: 2.6, chord: 1.8, melody: 1.4 }[role] || 1;
-  return priority * (1 - cur / max);
+  if (cur < soft) return priority * (1 - cur / soft);
+  /* 目安を超えた先は、1枚ごとに半減していく小さな正の値 */
+  return priority * 0.12 * Math.pow(0.5, cur - soft);
 }
 
 /* いま全体がどれくらい賑やかか（0=無音 1=満杯） */
@@ -1252,14 +1298,13 @@ function insertCard(cardId) {
   const sibling = State.order.find(id => CARDS[id].inst === inst);
   if (sibling) dropPart(sibling);
 
-  /* ROLE ごとの上限。超えたらその ROLE のいちばん古い音と入れ替える */
-  const sameRole = State.order.filter(id => id.split('-')[0] === role);
-  while (sameRole.length >= ROLES[role].max) {
-    const out = sameRole.shift();
+  /* v8：ROLE ごとの上限は撤廃した。出したカードは必ず鳴る。
+     安全弁（MAX_PARTS）に達したときだけ、いちばん古い音が抜ける。 */
+  while (State.order.length >= MAX_PARTS) {
+    const out = State.order[0];
     dropPart(out);
-    UI.toast(`${ROLES[role].jp}は${ROLES[role].max}枚まで。${labelOf(out)} と交代しました`);
+    UI.toast(`${MAX_PARTS}枚が上限です。${labelOf(out)} と交代しました`);
   }
-  while (State.order.length >= MAX_PARTS) dropPart(State.order[0]);
 
   const part = new Part(cardId);
   const ticks = nextBoundaryTicks();
@@ -1644,7 +1689,7 @@ const UI = {
       lab.innerHTML = `<div class="rl-en">${r.label}</div>
                        <div class="rl-jp">${r.role}</div>
                        <small>${r.desc}</small>
-                       <div class="rl-max">同時${r.max}枚まで</div>`;
+                       <div class="rl-max">目安${r.soft}枚（何枚でも足せます）</div>`;
       grid.appendChild(lab);
 
       /* セルは「楽器」1つぶん。中の 1/2/3 がバリエーション。 */

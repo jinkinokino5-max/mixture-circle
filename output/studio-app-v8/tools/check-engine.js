@@ -129,7 +129,7 @@ load('app.js',
   '\n;["Part","State","buildMaster","CARDS","CARD_ORDER","ROLE_ORDER","ROLES","INSTRUMENTS",'
   + '"INSTRUMENT_ORDER","VARIATIONS","pressInstrument","insertCard","removeCard","KEYMAP",'
   + '"ensureBar","updateArrangement","updateAutoMix","currentSection","roleBus","SECTIONS",'
-  + '"generateBar","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness","triggerBreak","partsBusLevel","UI"]'
+  + '"generateBar","resolveNotes","setEnergy","playCadence","endGame","dropPart","suggestCards","takeSuggestion","refreshSuggestions","chordAtBar","busyness","triggerBreak","partsBusLevel","MAX_PARTS","UI"]'
   + '.forEach(n=>{ try{ globalThis[n]=eval(n); }catch(e){} });');
 
 /* ---------- 実行 ---------- */
@@ -387,7 +387,10 @@ load('app.js',
     /* 3つとも同じ ROLE ではないこと（選ぶ意味がなくなる） */
     if (new Set(firstRoles).size === 1) errors.push('3つとも同じ役割を推している');
 
-    /* 提案どおりに8回積んでも、ROLE の上限を超えないこと */
+    /* v8：上限は撤廃したので「超えないこと」は検査できない。
+       代わりに「提案が目安（soft）から極端に偏らないこと」を見る。
+       目安＋1枚までは許容。それ以上ひとつの役割に寄るのは、
+       roleNeed() の減衰が効いていないということ。 */
     for (let i = 0; i < 8; i++) {
       State.suggest = ctx.suggestCards();
       if (!State.suggest.length) break;
@@ -396,9 +399,9 @@ load('app.js',
     }
     const counts = {};
     State.order.forEach(id => { counts[CARDS[id].role] = (counts[CARDS[id].role] || 0) + 1; });
-    console.log('提案だけで積んだ結果 : ' + ROLE_ORDER.map(r => `${ROLES[r].jp}${counts[r] || 0}/${ROLES[r].max}`).join(' '));
+    console.log('提案だけで積んだ結果 : ' + ROLE_ORDER.map(r => `${ROLES[r].jp}${counts[r] || 0}（目安${ROLES[r].soft}）`).join(' '));
     ROLE_ORDER.forEach(r => {
-      if ((counts[r] || 0) > ROLES[r].max) errors.push(`${r} が上限 ${ROLES[r].max} を超えた（${counts[r]}枚）`);
+      if ((counts[r] || 0) > ROLES[r].soft + 1) errors.push(`${r} が目安 ${ROLES[r].soft} から偏りすぎ（${counts[r]}枚）`);
     });
     /* 同じ楽器が2枚入っていないこと */
     const insts = State.order.map(id => CARDS[id].inst);
@@ -407,15 +410,20 @@ load('app.js',
     const kicks = State.order.filter(id => CARDS[id].drum && CARDS[id].drum.hasKick && CARDS[id].drum.k.length);
     if (kicks.length > 1) errors.push(`キック持ちが ${kicks.length} 枚（提案が土台を重ねている）`);
 
-    /* 満杯になったら提案が空になること */
+    /* v8：上限を撤廃したので、提案は尽きないのが正しい。
+       代わりに、いくら積んでも安全弁（MAX_PARTS）を超えないことと、
+       積み続けても提案が壊れない（例外・空配列にならない）ことを見る。 */
     let guard = 0;
-    while (guard++ < 20) {
+    while (guard++ < 40) {
       const s = ctx.suggestCards();
-      if (!s.length) break;
+      if (!s.length) { errors.push('提案が尽きた（上限撤廃後は出続けるはず）'); break; }
       State.lastInput.clear();
       ctx.insertCard(s[0]);
     }
-    if (ctx.suggestCards().length) errors.push('満杯なのに提案が出続けている');
+    if (State.order.length > ctx.MAX_PARTS) {
+      errors.push(`安全弁を超えた（${State.order.length} 枚 / MAX_PARTS ${ctx.MAX_PARTS}）`);
+    }
+    console.log(`上限撤廃の確認 : 40回積んで ${State.order.length} 枚（安全弁 ${ctx.MAX_PARTS}）`);
 
     /* 賑やかなときは「余白」、寂しいときは「刻み」を推すか */
     State.parts.forEach(p => p.dispose());
@@ -423,6 +431,48 @@ load('app.js',
     const quiet = ctx.suggestCards().map(id => CARDS[id].n);
     console.log(`寂しいときの提案の変化番号 : ${quiet.join(',')}（3=刻み が多いはず）`);
     State.parts.clear(); State.order = [];
+  }
+
+  /* ===== 10b. 案M（v8）：メロディが重なったら二重奏になるか ===== */
+  {
+    State.parts.forEach(p => p.dispose());
+    State.parts.clear(); State.order = []; State.lastInput.clear();
+    State.playing = true; State.genBar = -1;
+
+    /* 別々の楽器のメロディを3枚積む（上限が無いので3枚入るはず） */
+    ['melody-piano-1', 'melody-violin-2', 'melody-flute-3'].forEach(id => {
+      State.lastInput.clear();
+      ctx.insertCard(id);
+    });
+    const mel = State.order.filter(id => CARDS[id].role === 'melody');
+    if (mel.length !== 3) errors.push(`メロディ3枚が入らなかった（${mel.length}枚）`);
+
+    ctx.ensureBar(0);
+    const parts = mel.map(id => State.parts.get(id));
+    const [p0, p1, p2] = parts;
+
+    /* 主旋律は 0、2枚目・3枚目はずれる */
+    if (p0.harmony !== 0) errors.push(`主旋律の harmony が ${p0.harmony}（0 のはず）`);
+    if (!p1 || p1.harmony === 0) errors.push('2枚目のメロディがずれていない（二重奏になっていない）');
+    if (!p2 || p2.harmony === 0) errors.push('3枚目のメロディがずれていない');
+    if (p1 && p2 && p1.harmony === p2.harmony) errors.push('2枚目と3枚目が同じ高さに重なっている');
+
+    /* 音符の位置は借りている＝主旋律と同じ。だから旋律は1本に聞こえる */
+    const stepsOf = (p) => p.curPat.map(e => e.s).join(',');
+    if (p1 && stepsOf(p1) !== stepsOf(p0)) errors.push('2枚目が主旋律と別の位置で鳴っている（寄り添っていない）');
+    if (p2 && stepsOf(p2) !== stepsOf(p0)) errors.push('3枚目が主旋律と別の位置で鳴っている');
+
+    /* 実際に音名を解決して、高さが本当に違うことを確かめる */
+    const chord = ctx.chordAtBar(0);
+    const nameAt = (p) => {
+      const ev = p.curPat[0];
+      return ev ? ctx.resolveNotes('melody', chord, ev, p.s.oct, p.harmony)[0] : '(無音)';
+    };
+    console.log(`二重奏 : ${mel.map((id, i) => `${CARDS[id].label}${nameAt(parts[i])}(${parts[i].harmony >= 0 ? '+' : ''}${parts[i].harmony})`).join(' / ')}`);
+    if (p0.curPat.length === 0) errors.push('主旋律が無音（二重奏の検査が成立していない）');
+
+    State.parts.forEach(p => p.dispose());
+    State.parts.clear(); State.order = []; State.playing = false;
   }
 
   /* ===== 11. 案I：ブレイクが仕込まれるか ===== */

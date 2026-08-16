@@ -331,7 +331,7 @@ for (const [iid, inst] of Object.entries(INSTRUMENTS)) {
 /* ---- 出力 ---- */
 console.log(`楽器 ${instTotal} × バリエーション ${NV} ＝ カード ${cardTotal} 枚`);
 console.log(`キック持ちリズムカード ${kickOwners} 枚 / キック無しの薄い層 ${thin} 枚`);
-console.log(`同時上限 : ` + ROLE_ORDER.map(r => `${ROLES[r].label} ${ROLES[r].max}`).join(' / '));
+console.log(`同時枚数の目安 : ` + ROLE_ORDER.map(r => `${ROLES[r].label} ${ROLES[r].soft}`).join(' / ') + '（上限なし）');
 const avg = i => (densRows.reduce((a, r) => a + r.ds[i], 0) / densRows.length).toFixed(1);
 console.log(`1小節あたりの平均音数 : 基本 ${avg(0)} / 余白 ${avg(1)} / 刻み ${avg(2)}`);
 console.log(`埋まっている位置に置いた割合 : ${(densRows.avoidRate * 100).toFixed(0)}%（低いほど良い）`);
