@@ -394,7 +394,10 @@ class Part {
     /* 案2：この席の発音オフセット（ms）。席と同じく投入時に決まる */
     this.onsetMs = onsetSlotMs(cardId);
     const depth = State.space ? clamp(sp.depth || 0, 0, 1) : 0;
-    const pan = State.space ? clamp(sp.pan * seatFlip, -0.85, 0.85) : 0;
+    /* 案5：定義上の立ち位置＝「本来いたい場所」。実際にどこへ置くかは
+       枚数を見て respreadPan() が決める（増えるほど左右へ開く）。   */
+    this.homePan = clamp((sp.pan || 0) * seatFlip, -0.85, 0.85);
+    const pan = State.space ? this.homePan : 0;
 
     /* 信号の道すじ（手前 → 奥）
          voice → hp → lp（音色） → gain（音量） → air（距離） → panner（左右） → roleBus
@@ -1167,6 +1170,57 @@ function duckByCount() {
   partsBus.gain.rampTo(partsBusLevel(), 0.4);
 }
 
+/* =====================================================================
+   案5：枚数に応じてステレオ定位を自動で押し広げる
+   ---------------------------------------------------------------------
+   Huron の第10原理（音源位置）は、パートを独立させる5本のレバーのうち
+   いちばん実装が軽いもの。Liu ら (AES 2022) の自動ミックスも、同時に
+   話す声を聞き分けさせるためにフォース・ディレクテッド模型で各音源の
+   仮想位置を自動配置している（問題設定は本アプリと同じ）。
+   → reference/音の重ね方リサーチ.md §7・提案D
+
+   v7 までは card.space.pan の固定値と「同じ ROLE の2枚目は左右反転」
+   だけで、6枚積んでも広がらなかった。
+
+   ここでは「本来いたい場所（homePan）の順番は守ったまま、枚数が
+   増えるほど等間隔に開く」という配り方をする。
+     ・順番を守る … 定義した左右の性格（アコギは右、サックスは左…）が
+       枚数で入れ替わらない
+     ・等間隔    … 押しのけ合った結果と同じ配置に、反復計算なしで届く
+     ・幅は枚数で決まる … 2枚なら軽く、6枚なら目一杯に開く
+
+   参加するのは「本来の立ち位置を持つ」パートだけ。ベースとキックの
+   ある太鼓は homePan が 0 で、ここでは動かさない。低音と拍の芯を
+   中央から動かさないのは、定位の実務でも守られている作法。       */
+const PAN_LIMIT = 0.85;
+
+function respreadPan() {
+  if (!State.parts.size) return;
+  const movers = [];
+  State.parts.forEach(p => { if (Math.abs(p.homePan || 0) > 0.05) movers.push(p); });
+
+  /* 「左右と奥行きに置く」を切っているときは全員まん中へ */
+  if (!State.space) {
+    State.parts.forEach(p => { try { p.panner.pan.rampTo(0, 0.6); } catch (e) {} });
+    return;
+  }
+
+  const n = movers.length;
+  if (n === 0) return;
+  if (n === 1) {
+    try { movers[0].panner.pan.rampTo(movers[0].homePan, 0.6); } catch (e) {}
+    return;
+  }
+
+  /* 幅は枚数で開く。2枚 ±0.44 → 4枚で上限 ±0.85 */
+  const width = clamp(0.22 * n, 0.30, PAN_LIMIT);
+  movers.sort((a, b) => a.homePan - b.homePan);
+  movers.forEach((p, i) => {
+    const pos = -width + (2 * width * i) / (n - 1);
+    try { p.panner.pan.rampTo(pos, 0.6); } catch (e) {}
+  });
+}
+
 function labelOf(id) {
   const role = id.split('-')[0];
   const c = CARDS[id];
@@ -1217,6 +1271,7 @@ function insertCard(cardId) {
   UI.setCell(cardId, 'pending');
   recomputeKickOwner();
   duckByCount();
+  respreadPan();                        // 案5：枚数が変わったので定位を配り直す
   UI.refreshNow();
   refreshSuggestions();                 // 案B：入れたら候補を出し直す
 
@@ -1243,6 +1298,7 @@ function removeCard(cardId) {
   dropPart(cardId);
   recomputeKickOwner();
   duckByCount();
+  respreadPan();                        // 案5：枚数が変わったので定位を配り直す
   UI.refreshNow();
   refreshSuggestions();
 }
