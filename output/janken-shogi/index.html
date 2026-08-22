@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>じゃんけん将棋</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= タイトル ================= -->
+  <section class="screen" id="screen-title">
+    <div class="panel">
+      <h1 class="title">じゃんけん将棋</h1>
+      <p class="lead">伏せた王将、三すくみ、射程2。<br>正体を隠したまま、相手の王将を撃ち抜け。</p>
+
+      <div class="field">
+        <div class="field-label">対戦モード</div>
+        <div class="choice-row" id="mode-choice">
+          <button class="choice is-on" data-mode="cpu">CPU と対戦</button>
+          <button class="choice" data-mode="pvp">2人で対戦<span class="sub">パス＆プレイ</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">盤のサイズ</div>
+        <div class="choice-row" id="size-choice">
+          <button class="choice" data-size="5">5×5<span class="sub">短期決戦・カード5枚</span></button>
+          <button class="choice is-on" data-size="6">6×6<span class="sub">標準・カード6枚</span></button>
+          <button class="choice" data-size="7">7×7<span class="sub">じっくり・カード7枚</span></button>
+        </div>
+      </div>
+
+      <button class="primary big" id="btn-start">対局を始める</button>
+      <button class="link" id="btn-rules">ルールを読む</button>
+    </div>
+  </section>
+
+  <!-- ================= 交代（パス＆プレイ） ================= -->
+  <section class="screen" id="screen-handoff">
+    <div class="panel center">
+      <div class="handoff-icon">🔄</div>
+      <h2 id="handoff-title">プレイヤー1 に交代</h2>
+      <p class="lead" id="handoff-note">端末を渡してください。相手に画面を見せないように。</p>
+      <button class="primary big" id="btn-handoff-ok">準備OK</button>
+    </div>
+  </section>
+
+  <!-- ================= 王将の確認 ================= -->
+  <section class="screen" id="screen-king">
+    <div class="panel center">
+      <h2 id="king-title">あなたの王将</h2>
+      <p class="lead">カードをタップして自分だけ確認してください。</p>
+      <div class="king-card" id="king-card">
+        <div class="king-face-back">?</div>
+        <div class="king-face-front" id="king-face-front"></div>
+      </div>
+      <p class="hint" id="king-hint"></p>
+      <button class="primary big hidden" id="btn-king-ok">確認した</button>
+    </div>
+  </section>
+
+  <!-- ================= デッキ構築 ================= -->
+  <section class="screen" id="screen-deck">
+    <div class="panel">
+      <h2 id="deck-title">一般カードを選ぶ</h2>
+      <p class="lead">
+        残り <b id="deck-remain">5</b> 枚。一般カードは<b>相手にも見えます</b>。
+        王将を守る構成にするか、あえて逆を積んで惑わすか。
+      </p>
+      <div class="deck-picker" id="deck-picker"></div>
+      <div class="deck-tray" id="deck-tray"></div>
+      <div class="hint" id="deck-hint"></div>
+      <div class="btn-row">
+        <button class="ghost" id="btn-deck-clear">やり直す</button>
+        <button class="primary" id="btn-deck-ok" disabled>この構成で決定</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 配置 ================= -->
+  <section class="screen" id="screen-place">
+    <div class="panel">
+      <h2 id="place-title">自陣に並べる</h2>
+      <p class="lead">カードを選んで、光っているマスに置いてください。王将の位置は相手にも見えます。</p>
+      <div class="board-wrap"><div class="board" id="place-board"></div></div>
+      <div class="deck-tray" id="place-tray"></div>
+      <div class="btn-row">
+        <button class="ghost" id="btn-place-auto">おまかせ配置</button>
+        <button class="ghost" id="btn-place-clear">やり直す</button>
+        <button class="primary" id="btn-place-ok" disabled>この配置で決定</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 対局 ================= -->
+  <section class="screen" id="screen-play">
+    <div class="play-layout">
+      <div class="board-col">
+        <div class="turn-bar" id="turn-bar">
+          <span class="turn-chip" id="turn-chip">プレイヤー1 の手番</span>
+          <span class="ply" id="ply-count"></span>
+        </div>
+        <div class="board-wrap"><div class="board" id="board"></div></div>
+        <div class="action-note" id="action-note">自分のカードをタップして選択</div>
+      </div>
+      <aside class="side-col">
+        <div class="card-box">
+          <div class="box-title">あなたの王将</div>
+          <div class="my-king" id="my-king"></div>
+        </div>
+        <div class="card-box">
+          <div class="box-title">相手の王将は？</div>
+          <div class="candidates" id="candidates"></div>
+        </div>
+        <div class="card-box">
+          <div class="box-title">撃破したカード</div>
+          <div class="captured-row"><span class="cap-label">あなた</span><span id="cap-me"></span></div>
+          <div class="captured-row"><span class="cap-label">相手</span><span id="cap-opp"></span></div>
+        </div>
+        <div class="card-box grow">
+          <div class="box-title">棋譜</div>
+          <div class="log" id="log"></div>
+        </div>
+        <button class="ghost small" id="btn-help">ルールを見る</button>
+        <button class="ghost small" id="btn-resign">投了してタイトルへ</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 結果 ================= -->
+  <section class="screen" id="screen-over">
+    <div class="panel center">
+      <h2 id="over-title">決着</h2>
+      <p class="lead" id="over-reason"></p>
+      <div class="reveal-row" id="over-reveal"></div>
+      <div class="btn-row center">
+        <button class="primary" id="btn-next-game">次の対局へ</button>
+        <button class="ghost" id="btn-to-title">タイトルへ</button>
+      </div>
+      <p class="hint" id="series-note"></p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= モーダル ================= -->
+<div class="modal-back hidden" id="modal">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+    <div class="btn-row center" id="modal-btns"></div>
+  </div>
+</div>
+
+<script src="rules.js"></script>
+<script src="ai.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
