@@ -1,7 +1,10 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-set PORT=8768
+
+rem v9 は 8769 を使う。v3 が 8768 を使っているので、
+rem 両方を同時に開いても取り合いにならない。
+set PORT=8769
 
 if not exist "samples\manifest.js" (
   echo 音源がまだありません。
@@ -9,6 +12,23 @@ if not exist "samples\manifest.js" (
   echo （このまま進めると、全パートが合成音になります）
   echo.
   pause
+)
+
+rem ポートが埋まっていたら、黙って別のアプリを開いてしまわないように止める。
+rem （以前、v3 のサーバーが 8768 を掴んだままだったせいで、
+rem   v9 を起動したつもりで v3 の画面が開く、という事故があった）
+netstat -ano | findstr /c:"LISTENING" | findstr /c:":%PORT% " >nul
+if %errorlevel%==0 (
+  echo.
+  echo ポート %PORT% はすでに使われています。
+  echo 別の「ミクスチャー・サークル v9 サーバー」の窓がまだ開いたままかもしれません。
+  echo その窓を閉じてから、もう一度この bat を実行してください。
+  echo.
+  echo 使っているプロセスはこれです：
+  netstat -ano | findstr /c:"LISTENING" | findstr /c:":%PORT% "
+  echo.
+  pause
+  goto :eof
 )
 
 rem Node を先に使う。Python の http.server は接続の待ち行列が5本しかなく、
@@ -36,6 +56,7 @@ goto :eof
 timeout /t 2 >nul
 start "" http://localhost:%PORT%/index.html
 echo.
-echo ブラウザを開きました。
+echo ブラウザを開きました（http://localhost:%PORT%/index.html）。
+echo 画面の左上が「ミクスチャー・サークル v9」になっていることを確かめてください。
 echo 遊び終わったら、最小化されている「ミクスチャー・サークル v9 サーバー」の窓を閉じてください。
 timeout /t 6 >nul

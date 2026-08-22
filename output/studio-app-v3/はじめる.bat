@@ -11,6 +11,20 @@ if not exist "samples\manifest.js" (
   pause
 )
 
+rem ポートが埋まっていたら、黙って別のアプリを開いてしまわないように止める
+netstat -ano | findstr /c:"LISTENING" | findstr /c:":%PORT% " >nul
+if %errorlevel%==0 (
+  echo.
+  echo ポート %PORT% はすでに使われています。
+  echo サーバーの窓がまだ開いたままかもしれません。
+  echo その窓を閉じてから、もう一度この bat を実行してください。
+  echo.
+  netstat -ano ^| findstr /c:"LISTENING" ^| findstr /c:":%PORT% "
+  echo.
+  pause
+  goto :eof
+)
+
 rem Node を先に使う。Python の http.server は接続の待ち行列が5本しかなく、
 rem 音源236個を一気に読むときに取りこぼす（実測：同時236個で50個しか取れない）。
 rem 同梱の server.js にはその制限が無い。
