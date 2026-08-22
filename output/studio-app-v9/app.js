@@ -511,9 +511,37 @@ ROLE_ORDER.forEach(rk => {
 /* スタイルカード4枚は数字の 6 7 8 9（メロディの 1〜5 の右どなり） */
 WORLD_ORDER.forEach(sk => { KEYMAP[WORLDS[sk].key] = 'style-' + sk; });
 
-let uidBuf = '', uidTimer = null;   // RFIDリーダーが打ち込むUIDを拾うバッファ
-let pendingDigit = null;            // 数字キー(1-8)はMELODYの操作キーと兼用のタイマーID
-const DIGIT_HOLD_MS = 45;           // 人の手より速い連続入力＝リーダーとみなす猶予（体感できない速さ）
+/* ---------------------------------------------------------------------
+   カードリーダーからの入力
+   ---------------------------------------------------------------------
+   リーダーはキーボードとして振る舞い、UIDを1文字ずつ高速に打ち込んで
+   最後に Enter を送る。UIDは**16進数なので a〜f の英字を含む**
+   （例：010095e40c5553）。
+
+   ここが以前壊れていた：数字だけを UID として拾っていたため、
+     ・UIDから英字が抜け落ちて CARD_MAP に一致しない
+     ・しかも a b c d e f はすべて演奏キーなので、UIDを読むたびに
+       関係のない札が次々と鳴ってしまう
+   という二重の事故になっていた。
+
+   直し方：**英数字はすべて同じ道を通す。**
+   1文字来たら
+     ・UIDバッファに足す（400ms 何も来なければ捨てる）
+     ・その文字が演奏キーなら、すぐには鳴らさずに 45ms だけ待つ
+   リーダーの入力なら次の文字か Enter が 45ms 以内に来て打ち消される。
+   手押しなら 45ms 後にふつうに鳴る（人には分からない遅さ）。       */
+let uidBuf = '', uidTimer = null;
+let pendingKey = null;              // 手押しかリーダーかを見分けるための保留
+const KEY_HOLD_MS = 45;             // 人の手より速い連続入力＝リーダーとみなす猶予
+const UID_RESET_MS = 400;           // これだけ間があいたらUIDの途中でも捨てる
+
+/* UIDの大文字小文字の違いで読めなくならないように、小文字で引けるようにしておく */
+const CARD_MAP_LC = {};
+Object.keys(CARD_MAP || {}).forEach(k => { CARD_MAP_LC[k.toLowerCase()] = CARD_MAP[k]; });
+
+function cancelPendingKey() {
+  if (pendingKey) { clearTimeout(pendingKey); pendingKey = null; }
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.repeat) return;
@@ -525,31 +553,30 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Enter') {
-    if (pendingDigit) { clearTimeout(pendingDigit); pendingDigit = null; }
-    if (uidBuf.length >= 6 && CARD_MAP[uidBuf]) insertCard(CARD_MAP[uidBuf]);
+    /* リーダーが打ち終えた合図。最後の1文字が演奏キーでも鳴らさない */
+    cancelPendingKey();
+    clearTimeout(uidTimer);
+    const uid = uidBuf;
     uidBuf = '';
+    if (uid.length < 6) return;
+    const id = CARD_MAP_LC[uid.toLowerCase()];
+    if (id) insertCard(id);
+    else UI.toast(`未登録のカードです（UID: ${uid}）`);
     return;
   }
-  if (/^[0-9]$/.test(e.key)) {
+  if (/^[0-9a-zA-Z]$/.test(e.key)) {
     uidBuf += e.key;
     clearTimeout(uidTimer);
-    uidTimer = setTimeout(() => { uidBuf = ''; }, 400);
+    uidTimer = setTimeout(() => { uidBuf = ''; }, UID_RESET_MS);
 
-    /* 数字キーはMELODYの操作キーと同じ。リーダーがUIDを連打してくるのか
-       1回だけの手押しなのかは次の入力（or Enter）が来るまで分からないので、
-       ごく短く待ってから確定する。リーダーの入力なら次の文字が45ms以内に
-       来て打ち消され、Enterでカード投入に切り替わる。手押しなら45ms後に
-       ふつうに鳴る（体感できない遅さ）。 */
-    if (pendingDigit) clearTimeout(pendingDigit);
-    const digitId = KEYMAP[e.key.toLowerCase()];
-    if (digitId) {
+    cancelPendingKey();
+    const id = KEYMAP[e.key.toLowerCase()];
+    if (id) {
       e.preventDefault();
-      pendingDigit = setTimeout(() => { pendingDigit = null; insertCard(digitId); }, DIGIT_HOLD_MS);
+      pendingKey = setTimeout(() => { pendingKey = null; insertCard(id); }, KEY_HOLD_MS);
     }
     return;
   }
-  const id = KEYMAP[e.key.toLowerCase()];
-  if (id) { e.preventDefault(); insertCard(id); }
 });
 
 /* ============ 6. 起動時：音源の読み込み ============ */
