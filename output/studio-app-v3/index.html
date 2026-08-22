@@ -16,6 +16,11 @@
     --funk:#b8791f;       --funk-a:#ffc861;
     --hiphop:#6b4a9e;     --hiphop-a:#c2a3ff;
     --world:#5d7a3a;      --world-a:#b8e08a;
+    /* スタイルカード4枚（世界を塗り替える札）。20枚とは色の系統を変える */
+    --st-beatles:#8a5a1f;   --st-beatles-a:#ffd08a;
+    --st-kaze:#1f6f6a;      --st-kaze-a:#7ff0e0;
+    --st-modal:#26407e;     --st-modal-a:#94b4ff;
+    --st-hisaishi:#5d3a7a;  --st-hisaishi-a:#d5aaff;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -128,8 +133,8 @@
   /* ===== グリッド：行＝ROLE／列＝GENRE ===== */
   main{flex:1; padding:18px 20px 22px; display:flex; flex-direction:column; gap:16px}
   .grid{
-    display:grid; grid-template-columns:104px repeat(8,1fr); gap:6px;
-    max-width:1680px; width:100%; margin:0 auto;
+    display:grid; grid-template-columns:104px repeat(5,1fr); gap:6px;
+    max-width:1280px; width:100%; margin:0 auto;
   }
   .head-cell{
     display:flex; flex-direction:column; justify-content:flex-end; gap:2px;
@@ -176,6 +181,48 @@
   }
   .cell.reject{animation:shake .3s}
   @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+  /* ===== スタイルカード4枚（世界を塗り替える札） =====
+     20枚（角丸の四角）と区別できるよう、横長・金縁・少し大きく作る */
+  .styles{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+    max-width:1280px; width:100%; margin:0 auto;
+  }
+  .styles-head{
+    max-width:1280px; width:100%; margin:0 auto -8px; display:flex; align-items:baseline; gap:12px;
+  }
+  .styles-head b{font-size:11px; letter-spacing:.14em; color:var(--fg-dim); font-weight:500}
+  .styles-head small{font-size:11px; color:#5f6a80}
+  .style-card{
+    position:relative; overflow:hidden; cursor:pointer; user-select:none;
+    border:1px solid color-mix(in srgb, var(--ga) 45%, var(--line));
+    border-radius:14px; padding:11px 14px 12px; min-height:86px;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--g) 34%, var(--panel)) 0%, var(--panel) 70%);
+    transition:transform .09s, box-shadow .2s, border-color .2s;
+    display:flex; flex-direction:column; gap:1px;
+  }
+  .style-card:hover{transform:translateY(-2px); border-color:var(--ga)}
+  .style-card .skey{
+    position:absolute; top:9px; right:10px; font-size:10px; letter-spacing:.1em; color:var(--fg-dim);
+    border:1px solid var(--line); border-radius:5px; padding:1px 7px; font-family:ui-monospace,monospace;
+  }
+  .style-card .sname{font-size:15px; font-weight:700; letter-spacing:.02em}
+  .style-card .ssub{font-size:9px; letter-spacing:.18em; color:var(--ga); opacity:.85}
+  .style-card .sdesc{font-size:11px; color:var(--fg-dim); margin-top:5px}
+  .style-card .sdetail{font-size:9.5px; color:#5f6a80; line-height:1.5; margin-top:2px}
+  .style-card.arming{border-color:var(--ga); animation:pulse .32s ease-in-out infinite alternate}
+  .style-card.on{
+    border-color:var(--ga); box-shadow:0 0 34px -8px var(--ga);
+    background:linear-gradient(135deg, color-mix(in srgb, var(--g) 78%, var(--panel)) 0%, color-mix(in srgb, var(--g) 30%, var(--panel)) 100%);
+  }
+  .style-card.on .sdesc,.style-card.on .sdetail,.style-card.on .skey{color:#f2e9ff}
+  .style-card.on::after{
+    content:'いまこの世界'; position:absolute; bottom:9px; right:12px;
+    font-size:9px; letter-spacing:.1em; color:#fff; opacity:.75;
+  }
+  /* ヘッダーの「いまの世界」表示 */
+  .world{font-size:13px; font-weight:700; color:var(--fg-dim)}
+  .world.on{color:#ffd479}
 
   /* ===== 下部 ===== */
   .bottom{max-width:1680px; width:100%; margin:0 auto; display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start}
@@ -236,7 +283,9 @@
     <p class="sub">
       カード1枚が <b>バンドのセクション1つ</b>（2〜3楽器のかたまり）。<br>
       出すと <b>合図が鳴り、次の小節頭で一撃とともに入ってきます</b>。<br>
-      <b>4役割 × 8ジャンル ＝ 32枚。</b>重ねるほど大きく、密度が上がっていきます。
+      <b>重ねる札20枚（4役割 × 5ジャンル）＋ 世界を塗り替える札4枚 ＝ 24枚。</b><br>
+      4枚の <b>スタイルカード</b>（ビートルズ／藤井風／マイルス＆エヴァンス／久石譲）は、
+      コード進行・テンポ・楽器・ノリを<b>まるごと入れ替えます</b>。
     </p>
 
     <div class="loadbox">
@@ -285,7 +334,8 @@
     <button class="btn" id="startbtn" disabled>はじめる</button>
     <p class="note">
       音が出ます。<b>できればスピーカーかヘッドホンで。</b>低音とステレオが体験の半分です。<br>
-      コード進行は <b>Cm9 → A♭maj9 → E♭6/9 → B♭sus9</b>。
+      標準の世界のコード進行は <b>Cm9 → A♭maj9 → E♭6/9 → B♭sus9</b>。
+      ここで選んだテンポは標準の世界のもので、スタイルカードを出すとその世界のテンポに変わります。
     </p>
   </div>
 </div>
@@ -298,6 +348,7 @@
     <div id="chordnow">Cm9</div>
     <div id="progdots"><i class="on"></i><i></i><i></i><i></i></div>
   </div>
+  <div class="stat"><span class="world" id="worldnow">標準</span><i>の世界</i></div>
   <div class="stat"><b id="timeleft">3:00</b><i>のこり</i></div>
   <div class="stat"><div id="energy"></div><i><b id="partcount">0</b> / <span id="maxshow">6</span> 枚</i></div>
   <div class="stat"><b id="bpmshow">104</b><i>BPM</i></div>
@@ -310,6 +361,12 @@
 <main>
   <div class="grid" id="grid"></div>
 
+  <div class="styles-head">
+    <b>STYLE — 世界を塗り替える4枚</b>
+    <small>出すと、いま鳴っている音がそのまま別の音楽に翻訳されます（同じ札をもう一度出すと標準に戻ります）</small>
+  </div>
+  <div class="styles" id="styles"></div>
+
   <div class="bottom">
     <div class="now">
       <h3>いま鳴っている音</h3>
@@ -317,7 +374,9 @@
     </div>
     <div class="help">
       <b>行＝ROLE（役割）／列＝GENRE（ジャンル）</b>。キーボードの並びがそのままグリッドです。<br>
-      各マスの小さな文字が、そのカードに入っている<b>楽器の組み合わせ</b>です。<br>
+      各マスの小さな文字が、そのカードに入っている<b>楽器の組み合わせ</b>。
+      スタイルカードを出すと<b>この表示ごと変わります</b>（＝楽器が入れ替わった証拠）。<br>
+      スタイルカードは <kbd>6</kbd> <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd>。<br>
       <kbd>Backspace</kbd> 最後に入れた音を消す　<kbd>Esc</kbd> 終了　クリックでも投入できます。
     </div>
   </div>

@@ -14,6 +14,8 @@ const State = {
   quantize: 'bar',        // 'bar'（気持ちいい）｜'beat'（速い）
   maxParts: 6,            // 同時に鳴らせる枚数（開始画面で変えられる）
   durationSec: 180,
+  baseBpm: 104,           // 開始画面で選んだテンポ（＝標準の世界のテンポ）
+  styleBusy: false,       // スタイルカードの切り替え待ちのあいだ true
   elapsed: 0,
   parts: new Map(),       // id -> Part
   order: [],              // 投入順（古い順）
@@ -27,11 +29,14 @@ const State = {
   },
 };
 
+function isStyleCard(id) { return id.startsWith('style-') && !!STYLES[id.slice(6)]; }
+
 function cardOf(id) {
   const [g, r] = id.split('-');
   return (CARDS[g] && CARDS[g][r]) ? CARDS[g][r] : null;
 }
 function labelOf(id) {
+  if (isStyleCard(id)) return STYLES[id.slice(6)].label;
   const [g, r] = id.split('-');
   return `${GENRES[g].label}の${ROLES[r].jp}`;
 }
@@ -45,7 +50,11 @@ function barSeconds() { return (60 / Tone.Transport.bpm.value) * 4; }
    この3つが揃って初めて「音を足した」ことが快感になる。            */
 function insertCard(cardId) {
   if (!State.playing || State.paused) return;
+  if (isStyleCard(cardId)) { requestStyle(cardId.slice(6)); return; }
   if (!cardOf(cardId)) return;
+  /* 世界の切り替え中（合図から着地までの約1小節）は投入を受けない。
+     テンポが変わる瞬間をまたいで予約すると、鳴り始めの位置がずれるため */
+  if (State.styleBusy) { UI.reject(cardId); UI.toast('切り替え中です。少し待ってください'); return; }
 
   const now = performance.now();
   if (now - (State.lastInput.get(cardId) || 0) < RETRIGGER_GUARD_MS) return;
@@ -124,6 +133,97 @@ function nextBoundaryTicks() {
   return target;
 }
 
+/* スタイル切り替え用の区切り。1拍前に「仕込み」をするので、
+   いまから 1.5拍 以上先の小節頭を選ぶ（近すぎると仕込みが間に合わない） */
+function styleBoundaryTicks() {
+  const ppq = Tone.Transport.PPQ, q = ppq * 4;
+  const cur = Tone.Transport.ticks;
+  let target = Math.ceil((cur + 2) / q) * q;
+  while (target - cur < ppq * 1.5) target += q;
+  return target;
+}
+
+/* ============ 2-b. スタイルカード：世界をまるごと塗り替える ============
+   譜面は1つも書き換えない。変わるのは
+     コード進行（調ごと）／テンポ／跳ね／楽器／ドラムキット／和音の積み方／
+     残響とディレイと左右の広がり／メロディのハモリ
+   いま鳴っているカードは、次の小節頭で「同じ役割のまま別の楽器」に化ける。
+
+   同じスタイルカードをもう一度出すと標準の世界に戻る（4枚で5つの世界）。 */
+function requestStyle(styleKey) {
+  if (!STYLES[styleKey]) return;
+  if (State.styleBusy) { UI.toast('切り替え中です'); return; }
+
+  const target = (Style.key === styleKey) ? null : styleKey;   // 同じ札＝解除
+  const entryTicks = styleBoundaryTicks();
+  const ppq = Tone.Transport.PPQ;
+
+  State.styleBusy = true;
+  UI.styleArm(styleKey);
+  playCue(Tone.now() + 0.02);          // 受け付けた合図（1枚出したときと同じ音）
+
+  /* 1拍前に仕込む。この時点の tPrep は正確な音の時刻なので、
+     境目の時刻は「tPrep ＋ 1拍」で確定できる（テンポはまだ変わっていない） */
+  Tone.Transport.scheduleOnce((tPrep) => {
+    const oldBpm = Tone.Transport.bpm.value;
+    const tEdge = tPrep + 60 / oldBpm;
+    const def = target ? STYLES[target] : null;
+    const newBpm = def ? def.bpm : State.baseBpm;
+
+    /* 世界の定数を差し替える。ここから作る Part は新しい世界の住人になる */
+    Style.set(target);
+    applyStyleTone(0.5);
+    BaseBeat.restyle();
+
+    /* いま鳴っているカードを、同じIDのまま作り直す（＝楽器が化ける） */
+    const rebuilt = [];
+    State.order.forEach(id => {
+      if (!cardOf(id)) return;
+      const [gk, rk] = id.split('-');
+      State.panSeed = -State.panSeed || 1;
+      try { rebuilt.push([id, new Part(gk, rk, State.panSeed)]); } catch (e) { /* 1枚落ちても続ける */ }
+    });
+
+    /* 古い音は境目に向かって消す */
+    const old = [];
+    State.parts.forEach(p => {
+      old.push(p);
+      try {
+        p.gain.gain.cancelScheduledValues(tPrep);
+        p.gain.gain.setValueAtTime(p.gain.gain.value, tPrep);
+        p.gain.gain.linearRampToValueAtTime(0.0001, tEdge);
+      } catch (e) {}
+    });
+
+    /* 転換の音（ふくらんで、境目で切れて、一撃） */
+    playTurn(tEdge, 60 / oldBpm);
+
+    /* テンポと跳ねは境目ちょうどで切り替える。
+       bpm は「その時刻に切り替える」形で予約する（値を直接代入すると
+       すでに予約済みの音の位置がずれて、鳴らないカードが出る） */
+    try { Tone.Transport.bpm.setValueAtTime(newBpm, tEdge); } catch (e) { Tone.Transport.bpm.value = newBpm; }
+    Tone.Transport.swing = def ? (def.swing || 0) : 0;
+    Tone.Transport.swingSubdivision = def ? (def.swingSub || '8n') : '8n';
+
+    /* 新しい世界の音を、境目ちょうどから鳴らし始める */
+    const barSec = (60 / newBpm) * 4;
+    State.parts.clear();
+    rebuilt.forEach(([id, p]) => {
+      try { p.start(tEdge, entryTicks, barSec, true); State.parts.set(id, p); } catch (e) {}
+    });
+    setTimeout(() => old.forEach(p => { try { p.dispose(); } catch (e) {} }), 900);
+
+    Tone.Draw.schedule(() => {
+      State.styleBusy = false;
+      UI.styleApplied();
+      UI.punch();
+      UI.energy();
+      document.getElementById('bpmshow').textContent = Math.round(newBpm);
+      UI.toast(target ? `${STYLES[target].label} の世界になりました` : '標準の世界に戻りました');
+    }, tEdge);
+  }, (entryTicks - ppq) + 'i');
+}
+
 function secondsAtTicks(ticks) {
   const ppq = Tone.Transport.PPQ;
   const beats = (ticks - Tone.Transport.ticks) / ppq;
@@ -134,7 +234,11 @@ function secondsAtTicks(ticks) {
 async function startGame(bpm) {
   await Tone.start();
   await buildAudio();
+  State.baseBpm = bpm;
+  Style.set(null);                 // いつも「標準の世界」から始まる
+  applyStyleTone(0.01);
   Tone.Transport.bpm.value = bpm;
+  Tone.Transport.swing = 0;
   Tone.Transport.timeSignature = 4;
 
   BaseBeat.start();
@@ -216,7 +320,49 @@ const UI = {
         UI.cells[id] = c;
       });
     });
+
+    /* スタイルカード4枚。20枚とは形も色も変えて「別種の札」だと分かるようにする */
+    const strip = document.getElementById('styles');
+    strip.innerHTML = '';
+    STYLE_ORDER.forEach(sk => {
+      const s = STYLES[sk];
+      const c = el('div', 'style-card', '');
+      c.style.setProperty('--g', `var(--st-${sk})`);
+      c.style.setProperty('--ga', `var(--st-${sk}-a)`);
+      c.innerHTML = `<div class="skey">${s.key}</div>
+                     <div class="sname">${s.label}</div>
+                     <div class="ssub">${s.sub}</div>
+                     <div class="sdesc">${s.desc}</div>
+                     <div class="sdetail">${s.detail}</div>`;
+      c.addEventListener('click', () => insertCard('style-' + sk));
+      strip.appendChild(c);
+      UI.styleCells[sk] = c;
+    });
+    UI.styleApplied();
     UI.time();
+  },
+
+  styleCells: {},
+
+  /* 受け付けた直後（着地するまで）光らせる */
+  styleArm(sk) {
+    Object.values(UI.styleCells).forEach(c => c.classList.remove('arming'));
+    const c = UI.styleCells[sk]; if (c) c.classList.add('arming');
+  },
+  /* 着地後：いまの世界を示す */
+  styleApplied() {
+    STYLE_ORDER.forEach(sk => {
+      const c = UI.styleCells[sk]; if (!c) return;
+      c.classList.remove('arming');
+      c.classList.toggle('on', Style.key === sk);
+    });
+    const now = document.getElementById('worldnow');
+    if (now) {
+      now.textContent = Style.label();
+      now.className = Style.key ? 'world on' : 'world';
+    }
+    document.body.classList.toggle('styled', !!Style.key);
+    UI.markSources();          // 各マスの楽器名を、いまの世界のものに書き換える
   },
 
   markSources() {
@@ -224,15 +370,20 @@ const UI = {
       const c = UI.cells[gk + '-' + rk]; if (!c) return;
       const card = CARDS[gk][rk];
       let real = 0, total = 0;
+      /* スタイルカードが出ているときは、読み替えたあとの楽器を表示する。
+         「同じ札が別の楽器になった」ことが目で分かるのが大事 */
+      const voices = card.layers.map(sp => Style.voice(sp.voice)).filter(v => v && VOICES[v]);
       card.layers.forEach(sp => {
-        const vo = VOICES[sp.voice];
+        const key = Style.voice(sp.voice);
+        if (!key || !VOICES[key]) return;
+        const vo = VOICES[key];
         if (vo.kind === 'synth') return;      // シンセは元々合成音なので数えない
         total++;
-        if (vo.kind === 'kit') { if (kitUrls(sp.kit)) real++; }
-        else if (samplerUrls(sp.voice)) real++;
+        if (vo.kind === 'kit') { if (kitUrls(Style.kit(sp.kit))) real++; }
+        else if (samplerUrls(key)) real++;
       });
       const s = c.querySelector('.src');
-      const names = card.layers.map(sp => VOICES[sp.voice].label).join(' ＋ ');
+      const names = voices.map(v => VOICES[v].label).join(' ＋ ');
       s.textContent = names;
       s.className = 'src' + (total > 0 && real === total ? ' real' : '');
     }));
@@ -342,8 +493,12 @@ const KEYMAP = {};
 ROLE_ORDER.forEach(rk => {
   ROLES[rk].keys.forEach((k, i) => { KEYMAP[k] = GENRE_ORDER[i] + '-' + rk; });
 });
+/* スタイルカード4枚は数字の 6 7 8 9（メロディの 1〜5 の右どなり） */
+STYLE_ORDER.forEach(sk => { KEYMAP[STYLES[sk].key] = 'style-' + sk; });
 
 let uidBuf = '', uidTimer = null;   // RFIDリーダーが打ち込むUIDを拾うバッファ
+let pendingDigit = null;            // 数字キー(1-8)はMELODYの操作キーと兼用のタイマーID
+const DIGIT_HOLD_MS = 45;           // 人の手より速い連続入力＝リーダーとみなす猶予（体感できない速さ）
 
 document.addEventListener('keydown', (e) => {
   if (e.repeat) return;
@@ -355,6 +510,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Enter') {
+    if (pendingDigit) { clearTimeout(pendingDigit); pendingDigit = null; }
     if (uidBuf.length >= 6 && CARD_MAP[uidBuf]) insertCard(CARD_MAP[uidBuf]);
     uidBuf = '';
     return;
@@ -363,6 +519,19 @@ document.addEventListener('keydown', (e) => {
     uidBuf += e.key;
     clearTimeout(uidTimer);
     uidTimer = setTimeout(() => { uidBuf = ''; }, 400);
+
+    /* 数字キーはMELODYの操作キーと同じ。リーダーがUIDを連打してくるのか
+       1回だけの手押しなのかは次の入力（or Enter）が来るまで分からないので、
+       ごく短く待ってから確定する。リーダーの入力なら次の文字が45ms以内に
+       来て打ち消され、Enterでカード投入に切り替わる。手押しなら45ms後に
+       ふつうに鳴る（体感できない遅さ）。 */
+    if (pendingDigit) clearTimeout(pendingDigit);
+    const digitId = KEYMAP[e.key.toLowerCase()];
+    if (digitId) {
+      e.preventDefault();
+      pendingDigit = setTimeout(() => { pendingDigit = null; insertCard(digitId); }, DIGIT_HOLD_MS);
+    }
+    return;
   }
   const id = KEYMAP[e.key.toLowerCase()];
   if (id) { e.preventDefault(); insertCard(id); }

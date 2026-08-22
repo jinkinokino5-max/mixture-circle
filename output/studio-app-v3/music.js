@@ -33,7 +33,9 @@ const PROG = [
   { name: 'E♭6/9',  root:  3, vc: [ 3, 7,10, 12, 17], lad: [0, 3, 5,  7, 10, 12, 15, 17, 19] },
   { name: 'B♭sus9', root: -2, vc: [-2, 2, 5,  8, 12], lad: [0, 2, 5, 10, 12, 14, 17, 22, 24] },
 ];
-function chordAt(bar) { return PROG[((bar % 4) + 4) % 4]; }
+/* いま有効な進行を返す。スタイルカード（9章）が出ていればそちらの進行になる */
+function currentProg() { return (Style.def && Style.def.prog) ? Style.def.prog : PROG; }
+function chordAt(bar) { const P = currentProg(); return P[((bar % 4) + 4) % 4]; }
 
 /* 梯子の番号 → 半音。範囲外は1オクターブずつ足して伸ばす */
 function ladSemi(ch, i) {
@@ -61,31 +63,33 @@ function bassSemi(ch, c) {
 const ROLES = {
   melody: {
     label: 'MELODY', jp: 'メロディ', desc: '曲の「顔」・主旋律',
-    keys: ['1', '2', '3', '4', '5', '6', '7', '8'],
+    keys: ['1', '2', '3', '4', '5'],
     oct: 4, hp: 180, lp: 15000, gain: -6, send: 0.34, delay: 0.22, pan: 0.18,
   },
   bass: {
     label: 'BASS', jp: 'ベース', desc: '曲の「足元」・低音と安定感',
-    keys: ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'],
+    keys: ['q', 'w', 'e', 'r', 't'],
     oct: 2, hp: 24, lp: 3200, gain: -3, send: 0.05, delay: 0, pan: 0,
   },
   rhythm: {
     label: 'RHYTHM', jp: 'リズム', desc: '曲の「動き」・拍とノリ',
-    keys: ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k'],
+    keys: ['a', 's', 'd', 'f', 'g'],
     oct: 0, hp: 26, lp: 17000, gain: -4, send: 0.14, delay: 0, pan: 0,
   },
   chord: {
     label: 'CHORD', jp: 'コード', desc: '曲の「空間」・和音と厚み',
-    keys: ['z', 'x', 'c', 'v', 'b', 'n', 'm', ','],
+    keys: ['z', 'x', 'c', 'v', 'b'],
     oct: 3, hp: 110, lp: 13000, gain: -5, send: 0.30, delay: 0.10, pan: 0.30,
   },
 };
 const ROLE_ORDER = ['melody', 'bass', 'rhythm', 'chord'];
 
 /* ============ 4. ジャンル（グリッドの列） ============
-   8ジャンル × 4役割 ＝ 32枚。
-   ファンク／ヒップホップ／ワールドは v3 で追加した。
-   ワールド（民族音楽）は企画書に「拡張枠」として書かれていたもの。   */
+   5ジャンル × 4役割 ＝ 重ねるカード20枚。これに9章のスタイルカード4枚を足して計24枚。
+
+   ※ funk / hiphop / world の3ジャンル（12枚）は、24枚構成に絞るため
+     GENRE_ORDER から外してある。譜面そのものは下の CARDS に残してあるので、
+     GENRE_ORDER に名前を戻せばいつでも復活する（消していない）。       */
 const GENRES = {
   rock:       { label: 'ロック',     sub: 'ROCK',       desc: '力強い・激しい' },
   funk:       { label: 'ファンク',   sub: 'FUNK',       desc: '16分・粘る・踊れる' },
@@ -96,33 +100,40 @@ const GENRES = {
   electronic: { label: 'エレクトロ', sub: 'ELECTRONIC', desc: '未来的・機械的・反復' },
   pop:        { label: 'ポップ',     sub: 'POP',        desc: '明るい・親しみやすい' },
 };
-const GENRE_ORDER = ['rock', 'funk', 'hiphop', 'jazz', 'classical', 'world', 'electronic', 'pop'];
+const GENRE_ORDER = ['rock', 'jazz', 'classical', 'electronic', 'pop'];
+/* 休止中のジャンル（譜面は CARDS に残っている）。戻すときは上の配列に足す */
+const GENRE_BENCH = ['funk', 'hiphop', 'world'];
 
 /* ============ 5. 音源の一覧 ============
-   kind  'sampler' 実録音 / 'kit' 実録音ドラム / 'synth' 合成音        */
+   kind  'sampler' 実録音 / 'kit' 実録音ドラム / 'synth' 合成音
+   ctr   その楽器の「中心オクターブ」。実際に録音されている音域の真ん中。
+         スタイルカードで楽器を読み替えるとき、この差ぶんだけ
+         オクターブを自動でずらす（シンセリード ctr5 → ギター ctr3 なら
+         2オクターブ下げる）。これが無いと、ギターに読み替えた瞬間に
+         音源の最高音を2オクターブ超えて不自然に伸びた音になる。      */
 const VOICES = {
-  piano:             { label: 'ピアノ',           kind: 'sampler', env: { attack: 0,     release: 1.6 }, fb: 'poly' },
-  organ:             { label: 'オルガン',         kind: 'sampler', env: { attack: 0.01,  release: 0.5 }, fb: 'organ' },
-  harmonium:         { label: 'ハルモニウム',     kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, fb: 'organ' },
-  harp:              { label: 'ハープ',           kind: 'sampler', env: { attack: 0,     release: 2.2 }, fb: 'poly' },
-  xylophone:         { label: 'シロフォン',       kind: 'sampler', env: { attack: 0,     release: 0.8 }, fb: 'bell' },
-  'guitar-electric': { label: 'エレキギター',     kind: 'sampler', env: { attack: 0.002, release: 0.5 }, fb: 'pluck' },
-  'guitar-acoustic': { label: 'アコギ',           kind: 'sampler', env: { attack: 0.003, release: 1.0 }, fb: 'pluck' },
-  'guitar-nylon':    { label: 'ガットギター',     kind: 'sampler', env: { attack: 0.004, release: 1.1 }, fb: 'pluck' },
-  'bass-electric':   { label: 'エレキベース',     kind: 'sampler', env: { attack: 0.002, release: 0.35 }, fb: 'mono' },
-  contrabass:        { label: 'ウッドベース',     kind: 'sampler', env: { attack: 0.008, release: 0.45 }, fb: 'mono' },
-  cello:             { label: 'チェロ',           kind: 'sampler', env: { attack: 0.05,  release: 1.0 }, fb: 'bow' },
-  violin:            { label: 'バイオリン',       kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, fb: 'bow' },
-  flute:             { label: 'フルート',         kind: 'sampler', env: { attack: 0.03,  release: 0.6 }, fb: 'bow' },
-  clarinet:          { label: 'クラリネット',     kind: 'sampler', env: { attack: 0.03,  release: 0.5 }, fb: 'reed' },
-  saxophone:         { label: 'サックス',         kind: 'sampler', env: { attack: 0.012, release: 0.35 }, fb: 'reed' },
-  trumpet:           { label: 'トランペット',     kind: 'sampler', env: { attack: 0.01,  release: 0.3 }, fb: 'reed' },
-  trombone:          { label: 'トロンボーン',     kind: 'sampler', env: { attack: 0.02,  release: 0.4 }, fb: 'reed' },
-  'french-horn':     { label: 'ホルン',           kind: 'sampler', env: { attack: 0.04,  release: 0.8 }, fb: 'bow' },
-  'synth-lead':      { label: 'シンセリード',     kind: 'synth', fb: 'lead' },
-  'synth-bass':      { label: 'シンセベース',     kind: 'synth', fb: 'sbass' },
-  'synth-pad':       { label: 'シンセパッド',     kind: 'synth', fb: 'pad' },
-  sub:               { label: 'サブベース',       kind: 'synth', fb: 'sub' },
+  piano:             { label: 'ピアノ',           kind: 'sampler', env: { attack: 0,     release: 1.6 }, ctr: 4, fb: 'poly' },
+  organ:             { label: 'オルガン',         kind: 'sampler', env: { attack: 0.01,  release: 0.5 }, ctr: 4, fb: 'organ' },
+  harmonium:         { label: 'ハルモニウム',     kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, ctr: 3, fb: 'organ' },
+  harp:              { label: 'ハープ',           kind: 'sampler', env: { attack: 0,     release: 2.2 }, ctr: 3, fb: 'poly' },
+  xylophone:         { label: 'シロフォン',       kind: 'sampler', env: { attack: 0,     release: 0.8 }, ctr: 5, fb: 'bell' },
+  'guitar-electric': { label: 'エレキギター',     kind: 'sampler', env: { attack: 0.002, release: 0.5 }, ctr: 3, fb: 'pluck' },
+  'guitar-acoustic': { label: 'アコギ',           kind: 'sampler', env: { attack: 0.003, release: 1.0 }, ctr: 3, fb: 'pluck' },
+  'guitar-nylon':    { label: 'ガットギター',     kind: 'sampler', env: { attack: 0.004, release: 1.1 }, ctr: 3, fb: 'pluck' },
+  'bass-electric':   { label: 'エレキベース',     kind: 'sampler', env: { attack: 0.002, release: 0.35 }, ctr: 2, fb: 'mono' },
+  contrabass:        { label: 'ウッドベース',     kind: 'sampler', env: { attack: 0.008, release: 0.45 }, ctr: 2, fb: 'mono' },
+  cello:             { label: 'チェロ',           kind: 'sampler', env: { attack: 0.05,  release: 1.0 }, ctr: 3, fb: 'bow' },
+  violin:            { label: 'バイオリン',       kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, ctr: 4, fb: 'bow' },
+  flute:             { label: 'フルート',         kind: 'sampler', env: { attack: 0.03,  release: 0.6 }, ctr: 5, fb: 'bow' },
+  clarinet:          { label: 'クラリネット',     kind: 'sampler', env: { attack: 0.03,  release: 0.5 }, ctr: 4, fb: 'reed' },
+  saxophone:         { label: 'サックス',         kind: 'sampler', env: { attack: 0.012, release: 0.35 }, ctr: 4, fb: 'reed' },
+  trumpet:           { label: 'トランペット',     kind: 'sampler', env: { attack: 0.01,  release: 0.3 }, ctr: 4, fb: 'reed' },
+  trombone:          { label: 'トロンボーン',     kind: 'sampler', env: { attack: 0.02,  release: 0.4 }, ctr: 3, fb: 'reed' },
+  'french-horn':     { label: 'ホルン',           kind: 'sampler', env: { attack: 0.04,  release: 0.8 }, ctr: 3, fb: 'bow' },
+  'synth-lead':      { label: 'シンセリード',     kind: 'synth', ctr: 5, fb: 'lead' },
+  'synth-bass':      { label: 'シンセベース',     kind: 'synth', ctr: 2, fb: 'sbass' },
+  'synth-pad':       { label: 'シンセパッド',     kind: 'synth', ctr: 3, fb: 'pad' },
+  sub:               { label: 'サブベース',       kind: 'synth', ctr: 2, fb: 'sub' },
   drums:             { label: 'ドラム',           kind: 'kit' },
 };
 
@@ -800,7 +811,7 @@ function arpBar(indices) {
 /* ============ 8. 和音の積み方 ============ */
 function voicing(kind, ch, oct) {
   const V = ch.vc;
-  switch (kind) {
+  switch (Style.voicingKind(kind)) {
     case 'power':                                   // ロック：ルートと5度だけ
       return [ch.root, ch.root + 7, ch.root + 12];
     case 'rootless':                                // ジャズ：ルートを抜く（ベースに任せる）
@@ -818,3 +829,230 @@ function voicing(kind, ch, oct) {
 
 /* 強いイベントか（when:'accent' のレイヤーはここが true のときだけ鳴る） */
 function isAccent(ev) { return (ev.v || 0) >= 0.62; }
+
+/* =====================================================================
+   9. スタイルカード4枚（＝世界を塗り替えるレンズ）
+   ---------------------------------------------------------------------
+   このカードは譜面を持たない。持っているのは「世界の定数」だけ：
+
+     prog       コード進行そのもの（4小節ぶん・調も変わる）
+     bpm        テンポ
+     swing      跳ね（Tone.Transport.swing）
+     voiceMap   楽器の読み替え表（元の楽器 → その世界の楽器）
+     trim       読み替えたあとの音量調整（dB）
+     kit        ドラムキット
+     drumMap    打楽器の読み替え（'c'クラップ→'h'ライド、null＝鳴らさない）
+     voicingMap 和音の積み方の読み替え（パワーコード→4度堆積、など）
+     harmony    メロディに重ねるハモリ（音の梯子で何段上か。null＝なし）
+     音場        sendScale(残響) / delayScale / panScale / air / mud
+
+   20枚のカードは1枚も書き換えない。同じ譜面が、別の調・別の楽器・
+   別のノリに「翻訳」されて出てくる。
+
+   ── 各レンズの根拠（調べたこと）は README の「スタイルカードの設計根拠」に
+      まとめてある。ここには結果だけを書く。
+   ===================================================================== */
+const STYLES = {
+
+  /* ───────────── ビートルズ ─────────────
+     調べたこと：I–IV–V を土台にしつつ、♭VII（C in D）と
+     ダイアトニックでない長調のII（E7 in D）が、I/IV/V/ii/vi に次いで
+     多用される――これがビートルズの和声の指紋。終止は ♭VII→I の
+     二重プラガル。テンポは主要アルバムの平均が 104〜124BPM。
+     編成はアコギ＋エレキ＋ベース＋ドラム＋ピアノ／オルガン、
+     そして「3度でハモる2声のボーカル」。録音は乾いていて左右も狭い。 */
+  beatles: {
+    label: 'ビートルズ', sub: 'THE BEATLES', key: '6',
+    desc: '明るいギターバンド',
+    detail: 'D調・118BPM・♭VII と II7・3度のハモリ',
+    /* D6/9 → E7(長調のII) → G6/9(IV) → C6/9(♭VII) → 頭のDへ戻る。
+       ループの継ぎ目が C→D ＝ ♭VII→I（"Hey Jude" のコーダの終止）になる */
+    prog: [
+      { name: 'D6/9',  root:  2, vc: [ 2,  6,  9, 11, 16], lad: [2, 4, 6,  9, 11, 14, 16, 18, 21] },
+      { name: 'E7',    root:  4, vc: [ 4,  8, 11, 14, 18], lad: [4, 6, 8, 11, 14, 16, 18, 20, 23] },
+      { name: 'G6/9',  root:  7, vc: [ 7, 11, 14, 16, 21], lad: [2, 4, 7,  9, 11, 14, 16, 19, 21] },
+      { name: 'C6/9',  root:  0, vc: [ 0,  4,  7,  9, 14], lad: [0, 2, 4,  7,  9, 12, 14, 16, 19] },
+    ],
+    bpm: 118, swing: 0, swingSub: '8n',
+    harmony: 2,                       // 梯子2段上＝その和音の中の3度上でハモる
+    voiceMap: {
+      'synth-lead': 'guitar-electric', 'synth-pad': 'organ', 'synth-bass': 'bass-electric',
+      'guitar-nylon': 'guitar-acoustic', harp: 'piano', xylophone: 'piano',
+      saxophone: 'trumpet', contrabass: 'bass-electric',
+      /* バイオリン・チェロ・フルート・クラリネット・ハルモニウムは
+         そのまま残す（『エリナー・リグビー』の弦、『恋を抱きしめよう』の
+         管など、実際にビートルズが使った楽器なので） */
+    },
+    trim: { sub: -7, organ: +1, 'guitar-acoustic': +1 },
+    kit: 'Kit3', drumMap: {},
+    voicingMap: { pad: 'open' },
+    sendScale: 0.62, delayScale: 0.25, panScale: 0.55,
+    air: 3.5, mud: -1.0, drumGain: +1, energyScale: 1.0,
+  },
+
+  /* ───────────── 藤井風 ─────────────
+     調べたこと：Ⅱm→Ⅴ→Ⅰ→Ⅵ の循環（「花」は Fm→B♭→E♭→C）に
+     テンションとオンコードを乗せる。♭9 を持つセカンダリードミナント
+     （B7♭9・G#7♭9）と「Ⅰadd9/Ⅲ」が手癖。ゴスペル／R&B の歌い回し。
+     テンポは遅め（何なんw 90／帰ろう 92／死ぬのがいいわ 79）。
+     中心はピアノ、低音は深く、ドラムは手数が少ない。                  */
+  kaze: {
+    label: '藤井風', sub: 'FUJII KAZE', key: '7',
+    desc: 'ピアノとゴスペル',
+    detail: 'E♭調・88BPM・Ⅱm–Ⅴ–Ⅰ–Ⅵ7(♭9)・16分の跳ね',
+    prog: [
+      { name: 'Fm9',    root:  5, vc: [ 5,  8, 12, 15, 19], lad: [3, 5, 7,  8, 12, 15, 17, 19, 20] },
+      { name: 'B♭9',    root: -2, vc: [-2,  2,  5,  8, 12], lad: [2, 5, 7, 10, 12, 14, 17, 19, 22] },
+      { name: 'E♭maj9', root:  3, vc: [ 3,  7, 10, 14, 17], lad: [3, 5, 7, 10, 12, 15, 17, 19, 22] },
+      /* Ⅵ7(♭9)：Fm へ戻るためのセカンダリードミナント。この1小節だけ
+         D♭（♭9）が入って景色が翳る。藤井風の曲でいちばん耳につく音 */
+      { name: 'C7♭9',   root:  0, vc: [ 0,  4,  7, 10, 13], lad: [1, 4, 7, 10, 12, 13, 16, 19, 22] },
+    ],
+    bpm: 88, swing: 0.22, swingSub: '16n',
+    harmony: null,
+    voiceMap: {
+      'synth-lead': 'piano', 'synth-pad': 'organ', 'synth-bass': 'bass-electric',
+      'guitar-electric': 'guitar-acoustic', 'guitar-nylon': 'guitar-acoustic',
+      harp: 'piano', xylophone: 'piano', harmonium: 'organ',
+      clarinet: 'saxophone', flute: 'piano', 'french-horn': 'trombone',
+    },
+    trim: { piano: +2, sub: +1, drums: -2, organ: -1 },
+    kit: 'Kit8', drumMap: {},
+    voicingMap: { power: 'open', triad: 'full' },
+    sendScale: 1.10, delayScale: 1.20, panScale: 0.80,
+    air: 2.0, mud: -3.5, drumGain: -2, energyScale: 0.98,
+  },
+
+  /* ───────────── マイルス・デイヴィス／ビル・エヴァンス ─────────────
+     調べたこと：『カインド・オブ・ブルー』の "So What" は
+     D ドリアン16小節 → E♭ ドリアン8小節 → D ドリアン8小節。
+     和音は動かない（モード）。ビル・エヴァンスはルートを弾かず、
+     3度堆積ではなく4度堆積（"So What コード"＝下から E-A-D-G-B）で
+     長短どちらでもない色を作る。ベースはウォーキング、
+     ジミー・コブはライドとブラシ。全体に音量が小さく、間がある。      */
+  modal: {
+    label: 'マイルス／エヴァンス', sub: 'MODAL JAZZ', key: '8',
+    desc: '夜のモードジャズ',
+    detail: 'Dドリアン・132BPM・4度堆積・半音上へずれる3小節目',
+    /* 3小節目だけ半音上（E♭ドリアン）へずれて戻る＝"So What" の仕掛け。
+       vc は So What コードそのもの（下から E A D G B ＝ 4度を3つ積んで
+       いちばん上だけ3度）。root は別に持っているのでベースが支える     */
+    prog: [
+      { name: 'Dm11',  root:  2, vc: [ 4,  9, 14, 19, 23], lad: [2, 4, 5, 7,  9, 11, 12, 14, 16] },
+      { name: 'Dm11',  root:  2, vc: [ 4,  9, 14, 19, 23], lad: [2, 4, 5, 7,  9, 11, 12, 14, 16] },
+      { name: 'E♭m11', root:  3, vc: [ 5, 10, 15, 20, 24], lad: [3, 5, 6, 8, 10, 12, 13, 15, 17] },
+      { name: 'Dm11',  root:  2, vc: [ 4,  9, 14, 19, 23], lad: [2, 4, 5, 7,  9, 11, 12, 14, 16] },
+    ],
+    bpm: 132, swing: 0.35, swingSub: '8n',
+    harmony: null,
+    voiceMap: {
+      /* 『カインド・オブ・ブルー』にギターもシンセも入っていない。
+         全部をトランペット／サックス／ピアノ／ウッドベースに寄せる */
+      'guitar-electric': 'piano', 'guitar-acoustic': 'piano', 'guitar-nylon': 'piano',
+      'synth-lead': 'trumpet', 'synth-pad': 'piano', 'synth-bass': 'contrabass',
+      'bass-electric': 'contrabass', organ: 'piano', harmonium: 'piano',
+      harp: 'piano', xylophone: 'piano', violin: 'trumpet', cello: 'trombone',
+      flute: 'saxophone', clarinet: 'saxophone', 'french-horn': 'trombone',
+    },
+    trim: { sub: -10, piano: -1, drums: -4 },
+    kit: 'acoustic-kit',
+    /* クラップはジャズに存在しない。ライド（ハイハット）に読み替える */
+    drumMap: { c: 'h' },
+    voicingMap: { power: 'rootless', open: 'rootless', pad: 'full', triad: 'rootless' },
+    sendScale: 1.25, delayScale: 0.35, panScale: 0.90,
+    air: 1.0, mud: -1.5, drumGain: -3, energyScale: 0.85,
+  },
+
+  /* ───────────── 久石譲 ─────────────
+     調べたこと：sus4/sus2/11th を多用し、4度堆積で和音を作る。
+     分数コード（Em/G・C/E・Fm7/E♭）と借用和音（ハ長調に Fm）、
+     サビ後半で半音下の ♭IIImaj7 に飛んで景色を変える。
+     メロディはペンタトニック。編成は弦・ピアノ・ハープ・ホルンで、
+     空気感（広い残響）が持ち味。テンポは遅い。                        */
+  hisaishi: {
+    label: '久石譲', sub: 'JOE HISAISHI', key: '9',
+    desc: '映画音楽のオーケストラ',
+    detail: 'ハ長調・76BPM・♭IIImaj7 と借用のⅣm・広い残響',
+    /* C → F → E♭maj7(♭III の代理) → Fm7(借用したⅣm) → 頭のCへ。
+       最後の Fm7→C が「ジブリの切なさ」の正体（ⅣmからⅠへのプラガル） */
+    prog: [
+      { name: 'Cadd9',  root:  0, vc: [ 0,  4,  7, 11, 14], lad: [0, 2, 4,  7,  9, 12, 14, 16, 19] },
+      { name: 'Fmaj9',  root:  5, vc: [ 5,  9, 12, 16, 19], lad: [0, 2, 5,  7,  9, 12, 14, 17, 19] },
+      { name: 'E♭maj9', root:  3, vc: [ 3,  7, 10, 14, 17], lad: [3, 5, 7, 10, 12, 15, 17, 19, 22] },
+      { name: 'Fm9',    root:  5, vc: [ 5,  8, 12, 15, 19], lad: [3, 5, 8, 10, 12, 15, 17, 20, 22] },
+    ],
+    bpm: 76, swing: 0, swingSub: '8n',
+    harmony: null,
+    voiceMap: {
+      'guitar-electric': 'harp', 'guitar-acoustic': 'harp', 'guitar-nylon': 'harp',
+      'synth-lead': 'flute', 'synth-pad': 'violin', 'synth-bass': 'cello',
+      'bass-electric': 'contrabass', organ: 'french-horn', harmonium: 'french-horn',
+      saxophone: 'flute', trumpet: 'french-horn', trombone: 'french-horn',
+      /* ピアノ・ハープ・シロフォン（＝グロッケン役）・弦はそのまま残す */
+    },
+    trim: { sub: -12, drums: -6, harp: +2, piano: +1, violin: +1 },
+    kit: 'acoustic-kit',
+    /* ハイハットは映画音楽に居場所がない。消して、
+       スネアとクラップはティンパニ（タム）に読み替える              */
+    drumMap: { h: null, c: 't1', s: 't2' },
+    voicingMap: { power: 'open', rootless: 'open', full: 'open' },
+    sendScale: 1.60, delayScale: 0.80, panScale: 1.15,
+    air: 4.5, mud: -2.0, drumGain: -4, energyScale: 0.95,
+  },
+};
+const STYLE_ORDER = ['beatles', 'kaze', 'modal', 'hisaishi'];
+
+/* ---------------------------------------------------------------------
+   いま有効なレンズ。def が null なら「標準」（v3 のままの世界）。
+   engine.js と app.js はここだけを見る。                              */
+const Style = {
+  key: null,
+  def: null,
+
+  set(key) {
+    this.key = (key && STYLES[key]) ? key : null;
+    this.def = this.key ? STYLES[this.key] : null;
+  },
+  label() { return this.def ? this.def.label : '標準'; },
+
+  /* 楽器の読み替え。null を返したら、そのレイヤーは鳴らさない */
+  voice(v) {
+    if (!this.def || !this.def.voiceMap) return v;
+    const m = this.def.voiceMap;
+    return (v in m) ? m[v] : v;
+  },
+  trim(v) {
+    if (!this.def || !this.def.trim) return 0;
+    return this.def.trim[v] || 0;
+  },
+  /* 読み替えでずらすオクターブ数（楽器の中心オクターブの差） */
+  octShift(from) {
+    const to = this.voice(from);
+    if (!to || to === from || !VOICES[to] || !VOICES[from]) return 0;
+    const a = VOICES[from].ctr, b = VOICES[to].ctr;
+    if (a == null || b == null) return 0;
+    return b - a;
+  },
+  kit(k) { return (this.def && this.def.kit) ? this.def.kit : k; },
+  voicingKind(k) {
+    if (!this.def || !this.def.voicingMap) return k;
+    const m = this.def.voicingMap;
+    return (k in m) ? m[k] : k;
+  },
+  /* 打楽器の読み替え。null＝鳴らさない */
+  drum(p) {
+    if (!this.def || !this.def.drumMap) return p;
+    const m = this.def.drumMap;
+    return (p in m) ? m[p] : p;
+  },
+  harmony() { return this.def ? (this.def.harmony || null) : null; },
+  num(field, dflt) {
+    if (!this.def || this.def[field] == null) return dflt;
+    return this.def[field];
+  },
+  sendScale()  { return this.num('sendScale', 1); },
+  delayScale() { return this.num('delayScale', 1); },
+  panScale()   { return this.num('panScale', 1); },
+  drumGain()   { return this.num('drumGain', 0); },
+  energyScale(){ return this.num('energyScale', 1); },
+};

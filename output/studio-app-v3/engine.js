@@ -83,7 +83,21 @@ async function buildAudio() {
    ここを 1.5〜2.1 にしたら同時投入でクリップしたので下げた */
 function setEnergyLevel(n) {
   if (!Bus.energy) return;
-  Bus.energy.gain.rampTo(1.15 + 0.09 * n, 0.5);
+  Bus.energy.gain.rampTo((1.15 + 0.09 * n) * Style.energyScale(), 0.5);
+}
+
+/* ============ 2-b. スタイルカードに合わせて全体の音色を変える ============
+   楽器そのものは Part 側で読み替える。ここは「部屋の響き」担当。
+   ・air … 高域の空気感（久石譲は +4.5dB、ジャズは +1dB で暖かく）
+   ・mud … 中低域のもたつき（藤井風は -3.5dB でベースの輪郭を出す）
+   ・delay … 付点8分ディレイの返り                                    */
+function applyStyleTone(sec = 0.6) {
+  if (!Bus.air) return;
+  try {
+    Bus.air.gain.rampTo(Style.num('air', 5), sec);
+    Bus.mud.gain.rampTo(Style.num('mud', -2.5), sec);
+    Bus.delay.feedback.rampTo(0.30 * Style.delayScale(), sec);
+  } catch (e) { /* 音は止めない */ }
 }
 
 function schedulePump(time, energy) {
@@ -175,6 +189,29 @@ function playImpact(time, strength = 1) {
   disposeAt([noise, hp, cg, cs, osc, bg], time + 2.2);
 }
 
+/* 3-2b. 転換：スタイルカードで世界が入れ替わる瞬間の音
+   ---------------------------------------------------------------------
+   着弾の一撃だけだと「1枚増えた」のと区別がつかない。
+   世界が変わるときは、その手前 lead 秒から高域のノイズがふくらんでいって
+   境目で切れ、そこに一撃が来る。周波数は動かさない（音量だけを動かす）ので
+   禁止した「きゅいーん」にはならない。                                */
+function playTurn(time, lead = 1.0) {
+  const t0 = Math.max(Tone.now() + 0.02, time - lead);
+  const noise = new Tone.Noise('pink');
+  const hp = new Tone.Filter({ type: 'highpass', frequency: 2600 });
+  const g = new Tone.Gain(0.0001).connect(Bus.fx);
+  const send = new Tone.Gain(0.6).connect(Bus.reverb);
+  g.connect(send);
+  noise.connect(hp); hp.connect(g);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.16, time);      // 境目に向かってふくらむ
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.06);
+  noise.start(t0); noise.stop(time + 0.1);
+  disposeAt([noise, hp, g, send], time + 2.2);
+
+  playImpact(time, 1.15);
+}
+
 /* 3-3. クラップ：手拍子。バックビートに入ると一気に踊れる音になる */
 function makeClap(dest) {
   const out = new Tone.Gain(1).connect(dest);
@@ -192,6 +229,24 @@ function makeClap(dest) {
       n.triggerAttackRelease('16n', t + 0.023, v);
     },
   };
+}
+
+/* ============ 3-4. 音域からはみ出した音を、オクターブ単位で連れ戻す ============
+   Tone.Sampler は録音の無い音でも「いちばん近い音を伸び縮みさせて」鳴らす。
+   数半音なら自然だが、5半音以上引き伸ばすと明らかに不自然な音になる
+   （実際、ロックのギターが音源の最高音を1オクターブ超えていたことがある）。
+   スタイルカードで楽器を読み替えると、この事故が起きやすい。
+   そこで TOL 半音を超えてはみ出した音だけ、オクターブ単位で音域内に折り返す。
+   TOL 以内は動かさない（旋律の形を壊さないため）。                    */
+const FIT_TOL = 4;
+function fitNote(note, L) {
+  if (L.lo == null || L.hi == null || L.hi - L.lo < 12) return note;
+  let m;
+  try { m = Tone.Frequency(note).toMidi(); } catch (e) { return note; }
+  let guard = 8;
+  while (m > L.hi + FIT_TOL && guard-- > 0) m -= 12;
+  while (m < L.lo - FIT_TOL && guard-- > 0) m += 12;
+  try { return Tone.Frequency(m, 'midi').toNote(); } catch (e) { return note; }
 }
 
 function disposeAt(nodes, when) {
@@ -261,11 +316,14 @@ class Part {
     this.gain = new Tone.Gain(Tone.dbToGain(R.gain)).connect(bus);
     this.nominal = Tone.dbToGain(R.gain);
 
-    this.rev = new Tone.Gain(R.send).connect(Bus.reverb);
+    /* 残響・ディレイ・左右の広がりはスタイルカードで伸び縮みする。
+       乾いた60年代の録音（ビートルズ）と、広いホール（久石譲）の差はここ */
+    this.rev = new Tone.Gain(Math.min(0.9, R.send * Style.sendScale())).connect(Bus.reverb);
     this.gain.connect(this.rev);
-    if (R.delay > 0) { this.dly = new Tone.Gain(R.delay).connect(Bus.delay); this.gain.connect(this.dly); }
+    const dlyAmt = R.delay * Style.delayScale();
+    if (dlyAmt > 0.001) { this.dly = new Tone.Gain(dlyAmt).connect(Bus.delay); this.gain.connect(this.dly); }
 
-    this.pan = new Tone.Panner(R.pan * panBias).connect(this.gain);
+    this.pan = new Tone.Panner(Math.max(-1, Math.min(1, R.pan * panBias * Style.panScale()))).connect(this.gain);
     /* ここに以前は「投入直後だけ閉じていて1小節かけて開くフィルタ」を
        置いていたが、460Hz→20kHz のフィルタスイープ＝まさに
        「きゅいーん」という音そのものだったので廃止した。
@@ -278,20 +336,36 @@ class Part {
 
   buildLayer(spec) {
     const L = { spec, accentOnly: spec.when === 'accent' };
-    const vo = VOICES[spec.voice];
+    /* ここがスタイルカードの心臓部：譜面はそのままで、鳴らす楽器だけ差し替える。
+       null に読み替えられたレイヤーは黙る（その世界に存在しない楽器） */
+    const voiceKey = Style.voice(spec.voice);
+    if (!voiceKey || !VOICES[voiceKey]) { L.muted = true; return L; }
+    const vo = VOICES[voiceKey];
+    L.voiceKey = voiceKey;
     L.vo = vo;
-    L.out = new Tone.Gain(Tone.dbToGain(spec.gain)).connect(this.hp);
+    /* 読み替え先の楽器に合わせてオクターブを自動で寄せる */
+    L.oct = (spec.oct || 0) + Style.octShift(spec.voice);
+    L.out = new Tone.Gain(Tone.dbToGain(spec.gain + Style.trim(spec.voice))).connect(this.hp);
 
     if (vo.kind === 'kit') {
-      L.kit = makeSampleKit(L.out, spec.kit) || makeSynthKit(L.out, 0);
+      const kitName = Style.kit(spec.kit);
+      L.out.gain.value = Tone.dbToGain(spec.gain + Style.trim(spec.voice) + Style.drumGain());
+      L.kit = makeSampleKit(L.out, kitName) || makeSynthKit(L.out, 0);
       if (L.kit.sampled) this.sampled = true;
       return L;
     }
 
     let node = null;
     if (vo.kind === 'sampler') {
-      node = makeSampleVoice(spec.voice, vo.env);
-      if (node) { L.sampled = true; this.sampled = true; }
+      node = makeSampleVoice(voiceKey, vo.env);
+      if (node) {
+        L.sampled = true; this.sampled = true;
+        /* その楽器に実際に録音がある音域を控えておく（下の fitNote で使う） */
+        try {
+          const ms = Object.keys(samplerUrls(voiceKey) || {}).map(n => Tone.Frequency(n).toMidi());
+          if (ms.length) { L.lo = Math.min(...ms); L.hi = Math.max(...ms); }
+        } catch (e) {}
+      }
     }
     if (!node) { node = this.makeSynth(vo.fb); L.sampled = false; }
 
@@ -374,12 +448,19 @@ class Part {
   }
 
   /* --- 投入 --- */
-  start(entryTime, entryTicks, barSec) {
+  start(entryTime, entryTicks, barSec, gentle) {
     /* 登場は少し大きめに鳴らし、2小節かけて定位置へ落ち着く。
        音色は最初から素のまま。フィルタを開く演出は
-       「きゅいーん」に聞こえるので入れない（音量だけで存在感を出す） */
-    this.gain.gain.setValueAtTime(this.nominal * 1.55, entryTime);
-    this.gain.gain.linearRampToValueAtTime(this.nominal, entryTime + barSec * 2);
+       「きゅいーん」に聞こえるので入れない（音量だけで存在感を出す）。
+       gentle=true はスタイルカードで作り直したとき用。すでに鳴っていた音を
+       置き換えるだけなので、登場の膨らみは付けずに定位置から始める     */
+    if (gentle) {
+      this.gain.gain.setValueAtTime(0.0001, entryTime);
+      this.gain.gain.linearRampToValueAtTime(this.nominal, entryTime + Math.min(0.25, barSec * 0.2));
+    } else {
+      this.gain.gain.setValueAtTime(this.nominal * 1.55, entryTime);
+      this.gain.gain.linearRampToValueAtTime(this.nominal, entryTime + barSec * 2);
+    }
 
     this.seq = new Tone.Sequence((t) => this.tick(t), range16(), '16n');
     this.seq.start(entryTicks + 'i');
@@ -393,6 +474,7 @@ class Part {
     const ch = chordAt(bar);
     events.forEach(e => {
       this.layers.forEach(L => {
+        if (L.muted) return;                         // その世界に存在しない楽器
         if (L.accentOnly && !isAccent(e)) return;    // 弱いイベントでは重ねない
         this.playOn(L, e, time, ch, bar);
       });
@@ -403,7 +485,10 @@ class Part {
   playOn(L, e, time, ch, bar) {
     const sp = L.spec;
     if (this.roleKey === 'rhythm') {
-      const f = L.kit[e.p] || L.kit.s;
+      /* 打楽器もスタイルで読み替える（クラップ→ライド／ハイハット→無音 など） */
+      const piece = Style.drum(e.p);
+      if (!piece) return;
+      const f = L.kit[piece] || L.kit.s;
       f(time, e.v);
       return;
     }
@@ -411,15 +496,21 @@ class Part {
     let semis;
     if (this.roleKey === 'melody') {
       semis = [ladSemi(ch, e.t) + tr];
+      /* ハモリ：梯子を何段か上の音を重ねる。度数ではなく「梯子の段」で
+         数えるので、どの和音の上でも必ず和声に乗る。
+         ビートルズの2声コーラス（3度上）はこれで再現している。
+         全部の音に付けると団子になるので、強い音だけ            */
+      const h = Style.harmony();
+      if (h && isAccent(e)) semis.push(ladSemi(ch, e.t + h) + tr);
     } else if (this.roleKey === 'bass') {
       semis = [(e.app != null ? chordAt(bar + 1).root + e.app : bassSemi(ch, e.c)) + tr];
     } else {
-      const v = voicing(sp.voicing, ch, sp.oct);
+      const v = voicing(sp.voicing, ch, L.oct);
       semis = (e.n != null ? [v[e.n % v.length] + 12 * Math.floor(e.n / v.length)] : v).map(x => x + tr);
     }
     const strum = sp.strum || 0;
     semis.forEach((semi, i) => {
-      const note = noteName(semi, sp.oct);
+      const note = fitNote(noteName(semi, L.oct), L);
       const t = time + i * strum;
       if (L.isPluck) L.voice.triggerAttack(note, t);
       else L.voice.triggerAttackRelease(note, e.l, t, e.v);
@@ -437,6 +528,7 @@ class Part {
     try { this.seq.stop(); this.seq.dispose(); } catch (e) {}
     const nodes = [];
     this.layers.forEach(L => {
+      if (L.muted) return;
       if (L.voice) nodes.push(L.voice);
       if (L.drive) nodes.push(L.drive);
       if (L.lp) nodes.push(L.lp);
@@ -457,8 +549,29 @@ const BaseBeat = {
 
   start() {
     this.gain = new Tone.Gain(1).connect(Bus.drums);
-    this.kit = makeSampleKit(this.gain, 'acoustic-kit', -13) || makeSynthKit(this.gain, -12);
+    this.kit = this.makeKit();
     this.seq = new Tone.Sequence((time) => this.tick(time), range16(), '16n').start(0);
+  },
+
+  makeKit() {
+    const lv = -13 + Style.drumGain();
+    return makeSampleKit(this.gain, Style.kit('acoustic-kit'), lv) || makeSynthKit(this.gain, lv + 1);
+  },
+
+  /* スタイルカードが出たらキットごと入れ替える。
+     古いキットは余韻を切らないよう、少し置いてから捨てる */
+  restyle() {
+    if (!this.gain) return;
+    const old = this.kit;
+    this.kit = this.makeKit();
+    if (old) setTimeout(() => { try { old.nodes.forEach(n => n.dispose()); } catch (e) {} }, 1800);
+  },
+
+  /* 打楽器の読み替えを通してから叩く（久石譲ではハイハットが消える） */
+  hit(piece, time, v) {
+    const p = Style.drum(piece);
+    if (!p || !this.kit) return;
+    (this.kit[p] || this.kit.s)(time, v);
   },
 
   tick(time) {
@@ -474,11 +587,11 @@ const BaseBeat = {
     const lv = hasRhythm ? 0.16 : 1;
     if (lv < 0.2 && step % 4 !== 0) return;
 
-    if (step === 0 || step === 8) this.kit.k(time, 0.85 * lv);
+    if (step === 0 || step === 8) this.hit('k', time, 0.85 * lv);
     if (!hasRhythm) {
-      if (energy >= 3 && (step === 4 || step === 12)) this.kit.s(time, 0.45);
-      if (step % 4 === 0) this.kit.h(time, step === 0 ? 0.20 : 0.13);
-      if (energy >= 2 && step % 2 === 0 && step % 4 !== 0) this.kit.h(time, 0.09);
+      if (energy >= 3 && (step === 4 || step === 12)) this.hit('s', time, 0.45);
+      if (step % 4 === 0) this.hit('h', time, step === 0 ? 0.20 : 0.13);
+      if (energy >= 2 && step % 2 === 0 && step % 4 !== 0) this.hit('h', time, 0.09);
     }
   },
 
