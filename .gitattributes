@@ -1,4 +1,5 @@
-# Windows のバッチファイルは必ず CRLF で取り出す。
-# LF のままだと cmd.exe が goto・ラベル・複数行の if を解釈できず、
-# ダブルクリックしても一瞬で閉じて「開けない」状態になる。
+# Windows のバッチファイルは必ず CRLF 改行にする
+# （LF だと cmd.exe が goto / ラベル / 複数行の if の解析に失敗し、
+#   ダブルクリックしても一瞬で閉じて「開けない」状態になる）
 *.bat text eol=crlf
+*.cmd text eol=crlf
