@@ -21,7 +21,17 @@ function manifest() {
 /* ファイル名 'Ds4' → 音名 'D#4'（音名にsは出てこないので単純置換でよい） */
 function fileToNote(f) { return f.replace('s', '#'); }
 
-/* ---- 起動時に全部まとめて読む ---- */
+/* ---- 起動時に全部まとめて読む ----
+   ※ 同時に投げる数を絞ってある。理由：
+     `はじめる.bat` が使う Python の `http.server` は、接続の待ち行列が
+     既定で5本しかない（socketserver の request_queue_size = 5）。
+     236個を一斉に取りに行くと大半が待ち行列からあふれ、
+     ブラウザ側で長いタイムアウトに入って「読み込みが終わらない」状態になる。
+     実測：同時236個 → 50個しか取れない／同時6個 → 236個すべて取れる。
+     取りこぼしは再挑戦する（一時的にあふれただけのことが多いため）。 */
+const LOAD_CONCURRENCY = 6;
+const LOAD_RETRY = 2;
+
 async function preloadSamples(onProgress) {
   const m = manifest();
   const jobs = [];
@@ -33,21 +43,35 @@ async function preloadSamples(onProgress) {
   }
 
   const total = jobs.length;
-  let done = 0;
+  let done = 0, failed = 0;
   onProgress(0, total);
-  if (total === 0) return { total: 0, loaded: 0, sets: 0 };
+  if (total === 0) return { total: 0, loaded: 0, sets: 0, failed: 0 };
 
-  await Promise.all(jobs.map(async ([dir, name]) => {
-    try {
-      const buf = await Tone.ToneAudioBuffer.fromUrl(`${SAMPLE_ROOT}${dir}/${name}.mp3`);
-      BUFFERS.set(dir + '/' + name, buf);
-    } catch (e) {
-      /* 1つ落ちても止めない。足りない楽器は合成音になるだけ */
+  async function loadOne(dir, name) {
+    for (let attempt = 0; attempt <= LOAD_RETRY; attempt++) {
+      try {
+        const buf = await Tone.ToneAudioBuffer.fromUrl(`${SAMPLE_ROOT}${dir}/${name}.mp3`);
+        BUFFERS.set(dir + '/' + name, buf);
+        return true;
+      } catch (e) {
+        /* 少し待ってから再挑戦。待ち行列があいていれば次は通る */
+        if (attempt < LOAD_RETRY) await new Promise(r => setTimeout(r, 150 * (attempt + 1)));
+      }
     }
-    onProgress(++done, total);
-  }));
+    return false;   /* 最後まで駄目でも止めない。その楽器が合成音になるだけ */
+  }
 
-  return { total, loaded: BUFFERS.size, sets: Object.keys(m.pitched || {}).length };
+  let next = 0;
+  async function worker() {
+    while (next < jobs.length) {
+      const [dir, name] = jobs[next++];
+      if (!(await loadOne(dir, name))) failed++;
+      onProgress(++done, total);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(LOAD_CONCURRENCY, total) }, worker));
+
+  return { total, loaded: BUFFERS.size, sets: Object.keys(m.pitched || {}).length, failed };
 }
 
 /* ---- 音階のある楽器：Sampler に渡す { 音名: バッファ } を組み立てる ---- */
