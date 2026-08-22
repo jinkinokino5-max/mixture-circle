@@ -123,6 +123,9 @@
   #energy i{
     width:7px; height:18px; border-radius:2px; background:#232a38; transition:background .25s, box-shadow .25s;
   }
+  /* 無制限のときは枠が20個になるので細くして収める */
+  #energy.many{gap:2px}
+  #energy.many i{width:4px; height:16px}
   #energy i.on{background:linear-gradient(180deg,#ff8073,#e0517a); box-shadow:0 0 10px -1px #e0517a}
 
   #progress{height:2px; background:#141822}
@@ -312,13 +315,15 @@
     </div>
 
     <div class="field">
-      <label>同時に鳴らせる枚数 — 多いほど厚く、少ないほど1枚ずつがはっきり聞こえる</label>
+      <label>同時に鳴らせる枚数 — 多いほど厚く、少ないほど1枚ずつがはっきり聞こえる。
+        「無制限」なら押し出されず、20枚すべてを重ねられる</label>
       <div class="chips" id="maxchips">
         <button class="chip" data-n="3">3枚</button>
         <button class="chip" data-n="4">4枚</button>
         <button class="chip" data-n="6" aria-pressed="true">6枚</button>
         <button class="chip" data-n="8">8枚</button>
         <button class="chip" data-n="10">10枚</button>
+        <button class="chip" data-n="0">無制限</button>
       </div>
     </div>
 
@@ -376,6 +381,7 @@
       マスの太い文字が<b>その札のはたらき</b>（世界が変わっても変わらない）、
       小さい文字が<b>いまの世界での楽器</b>（世界が変わると入れ替わる）。<br>
       スタイルカードは <kbd>6</kbd> <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd>。<br>
+      <b>同じ札をもう一度タッチ（同じキーをもう一度）すると、その音が外れます。</b><br>
       <kbd>Backspace</kbd> 最後に入れた音を消す　<kbd>Esc</kbd> 終了　クリックでも投入できます。
     </div>
   </div>

@@ -83,7 +83,11 @@ async function buildAudio() {
    ここを 1.5〜2.1 にしたら同時投入でクリップしたので下げた */
 function setEnergyLevel(n) {
   if (!Bus.energy) return;
-  Bus.energy.gain.rampTo((1.15 + 0.09 * n) * World.energyScale(), 0.5);
+  /* 上限 2.05 は「10枚のとき」の値。無制限モードでは20枚まで積めるので、
+     それ以上は上げない。ここを外すと最終段で潰れて、
+     足しても大きくならない（v2 の失敗）に逆戻りする */
+  const lv = Math.min(2.05, 1.15 + 0.09 * n);
+  Bus.energy.gain.rampTo(lv * World.energyScale(), 0.5);
 }
 
 /* ============ 2-b. 世界に合わせて全体の音色を変える ============
@@ -148,6 +152,29 @@ function playCue(time) {
 
   nodes.push(g, send);
   disposeAt(nodes, time + 2.0);
+}
+
+/* 3-1b. 解除の合図：同じ札をもう一度タッチして音を外したときの1音
+   ---------------------------------------------------------------------
+   入れたときの合図（G5・784Hz）と取り違えないよう、1オクターブ下の
+   G4（392Hz）を短く鳴らす。周波数は動かさない（スイープしない）。
+   G はこのアプリのどの世界の和音にも溶けるので、いつ鳴らしても濁らない。 */
+function playUncue(time) {
+  const g = new Tone.Gain(1).connect(Bus.fx);
+  const send = new Tone.Gain(0.22).connect(Bus.reverb);
+  g.connect(send);
+  const nodes = [g, send];
+  [[392, 0.20, 0.42], [784, 0.05, 0.18]].forEach(([hz, lv, dec]) => {
+    const o = new Tone.Oscillator({ type: 'sine', frequency: hz });
+    const og = new Tone.Gain(0).connect(g);
+    o.connect(og);
+    og.gain.setValueAtTime(0, time);
+    og.gain.linearRampToValueAtTime(lv, time + 0.006);
+    og.gain.exponentialRampToValueAtTime(0.0005, time + dec);
+    o.start(time); o.stop(time + dec + 0.05);
+    nodes.push(o, og);
+  });
+  disposeAt(nodes, time + 1.2);
 }
 
 /* 3-2. 衝撃：着弾の瞬間のクラッシュ（高域）と一撃の低音（体で感じる） */

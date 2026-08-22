@@ -5,14 +5,22 @@
    ここは「いつ何を鳴らすか」と「画面」だけを持つ。
    ===================================================================== */
 
-const RETRIGGER_GUARD_MS = 500;
-const MAX_PARTS_CHOICES = [3, 4, 6, 8, 10];   // 開始画面で選べる同時枚数
+/* 同じ札の連続入力を無視する時間。
+   カードリーダーは、札をかざしたままにすると同じUIDを繰り返し送ってくる。
+   「もう一度タッチで外す」を入れたので、ここが短いと
+   入る→外れる→入る…とばたついてしまう。手で置き直すには十分で、
+   かつ待たされたと感じない長さとして 900ms にした。                */
+const RETRIGGER_GUARD_MS = 900;
+/* 開始画面で選べる同時枚数。0 は「無制限」。
+   無制限でも重ねる札は20枚しかないので、実際の上限は20枚になる */
+const MAX_PARTS_CHOICES = [3, 4, 6, 8, 10, 0];
+const ALL_CARDS = 20;                          // 重ねる札の総数（無制限のときの表示に使う）
 
 /* ============ 1. 状態 ============ */
 const State = {
   playing: false, paused: false,
   quantize: 'bar',        // 'bar'（気持ちいい）｜'beat'（速い）
-  maxParts: 6,            // 同時に鳴らせる枚数（開始画面で変えられる）
+  maxParts: 6,            // 同時に鳴らせる枚数（Infinity＝無制限）
   durationSec: 180,
   baseBpm: 104,           // 開始画面で選んだテンポ（＝標準の世界のテンポ）
   styleBusy: false,       // スタイルカードの切り替え待ちのあいだ true
@@ -61,9 +69,13 @@ function insertCard(cardId) {
   if (now - (State.lastInput.get(cardId) || 0) < RETRIGGER_GUARD_MS) return;
   State.lastInput.set(cardId, now);
 
+  /* もう一度タッチ（同じキー）で、その音を外す。
+     カードを2枚用意しなくても足し引きができるようにするための動作。
+     鳴り始める前（着弾待ち）の札も、ここで取り消せる */
   if (State.parts.has(cardId)) {
-    UI.reject(cardId);
-    UI.toast('その音はもう鳴っています');
+    playUncue(Tone.now() + 0.02);
+    removeCard(cardId);
+    UI.toast(`${labelOf(cardId)} を外しました`);
     return;
   }
 
@@ -427,7 +439,10 @@ const UI = {
     document.getElementById('partcount').textContent = n;
     const meter = document.getElementById('energy');
     meter.innerHTML = '';
-    for (let i = 0; i < State.maxParts; i++) {
+    /* 無制限のときは Infinity で回せないので、重ねる札の総数（20）を枠にする */
+    const slots = Number.isFinite(State.maxParts) ? State.maxParts : ALL_CARDS;
+    meter.classList.toggle('many', slots > 12);
+    for (let i = 0; i < slots; i++) {
       const b = el('i', i < n ? 'on' : '', '');
       meter.appendChild(b);
     }
@@ -599,8 +614,9 @@ document.addEventListener('DOMContentLoaded', () => {
     c.addEventListener('click', () => {
       document.querySelectorAll('#maxchips .chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
       c.setAttribute('aria-pressed', 'true');
-      State.maxParts = Number(c.dataset.n);
-      document.getElementById('maxshow').textContent = State.maxParts;
+      const v = Number(c.dataset.n);
+      State.maxParts = (v === 0) ? Infinity : v;      // 0 ＝ 無制限
+      document.getElementById('maxshow').textContent = (v === 0) ? '∞' : v;
       UI.energy();
     });
   });
