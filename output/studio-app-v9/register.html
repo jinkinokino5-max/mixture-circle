@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>カード登録ツール — ミクスチャー・サークル v9</title>
+<style>
+  :root{
+    --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
+    --fg:#eef2f8; --fg-dim:#8d96ab;
+    --ch-core:#b53f86;  --ch-sing:#96803f;  --ch-push:#b32633;
+    --ch-drive:#0c9a83; --ch-color:#2b62a0;
+    --st-beatles:#8a5a1f;   --st-kaze:#1f6f6a;
+    --st-modal:#26407e;     --st-hisaishi:#5d3a7a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg); min-height:100vh;
+    font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+    padding:24px;
+  }
+  h1{font-size:20px; margin:0 0 4px}
+  h1 em{font-style:normal; font-size:12px; letter-spacing:.1em; color:#48f7cd;
+    border:1px solid #1d6b5c; border-radius:5px; padding:2px 7px; margin-left:10px; vertical-align:3px}
+  p.lead{color:var(--fg-dim); font-size:13px; line-height:1.8; margin:0 0 18px; max-width:720px}
+  .status{
+    position:sticky; top:0; z-index:5; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:14px 18px; margin-bottom:18px; display:flex; align-items:center; gap:14px;
+    flex-wrap:wrap;
+  }
+  .status b{font-size:15px}
+  .status .hint{color:var(--fg-dim); font-size:12.5px}
+  .status .uidnow{font-variant-numeric:tabular-nums; font-size:13px; color:#48f7cd}
+  .status.armed{border-color:#a4478a; box-shadow:0 0 0 1px #a4478a inset}
+  .status.warn{border-color:#c94b4b; box-shadow:0 0 0 1px #c94b4b inset}
+
+  .manual{display:flex; gap:8px; align-items:center; margin-left:auto}
+  .manual input{
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px; color:var(--fg);
+    padding:7px 10px; font-size:13px; width:170px;
+  }
+  .manual button, .toolbtn{
+    background:var(--panel2); border:1px solid var(--line); color:var(--fg);
+    border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer;
+  }
+  .manual button:hover, .toolbtn:hover{border-color:#4a5265}
+
+  .grid{
+    display:grid; grid-template-columns: 110px repeat(5, 1fr); gap:6px; margin-bottom:12px;
+  }
+  .stylegrid{
+    display:grid; grid-template-columns: 110px repeat(4, 1fr); gap:6px; margin-bottom:22px;
+  }
+  .stylegrid .cell{border-left-width:5px}
+  .head-cell{padding:6px 4px; font-size:11px; color:var(--fg-dim); text-align:center}
+  .role-label{padding:8px 6px; font-size:12px; color:var(--fg-dim); display:flex; align-items:center}
+  .cell{
+    border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:8px;
+    cursor:pointer; min-height:64px; display:flex; flex-direction:column; justify-content:space-between;
+    border-left:3px solid var(--g, var(--line));
+  }
+  .cell:hover{border-color:#4a5265}
+  .cell.filled{background:var(--panel2)}
+  .cell.armed{outline:2px solid #ff8fd0; outline-offset:-2px}
+  .cell .hook{font-size:11px; color:var(--fg-dim)}
+  .cell .uid{font-variant-numeric:tabular-nums; font-size:12px; margin-top:6px}
+  .cell.filled .uid{color:#48f7cd}
+  .cell:not(.filled) .uid{color:#5a6272}
+  .cell .clear{align-self:flex-end; font-size:10px; color:#c94b4b; opacity:0; margin-top:-4px}
+  .cell:hover .clear{opacity:1}
+
+  .out{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px;
+  }
+  .out h2{font-size:14px; margin:0 0 10px}
+  .out textarea{
+    width:100%; height:260px; background:#0b0d13; border:1px solid var(--line); border-radius:8px;
+    color:#c9d3e4; font-family:Consolas,"SFMono-Regular",monospace; font-size:12px; padding:12px;
+    resize:vertical;
+  }
+  .out .row{display:flex; gap:10px; margin-top:10px}
+  .log{margin-top:10px; font-size:11.5px; color:var(--fg-dim); line-height:1.7; max-height:80px; overflow-y:auto}
+</style>
+</head>
+<body>
+
+<h1>カード登録ツール<em>REGISTER</em></h1>
+<p class="lead">
+  実物のNFCカードとゲーム内の「24枚」（重ねる札20枚＋世界を決めるスタイル札4枚）を対応づけるための道具。<br>
+  下のマスを1つクリック（＝そのマスを「待受」にする）→ カードリーダーにカードをかざす → 自動で登録されて次のマスに進みます。<br>
+  リーダーが自動でEnterまで送らない／別の文字を送る場合は、右上の欄に手入力してもOK。
+</p>
+
+<div class="status" id="status">
+  <b id="statustext">マスをクリックして、登録したいカードを選んでください</b>
+  <span class="hint">スキャン中のUID：<span class="uidnow" id="uidnow">（なし）</span></span>
+  <div class="manual">
+    <input type="text" id="manualuid" placeholder="UIDを手入力してEnter">
+    <button id="clearall" title="この画面での登録をすべて消す（cards.jsは変更しません）">全部リセット</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="stylegrid" id="stylegrid"></div>
+
+<div class="out">
+  <h2>生成された cards.js の中身（このままコピーして貼り替えてください）</h2>
+  <textarea id="outtext" readonly spellcheck="false"></textarea>
+  <div class="row">
+    <button class="toolbtn" id="copybtn">コピー</button>
+    <button class="toolbtn" id="downloadbtn">cards.js としてダウンロード</button>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+
+<script src="music.js"></script>
+<script src="cards.js"></script>
+<script>
+/* =====================================================================
+   register.js（このファイルに直書き）
+   ---------------------------------------------------------------------
+   CARD_MAP（cards.js）は「UID → カードID」の対応表。
+   このツールは cards.js を直接書き換えない（ブラウザから保存できないため）。
+   localStorage に作業中の対応表を持ち、右のテキストエリアに
+   常に最新の cards.js の中身を生成する。それをコピーして
+   cards.js に貼り替えるのが最終手順。
+   ===================================================================== */
+
+const STORAGE_KEY = 'mixture-v9-card-registration';
+
+/* 既存の cards.js（CARD_MAP）を UID→cardId のまま取り込み、
+   localStorage の作業内容があればそちらを優先する */
+function loadRegistry() {
+  const fromFile = (typeof CARD_MAP === 'object' && CARD_MAP) ? { ...CARD_MAP } : {};
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (saved && typeof saved === 'object') return { ...fromFile, ...saved };
+  } catch (e) {}
+  return fromFile;
+}
+function saveRegistry() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(registry));
+}
+
+let registry = loadRegistry();   // uid -> cardId
+let armedId = null;              // 今クリックして選んでいる cardId
+const cells = {};
+
+function cellOrder() {
+  const order = [];
+  ROLE_ORDER.forEach(rk => CHAR_ORDER.forEach(gk => order.push(gk + '-' + rk)));
+  WORLD_ORDER.forEach(sk => order.push('style-' + sk));
+  return order;
+}
+function isStyleCard(id) { return id.startsWith('style-') && WORLD_ORDER.includes(id.slice(6)); }
+function hookOf(id) {
+  if (isStyleCard(id)) {
+    const s = WORLDS[id.slice(6)];
+    return `<b>${s.label}</b><br>${s.detail}`;
+  }
+  const [c, r] = id.split('-');
+  return HOOKS[c][r];
+}
+function uidOf(cardId) {
+  for (const [uid, id] of Object.entries(registry)) if (id === cardId) return uid;
+  return null;
+}
+
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  grid.appendChild(el('div', 'head-cell', ''));
+  CHAR_ORDER.forEach(ck => {
+    const h = el('div', 'head-cell', '');
+    h.style.setProperty('--g', `var(--ch-${ck})`);
+    h.innerHTML = `<b>${CHARACTERS[ck].label}</b> <small>${CHARACTERS[ck].sub}</small>`;
+    grid.appendChild(h);
+  });
+  ROLE_ORDER.forEach(rk => {
+    const role = ROLES[rk];
+    grid.appendChild(el('div', 'role-label', role.label));
+    CHAR_ORDER.forEach(ck => {
+      grid.appendChild(makeCell(ck + '-' + rk, `var(--ch-${ck})`));
+    });
+  });
+
+  /* スタイルカード4枚（世界を塗り替える札）は別の段に並べる */
+  const sg = document.getElementById('stylegrid');
+  sg.innerHTML = '';
+  sg.appendChild(el('div', 'role-label', 'STYLE'));
+  WORLD_ORDER.forEach(sk => sg.appendChild(makeCell('style-' + sk, `var(--st-${sk})`)));
+}
+
+function makeCell(id, color) {
+  const c = el('div', 'cell', '');
+  c.style.setProperty('--g', color);
+  c.innerHTML = `<div class="hook">${hookOf(id)}</div>
+                 <div class="uid">未登録</div>
+                 <div class="clear">✕ 消す</div>`;
+  c.addEventListener('click', (e) => {
+    if (e.target.classList.contains('clear')) {
+      for (const uid of Object.keys(registry)) if (registry[uid] === id) delete registry[uid];
+      saveRegistry(); render();
+      return;
+    }
+    armedId = (armedId === id) ? null : id;
+    render();
+  });
+  cells[id] = c;
+  return c;
+}
+
+function render() {
+  const order = cellOrder();
+  order.forEach(id => {
+    const c = cells[id];
+    const uid = uidOf(id);
+    c.classList.toggle('filled', !!uid);
+    c.classList.toggle('armed', armedId === id);
+    c.querySelector('.uid').textContent = uid ? uid : '未登録';
+  });
+  const st = document.getElementById('status');
+  const txt = document.getElementById('statustext');
+  st.classList.remove('armed', 'warn');
+  if (armedId) {
+    st.classList.add('armed');
+    txt.textContent = `「${labelOf(armedId)}」を待受中 … カードをリーダーにかざしてください`;
+  } else {
+    const left = order.filter(id => !uidOf(id)).length;
+    txt.textContent = left === 0
+      ? '24枚すべて登録済みです。下のテキストを cards.js に貼り替えてください'
+      : `マスをクリックして、登録したいカードを選んでください（未登録 ${left}枚）`;
+  }
+  updateOutput();
+}
+function labelOf(id) {
+  if (isStyleCard(id)) return `スタイル「${WORLDS[id.slice(6)].label}」`;
+  const [c, r] = id.split('-');
+  return `${CHARACTERS[c].label}の${ROLES[r].jp}`;
+}
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html) e.innerHTML = html;
+  return e;
+}
+function log(msg) {
+  const box = document.getElementById('log');
+  const line = el('div', '', `${new Date().toLocaleTimeString('ja-JP')} — ${msg}`);
+  box.prepend(line);
+  while (box.children.length > 30) box.removeChild(box.lastChild);
+}
+
+/* ============ UIDの登録処理 ============ */
+function registerUid(uid) {
+  uid = uid.trim();
+  if (!uid) return;
+  document.getElementById('uidnow').textContent = uid;
+
+  const existing = registry[uid];
+  if (existing && existing !== armedId) {
+    document.getElementById('status').classList.add('warn');
+    document.getElementById('statustext').textContent =
+      `このUID（${uid}）はすでに「${labelOf(existing)}」に登録されています。先に✕で消してから登録し直してください`;
+    log(`重複：${uid} は既に ${labelOf(existing)} に登録済み（上書きしませんでした）`);
+    return;
+  }
+  if (!armedId) {
+    log(`UID ${uid} を読み取りました。先にマスをクリックして割り当て先を選んでください`);
+    return;
+  }
+  /* 同じマスに前のUIDが割り当たっていれば古い方は消す */
+  for (const u of Object.keys(registry)) if (registry[u] === armedId) delete registry[u];
+  registry[uid] = armedId;
+  saveRegistry();
+  log(`登録：${uid} → ${labelOf(armedId)}`);
+
+  /* 次の未登録マスへ自動で進む（連続スキャンを速くするため） */
+  const order = cellOrder();
+  const next = order.find(id => !uidOf(id));
+  armedId = next || null;
+  render();
+}
+
+/* ============ カードリーダー入力の捕捉 ============
+   app.js と同じ考え方：数字が高速に連打されてEnterで終わる＝リーダー。
+   ここは登録専用画面なので、キーの取りこぼしを避けるため
+   数字に限らずアルファベットも含めてそのままバッファする。          */
+let uidBuf = '', uidTimer = null;
+document.addEventListener('keydown', (e) => {
+  if (document.activeElement === document.getElementById('manualuid')) return; // 手入力欄は別扱い
+  if (e.repeat) return;
+  if (e.key === 'Enter') {
+    if (uidBuf) registerUid(uidBuf);
+    uidBuf = '';
+    return;
+  }
+  if (/^[0-9a-zA-Z]$/.test(e.key)) {
+    uidBuf += e.key;
+    clearTimeout(uidTimer);
+    uidTimer = setTimeout(() => { uidBuf = ''; }, 500);
+  }
+});
+document.getElementById('manualuid').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    registerUid(e.target.value);
+    e.target.value = '';
+  }
+});
+
+/* ============ cards.js 生成 ============ */
+function updateOutput() {
+  const line = (id, note) => {
+    const uid = uidOf(id);
+    return uid
+      ? `  '${uid}': '${id}',`.padEnd(38) + `// ${note}`
+      : `  // '<UIDを登録してください>': '${id}',  // ${note}`;
+  };
+  const groups = CHAR_ORDER.map(ck => {
+    const lines = ROLE_ORDER.map(rk => line(ck + '-' + rk, HOOKS[ck][rk]));
+    return `  // ---- ${CHARACTERS[ck].label} ${CHARACTERS[ck].sub} ----\n` + lines.join('\n');
+  });
+  groups.push('  // ---- STYLE（世界を決める4枚）----\n'
+    + WORLD_ORDER.map(sk => line('style-' + sk, `${WORLDS[sk].label}：${WORLDS[sk].detail}`)).join('\n'));
+  const text =
+`/* =====================================================================
+   cards.js — カードIDの定義と、RFID UID との対応表
+   register.html で生成（${new Date().toLocaleString('ja-JP')}）
+   ===================================================================== */
+
+const CARD_MAP = {
+${groups.join('\n\n')}
+};
+`;
+  document.getElementById('outtext').value = text;
+}
+
+document.getElementById('copybtn').addEventListener('click', async () => {
+  const ta = document.getElementById('outtext');
+  try { await navigator.clipboard.writeText(ta.value); log('コピーしました'); }
+  catch (e) { ta.select(); document.execCommand('copy'); log('コピーしました（フォールバック）'); }
+});
+document.getElementById('downloadbtn').addEventListener('click', () => {
+  const blob = new Blob([document.getElementById('outtext').value], { type: 'text/javascript;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cards.js';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('clearall').addEventListener('click', () => {
+  if (!confirm('この画面で登録した内容をすべて消します（cards.js 自体は変更されません）。よろしいですか？')) return;
+  registry = {};
+  armedId = null;
+  saveRegistry();
+  render();
+  log('この画面の登録内容をすべてリセットしました');
+});
+
+buildGrid();
+render();
+</script>
+</body>
+</html>
