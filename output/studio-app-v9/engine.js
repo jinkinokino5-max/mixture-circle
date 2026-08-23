@@ -534,13 +534,36 @@ class Part {
       const v = voicing(sp.voicing, ch, L.oct);
       semis = (e.n != null ? [v[e.n % v.length] + 12 * Math.floor(e.n / v.length)] : v).map(x => x + tr);
     }
+    /* --- 楽器に合わせて長さを決め直す（v9.1）-------------------------
+       譜面（PHRASES）の音符の長さは楽器を知らない。ピアノは16分でも
+       叩いた瞬間に音があるが（実測0.02秒）、ウッドベースは音量が
+       出そろうまでに0.885秒かかる。16分（132BPMで0.114秒）で切ると
+       音量の25%も出ないまま終わり、楽器の音そのものが聞こえない。
+       そこで music.js の VOICES にある speak / minGap を
+       当てて「間引く」「伸ばす」を行う。両方0の楽器は素通りする。  */
+    const notes = semis.map(semi => fitNote(noteName(semi, L.oct), L));
+    const dur = this.soundLength(L, e, time);
+    if (dur == null) return;          /* この楽器には速すぎる音符 → 出さない */
+
     const strum = sp.strum || 0;
-    semis.forEach((semi, i) => {
-      const note = fitNote(noteName(semi, L.oct), L);
+    notes.forEach((note, i) => {
       const t = time + i * strum;
       if (L.isPluck) L.voice.triggerAttack(note, t);
-      else L.voice.triggerAttackRelease(note, e.l, t, e.v);
+      else L.voice.triggerAttackRelease(note, dur, t, e.v);
     });
+  }
+
+  /* 実際に鳴らす長さ（秒）を返す。
+     null を返したら「その楽器には詰まりすぎているので今回は出さない」。
+     和音は1イベントで何音も鳴るので、判定はイベントにつき1回だけ行う
+     （音ごとにやると和音の2音目以降が消えてしまう）。              */
+  soundLength(L, e, time) {
+    let sec;
+    try { sec = Tone.Time(e.l).toSeconds(); } catch (err) { sec = 0.25; }
+    const gap = (L.vo && L.vo.minGap) || 0;
+    if (gap > 0 && L.lastAt != null && time - L.lastAt < gap - 0.0001) return null;
+    L.lastAt = time;
+    return Math.max(sec, (L.vo && L.vo.speak) || 0);
   }
 
   flash(time, v) { Tone.Draw.schedule(() => UI.flashCell(this.id, v), time); }

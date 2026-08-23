@@ -127,30 +127,49 @@ const HOOKS = {
    ctr   その楽器の「中心オクターブ」。実際に録音されている音域の真ん中。
          v9 では編成を世界ごとに手で決めているので自動補正には使わないが、
          編成表を書くときの目安として残してある
-         （例：シロフォンは ctr5 なので oct5 で書く）。               */
+         （例：シロフォンは ctr5 なので oct5 で書く）。
+   speak その楽器が「音として聞こえる形になるまで」に要る秒数。
+         譜面の音符がこれより短いときは、engine.js がここまで伸ばす。
+         値は samples/ の実録音を全部デコードして測った実測値
+         （5msごとのRMSが最大音量の80%に達するまでの時間の中央値、
+         上限0.45秒で頭打ち）。測定結果：
+           ピアノ 0.020／エレキギター 0.030／エレキベース 0.045／
+           サックス 0.065／トランペット 0.085／ホルン 0.180／
+           クラリネット 0.240／トロンボーン 0.495／ハルモニウム 0.605／
+           チェロ 0.525／ウッドベース 0.885（秒）
+         ピアノとウッドベースで44倍ちがう。16分音符は132BPMで0.114秒
+         なので、ウッドベースは音量の25%も出ないうちに切られていた。
+         これが「短い音だと楽器の音すら聞こえない」の正体。
+   minGap その楽器が実際に出せる「音と音の最短の間隔」秒。
+         これより詰まった音符は engine.js が間引く（前の音を伸ばす）。
+         太い管や弓の楽器に16分の連打を書いても実際には吹けないので、
+         間引いて8分相当にしたほうが、その楽器らしく、かつ濁らない。
+         0 は「いくら細かくても付いてこられる」の意味。
+         サックス・クラリネット・フルート・バイオリンは実測でも速く、
+         実際に細かく吹ける楽器なので 0 のまま。                  */
 const VOICES = {
-  piano:             { label: 'ピアノ',           kind: 'sampler', env: { attack: 0,     release: 1.6 }, ctr: 4, fb: 'poly' },
-  organ:             { label: 'オルガン',         kind: 'sampler', env: { attack: 0.01,  release: 0.5 }, ctr: 4, fb: 'organ' },
-  harmonium:         { label: 'ハルモニウム',     kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, ctr: 3, fb: 'organ' },
-  harp:              { label: 'ハープ',           kind: 'sampler', env: { attack: 0,     release: 2.2 }, ctr: 3, fb: 'poly' },
-  xylophone:         { label: 'シロフォン',       kind: 'sampler', env: { attack: 0,     release: 0.8 }, ctr: 5, fb: 'bell' },
-  'guitar-electric': { label: 'エレキギター',     kind: 'sampler', env: { attack: 0.002, release: 0.5 }, ctr: 3, fb: 'pluck' },
-  'guitar-acoustic': { label: 'アコギ',           kind: 'sampler', env: { attack: 0.003, release: 1.0 }, ctr: 3, fb: 'pluck' },
-  'guitar-nylon':    { label: 'ガットギター',     kind: 'sampler', env: { attack: 0.004, release: 1.1 }, ctr: 3, fb: 'pluck' },
-  'bass-electric':   { label: 'エレキベース',     kind: 'sampler', env: { attack: 0.002, release: 0.35 }, ctr: 2, fb: 'mono' },
-  contrabass:        { label: 'ウッドベース',     kind: 'sampler', env: { attack: 0.008, release: 0.45 }, ctr: 2, fb: 'mono' },
-  cello:             { label: 'チェロ',           kind: 'sampler', env: { attack: 0.05,  release: 1.0 }, ctr: 3, fb: 'bow' },
-  violin:            { label: 'バイオリン',       kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, ctr: 4, fb: 'bow' },
-  flute:             { label: 'フルート',         kind: 'sampler', env: { attack: 0.03,  release: 0.6 }, ctr: 5, fb: 'bow' },
-  clarinet:          { label: 'クラリネット',     kind: 'sampler', env: { attack: 0.03,  release: 0.5 }, ctr: 4, fb: 'reed' },
-  saxophone:         { label: 'サックス',         kind: 'sampler', env: { attack: 0.012, release: 0.35 }, ctr: 4, fb: 'reed' },
-  trumpet:           { label: 'トランペット',     kind: 'sampler', env: { attack: 0.01,  release: 0.3 }, ctr: 4, fb: 'reed' },
-  trombone:          { label: 'トロンボーン',     kind: 'sampler', env: { attack: 0.02,  release: 0.4 }, ctr: 3, fb: 'reed' },
-  'french-horn':     { label: 'ホルン',           kind: 'sampler', env: { attack: 0.04,  release: 0.8 }, ctr: 3, fb: 'bow' },
-  'synth-lead':      { label: 'シンセリード',     kind: 'synth', ctr: 5, fb: 'lead' },
-  'synth-bass':      { label: 'シンセベース',     kind: 'synth', ctr: 2, fb: 'sbass' },
-  'synth-pad':       { label: 'シンセパッド',     kind: 'synth', ctr: 3, fb: 'pad' },
-  sub:               { label: 'サブベース',       kind: 'synth', ctr: 2, fb: 'sub' },
+  piano:             { label: 'ピアノ',           kind: 'sampler', env: { attack: 0,     release: 1.6 }, speak: 0, minGap: 0, ctr: 4, fb: 'poly' },
+  organ:             { label: 'オルガン',         kind: 'sampler', env: { attack: 0.01,  release: 0.5 }, speak: 0.3, minGap: 0, ctr: 4, fb: 'organ' },
+  harmonium:         { label: 'ハルモニウム',     kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, speak: 0.35, minGap: 0.16, ctr: 3, fb: 'organ' },
+  harp:              { label: 'ハープ',           kind: 'sampler', env: { attack: 0,     release: 2.2 }, speak: 0.07, minGap: 0, ctr: 3, fb: 'poly' },
+  xylophone:         { label: 'シロフォン',       kind: 'sampler', env: { attack: 0,     release: 0.8 }, speak: 0.03, minGap: 0, ctr: 5, fb: 'bell' },
+  'guitar-electric': { label: 'エレキギター',     kind: 'sampler', env: { attack: 0.002, release: 0.5 }, speak: 0.04, minGap: 0, ctr: 3, fb: 'pluck' },
+  'guitar-acoustic': { label: 'アコギ',           kind: 'sampler', env: { attack: 0.003, release: 1.0 }, speak: 0.07, minGap: 0, ctr: 3, fb: 'pluck' },
+  'guitar-nylon':    { label: 'ガットギター',     kind: 'sampler', env: { attack: 0.004, release: 1.1 }, speak: 0.05, minGap: 0, ctr: 3, fb: 'pluck' },
+  'bass-electric':   { label: 'エレキベース',     kind: 'sampler', env: { attack: 0.002, release: 0.35 }, speak: 0.07, minGap: 0, ctr: 2, fb: 'mono' },
+  contrabass:        { label: 'ウッドベース',     kind: 'sampler', env: { attack: 0.008, release: 0.45 }, speak: 0.45, minGap: 0.2, ctr: 2, fb: 'mono' },
+  cello:             { label: 'チェロ',           kind: 'sampler', env: { attack: 0.05,  release: 1.0 }, speak: 0.4, minGap: 0.16, ctr: 3, fb: 'bow' },
+  violin:            { label: 'バイオリン',       kind: 'sampler', env: { attack: 0.05,  release: 0.9 }, speak: 0.3, minGap: 0, ctr: 4, fb: 'bow' },
+  flute:             { label: 'フルート',         kind: 'sampler', env: { attack: 0.03,  release: 0.6 }, speak: 0.3, minGap: 0, ctr: 5, fb: 'bow' },
+  clarinet:          { label: 'クラリネット',     kind: 'sampler', env: { attack: 0.03,  release: 0.5 }, speak: 0.26, minGap: 0, ctr: 4, fb: 'reed' },
+  saxophone:         { label: 'サックス',         kind: 'sampler', env: { attack: 0.012, release: 0.35 }, speak: 0.1, minGap: 0, ctr: 4, fb: 'reed' },
+  trumpet:           { label: 'トランペット',     kind: 'sampler', env: { attack: 0.01,  release: 0.3 }, speak: 0.12, minGap: 0, ctr: 4, fb: 'reed' },
+  trombone:          { label: 'トロンボーン',     kind: 'sampler', env: { attack: 0.02,  release: 0.4 }, speak: 0.4, minGap: 0.2, ctr: 3, fb: 'reed' },
+  'french-horn':     { label: 'ホルン',           kind: 'sampler', env: { attack: 0.04,  release: 0.8 }, speak: 0.2, minGap: 0.14, ctr: 3, fb: 'bow' },
+  'synth-lead':      { label: 'シンセリード',     kind: 'synth', speak: 0.05, minGap: 0, ctr: 5, fb: 'lead' },
+  'synth-bass':      { label: 'シンセベース',     kind: 'synth', speak: 0.05, minGap: 0, ctr: 2, fb: 'sbass' },
+  'synth-pad':       { label: 'シンセパッド',     kind: 'synth', speak: 1.2, minGap: 0.25, ctr: 3, fb: 'pad' },
+  sub:               { label: 'サブベース',       kind: 'synth', speak: 0.1, minGap: 0, ctr: 2, fb: 'sub' },
   drums:             { label: 'ドラム',           kind: 'kit' },
 };
 
