@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ミクスチャー・サークル — 7つのプロトタイプ</title>
-<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる7つのプロトタイプ。">
+<title>ミクスチャー・サークル — 11のプロトタイプ</title>
+<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる11のプロトタイプ。">
 <style>
   :root{
     --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
@@ -18,6 +18,9 @@
     --v5:#8a5cf6;  --v5a:#c4a6ff;
     --v6:#c2185b;  --v6a:#ff86b3;
     --v7:#e65100;  --v7a:#ffb74d;
+    --v8:#2e7d32;  --v8a:#8ee08c;
+    --v9:#d4a017;  --v9a:#ffe082;
+    --v10:#00b8d4; --v10a:#7de3f7;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -154,7 +157,7 @@
       <small>3〜6人が円になり、カードを出すたびに楽器が加わって、3分で1曲を共同生成する — 勝敗のない音楽カードゲーム。</small>
     </h1>
     <p class="lede">
-      同じ企画から生まれた <b>7つのプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
+      同じ企画から生まれた <b>11のプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
       音楽の知識は要りません。<b>キーを押すか、マスをクリックするだけ</b>です。
     </p>
     <div class="heronote">
@@ -166,7 +169,7 @@
 
 <section>
   <div class="wrap">
-    <h2>プロトタイプ <em>7 BUILDS</em></h2>
+    <h2>プロトタイプ <em>11 BUILDS</em></h2>
     <p class="sublede">
       上から順に作った順です。カードの構造・音の作り方・「出した瞬間の手ごたえ」を、作り直すたびに変えてきました。
       どれも独立して動くので、好きなものから試せます。
@@ -174,12 +177,103 @@
 
     <div class="apps">
 
+      <!-- v10 -->
+      <article class="app featured" style="--c:var(--v10); --ca:var(--v10a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v10</span>
+            <span class="tag hot">いちばん新しい</span>
+            <span class="tag">27枚</span>
+            <span class="tag">踊れる世界を追加</span>
+          </div>
+          <h3>ミクスチャー・サークル v10</h3>
+          <p class="tagline">v9 の仕組みはそのままに、<b>体が動く世界</b>を足した版。土台のビートも世界が持つようになりました。</p>
+          <p class="what">
+            v9 の4つの世界はどれも「座って聴く音楽」で、通りかかった人の足を止める力が弱いという弱点がありました。
+            v10 では<b>シティポップ／ダンス（四つ打ち）／ローファイ</b>の3つを追加。
+            作家名ではなく<b>「踊れる」「夏の夕方」「勉強のとなり」</b>という、
+            鳴る前から音が想像できる言葉で選べます。<br>
+            さらに<b>土台のビートを世界の持ちものにしました</b>。
+            ダンスの札を出せば、札を1枚も出していなくても四つ打ちが鳴っています
+            （＝通りすがりの人が最初に耳にする音が、世界ごとに変わる）。
+          </p>
+          <div class="spec">
+            <div>カード<b>27枚</b></div>
+            <div>8つの<b>世界（編成表）</b></div>
+            <div>土台のビート<b>6種類</b></div>
+            <div>同じ楽器のまま鳴る札<b>0/20</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v10/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v10/README.md">設計を読む</a>
+        </div>
+      </article>
+
+      <!-- v9 -->
+      <article class="app" style="--c:var(--v9); --ca:var(--v9a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v9</span>
+            <span class="tag">24枚</span>
+            <span class="tag">ジャンル撤廃</span>
+          </div>
+          <h3>ミクスチャー・サークル v9</h3>
+          <p class="tagline">「ジャンル」をやめ、楽器編成を丸ごと「世界（スタイルカード）」の側に持たせた版。</p>
+          <p class="what">
+            v3では「マイルスの世界の、ロックのカード」のような意味の通らない組み合わせができ、
+            楽器も機械的な読み替えで決めていたため、実在しない編成が混ざっていました。
+            v9では札は<b>「はたらき」（軸・歌・押し・刻み・彩り）だけ</b>を持ち、
+            楽器は<b>標準／ビートルズ／藤井風／マイルス＆エヴァンス／久石譲</b>の5つの世界が
+            実際の編成を調べた上で丸ごと決めます。同時枚数は<b>無制限まで選択可</b>、
+            鳴っている札はもう一度タッチすると音が外れます。
+          </p>
+          <div class="spec">
+            <div>カード<b>24枚</b></div>
+            <div>5つの<b>世界（編成表）</b></div>
+            <div>同時枚数<b>無制限まで選択可</b></div>
+            <div>同じ楽器のまま鳴る札<b>0/20</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v9/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v9/README.md">設計を読む</a>
+        </div>
+      </article>
+
+      <!-- v8 -->
+      <article class="app" style="--c:var(--v8); --ca:var(--v8a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v8</span>
+            <span class="tag">120枚</span>
+            <span class="tag">歌わせる</span>
+          </div>
+          <h3>STUDIO PULSE IV（v8）</h3>
+          <p class="tagline">v7を複製し、楽器を35に絞ってコード進行を「陽」に固定。メロディを「歌」に近づけた版。</p>
+          <p class="what">
+            役割ごとの枚数上限を撤廃し、<b>メロディが重なると自動で二重奏になる</b>ようにしました。
+            動機の反復や楽器ごとの癖を持たせ、機械的な音符の羅列ではなく
+            <b>人が歌うときの音づかい</b>に近づける改善を重ねています。
+          </p>
+          <div class="spec">
+            <div>カード<b>120枚</b></div>
+            <div>楽器<b>35種に絞る</b></div>
+            <div>初回の読み込み<b>約43MB</b></div>
+            <div>役割の枚数上限<b>撤廃</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v8/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v8/README.md">設計を読む</a>
+        </div>
+      </article>
+
       <!-- v3 -->
-      <article class="app featured" style="--c:var(--v3); --ca:var(--v3a)">
+      <article class="app" style="--c:var(--v3); --ca:var(--v3a)">
         <div class="body">
           <div class="badges">
             <span class="ver">v3</span>
-            <span class="tag hot">いちばん新しい</span>
             <span class="tag">32枚</span>
             <span class="tag">22楽器</span>
           </div>
@@ -209,7 +303,6 @@
         <div class="body">
           <div class="badges">
             <span class="ver">v7</span>
-            <span class="tag">最新</span>
             <span class="tag">音の中身に表情をつける</span>
           </div>
           <h3>STUDIO PULSE IV</h3>
@@ -411,23 +504,23 @@
 <section style="padding-top:0">
   <div class="wrap">
     <h2>ちがいの一覧 <em>COMPARISON</em></h2>
-    <p class="sublede">同じ企画を5回作り直した記録です。太字が、その版で新しく持ち込んだ考え方。</p>
+    <p class="sublede">同じ企画を10回作り直した記録です。太字が、その版で新しく持ち込んだ考え方。</p>
     <div class="scroller">
       <table>
         <thead>
-          <tr><th></th><th>Phase 0</th><th>STUDIO</th><th>v2</th><th>v3</th><th>v4</th></tr>
+          <tr><th></th><th>Phase 0</th><th>STUDIO</th><th>v2</th><th>v3</th><th>v4</th><th>v8</th><th>v9</th><th>v10</th></tr>
         </thead>
         <tbody>
-          <tr><th>カードの構造</th><td>楽器 × ジャンル</td><td>楽器 × ジャンル</td><td><b>役割</b> × ジャンル</td><td>役割 × ジャンル</td><td>役割 × <b>楽器</b></td></tr>
-          <tr><th>枚数</th><td>24</td><td>24</td><td>20</td><td><b>32</b></td><td>32</td></tr>
-          <tr><th>音源</th><td>合成音</td><td><b>実録音</b></td><td>実録音</td><td>実録音</td><td>実録音</td></tr>
-          <tr><th>楽器の数</th><td>6</td><td>6</td><td>11</td><td><b>22</b></td><td>20</td></tr>
-          <tr><th>1枚あたり</th><td>1楽器</td><td>1楽器</td><td>1楽器</td><td><b>2〜3楽器</b></td><td>1楽器</td></tr>
-          <tr><th>和声</th><td class="off">単一の和音</td><td class="off">単一の和音</td><td><b>4小節の進行</b></td><td>9th入り5声</td><td><b>進行を切替可</b></td></tr>
-          <tr><th>重ねたときの音量</th><td class="off">小さくなる</td><td class="off">小さくなる</td><td class="off">小さくなる</td><td class="on"><b>大きくなる</b></td><td class="on">大きくなる</td></tr>
-          <tr><th>投入時の演出</th><td class="off">なし</td><td class="off">なし</td><td class="off">なし</td><td class="on"><b>合図→一撃</b></td><td class="on">ビルド＆ドロップ</td></tr>
-          <tr><th>同時枚数</th><td>6</td><td>6</td><td>6</td><td><b>3〜10で選択</b></td><td>役割ごとに上限</td></tr>
-          <tr><th>初回の読み込み</th><td class="on">ほぼ0MB</td><td>約10MB</td><td>約17MB</td><td>約39MB</td><td>約26MB</td></tr>
+          <tr><th>カードの構造</th><td>楽器 × ジャンル</td><td>楽器 × ジャンル</td><td><b>役割</b> × ジャンル</td><td>役割 × ジャンル</td><td>役割 × <b>楽器</b></td><td>役割 × 生成</td><td>役割 × <b>世界</b></td><td>役割 × 世界</td></tr>
+          <tr><th>枚数</th><td>24</td><td>24</td><td>20</td><td><b>32</b></td><td>32</td><td>120</td><td>24</td><td><b>27</b></td></tr>
+          <tr><th>音源</th><td>合成音</td><td><b>実録音</b></td><td>実録音</td><td>実録音</td><td>実録音</td><td>実録音</td><td>実録音</td><td>実録音</td></tr>
+          <tr><th>楽器の数</th><td>6</td><td>6</td><td>11</td><td><b>22</b></td><td>20</td><td>35</td><td>編成表で可変</td><td>編成表で可変</td></tr>
+          <tr><th>1枚あたり</th><td>1楽器</td><td>1楽器</td><td>1楽器</td><td><b>2〜3楽器</b></td><td>1楽器</td><td>1楽器（自動で二重奏も）</td><td><b>世界が決める</b></td><td>世界が決める</td></tr>
+          <tr><th>和声</th><td class="off">単一の和音</td><td class="off">単一の和音</td><td><b>4小節の進行</b></td><td>9th入り5声</td><td><b>進行を切替可</b></td><td>進行を「陽」に固定</td><td>世界ごとの進行</td><td><b>8つの進行</b></td></tr>
+          <tr><th>重ねたときの音量</th><td class="off">小さくなる</td><td class="off">小さくなる</td><td class="off">小さくなる</td><td class="on"><b>大きくなる</b></td><td class="on">大きくなる</td><td class="on">大きくなる</td><td class="on">大きくなる</td><td class="on">大きくなる</td></tr>
+          <tr><th>投入時の演出</th><td class="off">なし</td><td class="off">なし</td><td class="off">なし</td><td class="on"><b>合図→一撃</b></td><td class="on">ビルド＆ドロップ</td><td class="on">提案から選ぶ</td><td class="on">重ねる／もう一度で外す</td><td class="on">重ねる／もう一度で外す</td></tr>
+          <tr><th>同時枚数</th><td>6</td><td>6</td><td>6</td><td><b>3〜10で選択</b></td><td>役割ごとに上限</td><td class="on">上限なし</td><td class="on"><b>無制限まで選択可</b></td><td class="on">無制限まで選択可</td></tr>
+          <tr><th>初回の読み込み</th><td class="on">ほぼ0MB</td><td>約10MB</td><td>約17MB</td><td>約39MB</td><td>約26MB</td><td>約43MB</td><td>約39MB</td><td>約39MB</td></tr>
         </tbody>
       </table>
     </div>
