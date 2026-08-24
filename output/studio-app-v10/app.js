@@ -162,7 +162,7 @@ function worldBoundaryTicks() {
      残響とディレイと左右の広がり／メロディのハモリ
    いま鳴っているカードは、次の小節頭で「同じ役割のまま別の楽器」に化ける。
 
-   同じスタイルカードをもう一度出すと標準の世界に戻る（4枚で5つの世界）。 */
+   同じスタイルカードをもう一度出すと標準の世界に戻る（13の世界）。 */
 function requestWorld(styleKey) {
   if (!WORLDS[styleKey]) return;
   if (State.worldBusy) { UI.toast('切り替え中です'); return; }
