@@ -14,7 +14,7 @@
     --ch-push:#b32633;    --ch-push-a:#ff8073;    /* 押し：熱い */
     --ch-drive:#0c9a83;   --ch-drive-a:#48f7cd;   /* 刻み：機械的 */
     --ch-color:#2b62a0;   --ch-color-a:#82c0f7;   /* 彩り：夜 */
-    /* スタイルカード4枚（世界を塗り替える札）。20枚とは色の系統を変える */
+    /* スタイルカード（世界を塗り替える札）。20枚とは色の系統を変える */
     --st-beatles:#8a5a1f;   --st-beatles-a:#ffd08a;
     --st-kaze:#1f6f6a;      --st-kaze-a:#7ff0e0;
     --st-modal:#26407e;     --st-modal-a:#94b4ff;
@@ -22,6 +22,12 @@
     --st-citypop:#a8386b;   --st-citypop-a:#ff9ec9;   /* v10：夕暮れ */
     --st-house:#3f7a12;     --st-house-a:#b6f76a;     /* v10：蛍光 */
     --st-lofi:#4a4358;      --st-lofi-a:#b3a8c9;      /* v10：くすんだ紫 */
+    /* v11 で足した5枚。前の7枚より彩度を上げて「熱い側」だと分かるようにした */
+    --st-funk:#a8611a;      --st-funk-a:#ffc061;      /* ファンク：真鍮 */
+    --st-rock:#8c1f2e;      --st-rock-a:#ff6b7a;      /* ハードロック：血の色 */
+    --st-reggae:#2f7a33;    --st-reggae-a:#8ef09a;    /* レゲエ：草の緑 */
+    --st-flamenco:#9c2a12;  --st-flamenco-a:#ff9b6b;  /* フラメンコ：赤土 */
+    --st-swing:#8a7a1c;     --st-swing-a:#ffe98a;     /* ビッグバンド：金 */
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -187,14 +193,16 @@
   .cell.reject{animation:shake .3s}
   @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 
-  /* ===== スタイルカード4枚（世界を塗り替える札） =====
+  /* ===== スタイルカード12枚（世界を塗り替える札） =====
      20枚（角丸の四角）と区別できるよう、横長・金縁・少し大きく作る */
   /* v10：世界が7つになったので1行7列。狭い画面では4列→2列に折り返す */
+  /* v11 で12枚になったので 6列×2段にした（7列のままだと1枚あぶれる） */
   .styles{
-    display:grid; grid-template-columns:repeat(7,1fr); gap:9px;
+    display:grid; grid-template-columns:repeat(6,1fr); gap:9px;
     max-width:1680px; width:100%; margin:0 auto;
   }
-  @media (max-width:1280px){ .styles{grid-template-columns:repeat(4,1fr)} }
+  @media (max-width:1560px){ .styles{grid-template-columns:repeat(4,1fr)} }
+  @media (max-width:1080px){ .styles{grid-template-columns:repeat(3,1fr)} }
   @media (max-width:760px){ .styles{grid-template-columns:repeat(2,1fr)} }
   .styles-head{
     max-width:1680px; width:100%; margin:0 auto -8px; display:flex; align-items:baseline; gap:12px;
@@ -300,11 +308,13 @@
     <p class="sub">
       <b>ジャンルはありません。</b>重ねる20枚は「役割 × 性格」だけを持ち、
       <b>楽器は世界の側が決めます</b>。<br>
-      7枚の <b>スタイルカード</b>（ビートルズ／藤井風／マイルス＆エヴァンス／久石譲／
-      シティポップ／ダンス／ローファイ）を出すと、コード進行・テンポ・ノリ・
+      12枚の <b>スタイルカード</b>（ビートルズ／藤井風／マイルス＆エヴァンス／久石譲／
+      シティポップ／ダンス／ローファイ／<b>ファンク／ハードロック／レゲエ／フラメンコ／
+      ビッグバンド</b>）を出すと、コード進行・テンポ・ノリ・
       <b>土台のビート</b>に加えて<b>20枚すべての楽器が、その音楽の実際の編成に入れ替わります</b>。<br>
-      （例：「押しのメロディ」は標準ではエレキギター、久石譲の世界ではホルンになります）<br>
-      <b>迷ったら「ダンス（四つ打ち）」か「シティポップ」から。</b>札を1枚も出していなくても、
+      （例：「押しのメロディ」は標準ではエレキギター、久石譲の世界ではホルン、
+      ファンクの世界ではトランペットになります）<br>
+      <b>迷ったら「ファンク」か「ハードロック」から。</b>札を1枚も出していなくても、
       その世界のビートが鳴りはじめます。
     </p>
 
@@ -385,7 +395,7 @@
   <div class="grid" id="grid"></div>
 
   <div class="styles-head">
-    <b>STYLE — 世界を決める7枚（楽器・進行・テンポ・土台のビートの全部を持っている）</b>
+    <b>STYLE — 世界を決める12枚（楽器・進行・テンポ・土台のビートの全部を持っている）</b>
     <small>出すと、いま鳴っている札がその音楽の実際の編成で鳴り直します（同じ札をもう一度出すと標準に戻ります）。「ノリ ●●●」は体が動きやすさの目安です</small>
   </div>
   <div class="styles" id="styles"></div>
@@ -399,7 +409,8 @@
       <b>行＝ROLE（役割）／列＝CHARACTER（性格）</b>。キーボードの並びがそのままグリッドです。<br>
       マスの太い文字が<b>その札のはたらき</b>（世界が変わっても変わらない）、
       小さい文字が<b>いまの世界での楽器</b>（世界が変わると入れ替わる）。<br>
-      スタイルカードは <kbd>6</kbd> <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> <kbd>0</kbd> <kbd>Y</kbd> <kbd>U</kbd>。<br>
+      スタイルカードは <kbd>6</kbd> <kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> <kbd>0</kbd> <kbd>Y</kbd> <kbd>U</kbd>
+      <kbd>P</kbd> <kbd>I</kbd> <kbd>O</kbd> <kbd>H</kbd> <kbd>J</kbd>。<br>
       <b>同じ札をもう一度タッチ（同じキーをもう一度）すると、その音が外れます。</b><br>
       <kbd>Backspace</kbd> 最後に入れた音を消す　<kbd>Esc</kbd> 終了　クリックでも投入できます。
     </div>

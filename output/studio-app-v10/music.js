@@ -539,6 +539,42 @@ function voicing(kind, ch, oct) {
 function isAccent(ev) { return (ev.v || 0) >= 0.62; }
 
 /* =====================================================================
+   8-a. 裏拍へ送る（offbeat）— v11 で追加
+   ---------------------------------------------------------------------
+   v10 まで、世界が変えられるのは「楽器・和声・テンポ・跳ね・土台のビート」で、
+   **札の譜面そのものには一切触らない**というのが設計の柱だった。
+   だがレゲエだけは、それでは成立しない。
+   レゲエの正体はテンポでも楽器でもなく「和音が拍の頭に無いこと」だからだ。
+   ギターとオルガンが裏拍だけを弾く（スカンク）。ここを守らないと、
+   どれだけ音色を寄せてもただの遅いポップスにしかならない。
+
+   そこで最小限の例外を1つだけ作った。
+   世界が offbeat: ['chord'] と書いていれば、その役割の音符のうち
+   **拍の頭にあるものだけ**を8分ぶん（2ステップ）後ろへ送る。
+
+   「拍の頭にあるものだけ」なのが大事で、
+   もともと裏に置いてある音符（彩りのコンピングなど）は動かさない。
+   全部を一律にずらすと、裏にあった音が表に戻ってしまう。
+
+   送り先がふさがっている（すぐ裏にもう音符がある）ときと、
+   小節からはみ出すときは、**その音符を落とす**。
+   残すと拍の頭に音が居座ってしまい、そこだけレゲエでなくなるため。
+   裏の音符がもう鳴っているので、落としても隙間はできない。       */
+function offbeatPhrase(phrase, n) {
+  return phrase.map(bar => {
+    const taken = new Set(bar.map(e => e.s));
+    const out = [];
+    bar.forEach(e => {
+      if (e.s % 4 !== 0) { out.push(e); return; }         // もともと裏＝そのまま
+      const to = e.s + n;
+      if (to <= 15 && !taken.has(to)) out.push(Object.assign({}, e, { s: to }));
+      /* 送れないときは落とす（拍の頭に残さない） */
+    });
+    return out.sort((a, b) => a.s - b.s);
+  });
+}
+
+/* =====================================================================
    8-b. 土台のビート（GROOVES）— v10 で追加
    ---------------------------------------------------------------------
    v9 まで、札を1枚も出していないときの土台のビートは
@@ -634,6 +670,83 @@ const GROOVES = {
     fill: [
       ['k', 8, .30, 2],
       ['s', 12, .30, 3],
+    ],
+  },
+
+  /* ───── ここから v11 で足した5つ ───── */
+
+  /* ファンク。「ザ・ワン」＝1拍目に全部を置く。
+     ジェームス・ブラウンが楽団に徹底させたのがこれで、
+     1拍目さえ揃っていれば、あいだは何をしても踊れる。
+     ゴーストスネア（聞こえるか聞こえないかの弱い打点）が
+     16分のうねりを作る。ここを消すと途端に打ち込みくさくなる */
+  funky: {
+    label: 'ファンク',
+    core: [ ['k', 0, .95], ['k', 6, .52], ['k', 10, .46] ],
+    fill: [
+      ['s', 4, .52, 1], ['s', 12, .52, 1],
+      ['s', 7, .11, 3], ['s', 14, .13, 3],
+      ['h', 0, .16], ['h', 2, .09], ['h', 4, .13], ['h', 6, .09],
+      ['h', 8, .15], ['h', 10, .09], ['h', 12, .13], ['h', 14, .10],
+      ['h', 1, .05, 2], ['h', 3, .05, 2], ['h', 5, .05, 2], ['h', 7, .05, 2],
+      ['h', 9, .05, 2], ['h', 11, .05, 2], ['h', 13, .05, 2], ['h', 15, .06, 2],
+      ['c', 4, .16, 4], ['c', 12, .16, 4],
+    ],
+  },
+
+  /* ハードロック。キックを2つ重ねて踏み、2・4のスネアを思いきり強く。
+     小節の終わりにタムを2つ置いて、次の小節へ雪崩れ込ませる */
+  stomp: {
+    label: 'ロックの8ビート',
+    core: [ ['k', 0, 1.0], ['k', 3, .58], ['k', 8, .92], ['k', 11, .52] ],
+    fill: [
+      ['s', 4, .72, 1], ['s', 12, .72, 1],
+      ['h', 0, .22], ['h', 2, .15], ['h', 4, .20], ['h', 6, .15],
+      ['h', 8, .22], ['h', 10, .15], ['h', 12, .20], ['h', 14, .16],
+      ['t1', 14, .28, 4], ['t2', 15, .34, 4],
+    ],
+  },
+
+  /* ワン・ドロップ。**1拍目にキックを置かない。**
+     3拍目でキックとスネアが同時に落ちる、これだけ。
+     頭が抜けているぶん、聴く側が勝手に体で拍を埋めにいく。
+     レゲエの「重さ」の正体はテンポではなくこの空白のほう */
+  onedrop: {
+    label: 'ワン・ドロップ',
+    core: [ ['k', 8, .90] ],
+    fill: [
+      ['s', 8, .46, 1],
+      ['h', 2, .17], ['h', 6, .17], ['h', 10, .17], ['h', 14, .18],
+      ['h', 0, .07, 3], ['h', 4, .07, 3], ['h', 8, .07, 3], ['h', 12, .07, 3],
+      ['s', 4, .11, 4], ['s', 12, .13, 4],
+    ],
+  },
+
+  /* パルマス（手拍子）。3-3-2 で数えるスペインのアクセント。
+     フラメンコの世界では drumMap でスネアが手拍子に置き換わるので、
+     ここの 's' は全部クラップとして鳴る（カホンの代わりにキックを使う） */
+  palmas: {
+    label: '手拍子（3-3-2）',
+    core: [ ['k', 0, .82], ['k', 6, .54], ['k', 12, .62] ],
+    fill: [
+      ['s', 0, .44, 1], ['s', 6, .38, 1], ['s', 12, .46, 1],
+      ['s', 3, .15, 3], ['s', 9, .15, 3],
+      ['h', 2, .10], ['h', 4, .08], ['h', 8, .10], ['h', 10, .08], ['h', 14, .11],
+    ],
+  },
+
+  /* 4ビート。ビッグバンドの足元。
+     ライド（ここではハイハット）が跳ね、キックは4つとも
+     「フェザリング」＝聞こえるか聞こえないかの強さで踏むだけ。
+     裏拍（6・14）は Transport の swing でうしろへずれて三連になる */
+  swing4: {
+    label: '4ビート',
+    core: [ ['k', 0, .30], ['k', 4, .25], ['k', 8, .30], ['k', 12, .25] ],
+    fill: [
+      ['h', 0, .20], ['h', 4, .18], ['h', 6, .13],
+      ['h', 8, .20], ['h', 12, .18], ['h', 14, .13],
+      ['s', 4, .22, 2], ['s', 12, .24, 2],
+      ['t1', 15, .22, 4],
     ],
   },
 };
@@ -1234,10 +1347,405 @@ const WORLDS = {
       },
     },
   },
+
+  /* ═════════════════════════════════════════════════════════════════
+     ここから v11 で足した5つ。
+     v10 までの7つは「日本で耳になじんだ音楽」に寄っていた
+     （ビートルズ／藤井風／ジャズ／久石譲／シティポップ／ハウス／ローファイ）。
+     どれも“聴き心地のいい方向”で、**熱い・濃い・体温の高い音楽が1つも無かった。**
+     足したのは、その空白を埋める5つ。
+       ファンク    … 黒人音楽のリズムの発明そのもの。ホーンが吠える
+       ハードロック … 歪んだギターの壁。いちばん音がでかい世界
+       レゲエ      … 拍の頭が抜けている。世界でいちばん揺れる
+       フラメンコ  … 手拍子と♭IIの緊張。ラテンの一番濃いところ
+       ビッグバンド … 158BPMの跳ね。管が全部いる、いちばん華やかな世界
+     ═════════════════════════════════════════════════════════════════ */
+
+  /* ───────────── ファンク／ソウル ─────────────
+     編成の根拠：ジェームス・ブラウンは楽団に「ザ・ワン」＝1拍目を
+     全員でそろえることを徹底させ、和音はほとんど動かさなかった。
+     ここでも進行は I7 を2小節続けてから IV9 → V7(♯9) と動くだけにしてある。
+     動かないからこそリズムが立つ。
+     ホーンセクション（サックス＋トランペット＋トロンボーン）と、
+     16分で刻むギターのカッティング、オルガンが土台。
+     残響はほとんど無い（60〜70年代のスタジオは乾いていた）。
+
+     ※ ドラムは Kit8 を使っている。samples/ には breakbeat13 というフォルダも
+        あるが、これは fetch-samples.js の DRUM_KITS に入っておらず
+        （タムも2つ足りない）、`音源をダウンロード.bat` では配られない。
+        使うと他の人の環境でだけ合成音に落ちるので、採用していない。  */
+  funk: {
+    label: 'ファンク', sub: 'FUNK & SOUL', key: 'p', move: 3,
+    desc: '熱い・ホーンが吠える',
+    detail: 'B♭調・102BPM・I7を動かさない・16分のカッティングとホーン',
+    prog: [
+      { name: 'B♭9',     root: -2, vc: [-2,  2,  5,  8, 12], lad: [0, 2, 5,  8, 10, 12, 14, 17, 20] },
+      { name: 'B♭9',     root: -2, vc: [-2,  2,  5,  8, 12], lad: [0, 2, 5,  8, 10, 12, 14, 17, 20] },
+      { name: 'E♭9',     root:  3, vc: [ 3,  7, 10, 13, 17], lad: [3, 5, 7, 10, 13, 15, 17, 19, 22] },
+      { name: 'F7(♯9)',  root: -7, vc: [-7, -3,  0,  3,  8], lad: [0, 3, 5,  8, 10, 12, 15, 17, 20] },
+    ],
+    bpm: 102, swing: 0.12, swingSub: '16n', harmony: 2,
+    kit: 'Kit8', groove: 'funky', drumMap: {}, voicingMap: {},
+    sendScale: 0.50, delayScale: 0.25, panScale: 0.85,
+    air: 4.5, mud: -3.0, drumGain: 2, energyScale: 1.08,
+    voices: {
+      core: {   /* カッティングのギターとエレキベース。ファンクの最小単位 */
+        melody: [ { voice: 'guitar-electric', oct: 4, gain: -5, drive: 0.14 },
+                  { voice: 'trumpet', oct: 4, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2 },
+                  { voice: 'sub', oct: 2, gain: -10 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit8', gain: -3 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -8, drive: 0.12, voicing: 'rootless', strum: 0.007 },
+                  { voice: 'organ', oct: 4, gain: -15, voicing: 'full', when: 'accent' } ],
+      },
+      sing: {   /* サックスが歌う。ソウル・バラードの側 */
+        melody: [ { voice: 'saxophone', oct: 4, gain: -5 },
+                  { voice: 'trombone', oct: 3, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -8 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -6 } ],
+        chord:  [ { voice: 'organ', oct: 3, gain: -7, voicing: 'full' },
+                  { voice: 'piano', oct: 4, gain: -15, voicing: 'rootless', when: 'accent' } ],
+      },
+      push: {   /* ホーンの一斉射撃（スタブ）。この世界のいちばん強い場面 */
+        melody: [ { voice: 'trumpet', oct: 4, gain: -5 },
+                  { voice: 'saxophone', oct: 4, gain: -12, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2 },
+                  { voice: 'sub', oct: 2, gain: -9 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit8', gain: -2 } ],
+        chord:  [ { voice: 'trombone', oct: 3, gain: -8, voicing: 'triad' },
+                  { voice: 'trumpet', oct: 4, gain: -14, voicing: 'triad', when: 'accent' } ],
+      },
+      drive: {  /* 16分の刻み。カッティングが主役になる */
+        melody: [ { voice: 'guitar-electric', oct: 4, gain: -7, drive: 0.18 },
+                  { voice: 'clarinet', oct: 4, gain: -17, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -8 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit3', gain: -3 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -9, drive: 0.10, voicing: 'rootless', strum: 0.005 },
+                  { voice: 'piano', oct: 4, gain: -16, voicing: 'rootless', when: 'accent' } ],
+      },
+      color: {  /* オルガンの合いの手（ハモンドのおかず） */
+        melody: [ { voice: 'organ', oct: 4, gain: -8 },
+                  { voice: 'saxophone', oct: 4, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -11 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -5 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -7, voicing: 'rootless' },
+                  { voice: 'guitar-electric', oct: 3, gain: -16, drive: 0.10, voicing: 'triad', when: 'accent' } ],
+      },
+    },
+  },
+
+  /* ───────────── ハードロック ─────────────
+     編成の根拠：ハードロックの音の芯は「歪んだギターを左右に2本置くこと」。
+     ここでは panScale を 1.15 まで上げて、左右いっぱいに広げてある。
+     和声は Em – Cadd9 – G – D、いわゆる i–♭VI–♭III–♭VII。
+     ロックのアンセムはほぼこの4つで書かれている。
+     ベースは低いミ（E1）から始める。エレキベースの最低音であり、
+     ロックがこの音を土台に選んだのは単にそこが一番低いからだった。
+     ギターだけの世界にはしていない。ハードロックは同時に
+     オルガン（ディープ・パープル）・弦（レッド・ツェッペリン）・
+     ピアノ（クイーン）を持ち込んだ音楽でもあるため、
+     「歌」「彩り」の枠はそちらへ寄せてある。                     */
+  rock: {
+    label: 'ハードロック', sub: 'HARD ROCK', key: 'i', move: 3,
+    desc: 'でかい・歪んだ壁',
+    detail: 'ホ短調・148BPM・i–♭VI–♭III–♭VII・パワーコードと低いミ',
+    prog: [
+      { name: 'Em',     root: -8, vc: [-8, -5, -1,  2,  6], lad: [4, 7,  9, 11, 14, 16, 19, 21, 23] },
+      { name: 'Cadd9',  root:  0, vc: [ 0,  4,  7, 12, 14], lad: [0, 2,  4,  7,  9, 12, 14, 16, 19] },
+      { name: 'G',      root: -5, vc: [-5, -1,  2,  7,  9], lad: [-1, 2, 4,  7,  9, 11, 14, 16, 19] },
+      { name: 'D',      root:  2, vc: [ 2,  6,  9, 14, 16], lad: [2, 4,  6,  9, 11, 14, 16, 18, 21] },
+    ],
+    bpm: 148, swing: 0, swingSub: '8n', harmony: 2,
+    kit: 'acoustic-kit', groove: 'stomp', drumMap: {}, voicingMap: {},
+    sendScale: 0.75, delayScale: 0.35, panScale: 1.15,
+    air: 4.5, mud: -3.5, drumGain: 2, energyScale: 1.14,
+    voices: {
+      core: {   /* リフとパワーコード。世界の芯 */
+        melody: [ { voice: 'guitar-electric', oct: 4, gain: -4, drive: 0.55 },
+                  { voice: 'guitar-electric', oct: 5, gain: -14, drive: 0.55, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2, drive: 0.16 },
+                  { voice: 'sub', oct: 2, gain: -8 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -2 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -6, drive: 0.60, voicing: 'power' },
+                  { voice: 'organ', oct: 4, gain: -15, voicing: 'full', when: 'accent' } ],
+      },
+      sing: {   /* 弦を持ち込んだ側（「カシミール」の景色） */
+        melody: [ { voice: 'violin', oct: 4, gain: -6 },
+                  { voice: 'french-horn', oct: 3, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -3 },
+                  { voice: 'cello', oct: 3, gain: -12 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit3', gain: -6 } ],
+        chord:  [ { voice: 'organ', oct: 3, gain: -7, voicing: 'full' },
+                  { voice: 'guitar-electric', oct: 3, gain: -15, drive: 0.35, voicing: 'power', when: 'accent' } ],
+      },
+      push: {   /* 音の壁。ここが最大音量 */
+        melody: [ { voice: 'guitar-electric', oct: 3, gain: -4, drive: 0.72 },
+                  { voice: 'guitar-electric', oct: 4, gain: -12, drive: 0.72, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2, drive: 0.24 },
+                  { voice: 'sub', oct: 2, gain: -7 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -2 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -5, drive: 0.78, voicing: 'power' },
+                  { voice: 'guitar-electric', oct: 4, gain: -13, drive: 0.70, voicing: 'power', when: 'accent' } ],
+      },
+      drive: {  /* 16分の刻み。プログレ寄りのシンセが顔を出す */
+        melody: [ { voice: 'synth-lead', oct: 5, gain: -9, drive: 0.30 },
+                  { voice: 'guitar-electric', oct: 4, gain: -15, drive: 0.50, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -3, drive: 0.18 },
+                  { voice: 'sub', oct: 2, gain: -7 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit3', gain: -3 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -7, drive: 0.62, voicing: 'power' },
+                  { voice: 'organ', oct: 4, gain: -16, voicing: 'full', when: 'accent' } ],
+      },
+      color: {  /* オルガンのソロと、ロックのピアノ */
+        melody: [ { voice: 'organ', oct: 4, gain: -7, drive: 0.22 },
+                  { voice: 'saxophone', oct: 4, gain: -15, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -11 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -5 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -6, voicing: 'open' },
+                  { voice: 'guitar-electric', oct: 4, gain: -16, drive: 0.40, voicing: 'power', when: 'accent' } ],
+      },
+    },
+  },
+
+  /* ───────────── レゲエ ─────────────
+     この世界だけ、**譜面に手を入れている**（8-a章の offbeat）。
+     レゲエの正体はテンポでも楽器でもなく「和音が拍の頭に無いこと」だからで、
+     そこを守らないと、どれだけ音色を寄せてもただの遅いポップスになる。
+     和音の役割だけ、拍の頭にある音符を8分ぶん裏へ送っている（＝スカンク）。
+
+     編成の根拠：土台のビートはワン・ドロップ（1拍目にキックを置かず、
+     3拍目でキックとスネアが同時に落ちる）。ベースが最前面に出て、
+     旋律よりも太く低く歌う。オルガンは「バブル」と呼ばれる裏拍の刻み。
+     旋律にハルモニウムを当てているのは**メロディカの代役**で、
+     どちらもリードを空気で鳴らす楽器。オーガスタス・パブロがこの音で
+     ダブの旋律を作った。ディレイを 1.6 倍まで上げてあるのはダブの名残。 */
+  reggae: {
+    label: 'レゲエ', sub: 'REGGAE', key: 'o', move: 2,
+    desc: '揺れる・拍の頭が無い',
+    detail: 'イ短調・74BPM・和音は裏拍だけ（スカンク）・ワン・ドロップ',
+    prog: [
+      { name: 'Am9',    root: -3, vc: [-3,  0,  4,  7, 11], lad: [0, 2, 4,  7,  9, 12, 14, 16, 19] },
+      { name: 'Dm9',    root:  2, vc: [ 2,  5,  9, 12, 16], lad: [0, 2, 5,  7,  9, 12, 14, 17, 19] },
+      { name: 'G9',     root: -5, vc: [-5, -1,  2,  5,  9], lad: [2, 5, 7,  9, 11, 14, 17, 19, 21] },
+      { name: 'Cmaj9',  root:  0, vc: [ 0,  4,  7, 11, 14], lad: [0, 2, 4,  7,  9, 11, 12, 14, 16] },
+    ],
+    bpm: 74, swing: 0, swingSub: '8n', harmony: 2,
+    kit: 'acoustic-kit', groove: 'onedrop', drumMap: {}, voicingMap: {},
+    offbeat: ['chord'],                    // ★ 和音だけ裏拍へ送る（この世界だけ）
+    sendScale: 1.10, delayScale: 1.60, panScale: 0.95,
+    air: 1.5, mud: 1.5, drumGain: 0, energyScale: 0.94,
+    voices: {
+      core: {   /* メロディカ（ハルモニウムで代用）と、前に出るベース */
+        melody: [ { voice: 'harmonium', oct: 4, gain: -6 },
+                  { voice: 'guitar-electric', oct: 4, gain: -16, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -1 },
+                  { voice: 'sub', oct: 2, gain: -6 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -4 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -8, voicing: 'triad', strum: 0.006 },
+                  { voice: 'organ', oct: 4, gain: -13, voicing: 'full', when: 'accent' } ],
+      },
+      sing: {   /* レゲエのホーン。トロンボーンが低く歌う */
+        melody: [ { voice: 'trombone', oct: 3, gain: -7 },
+                  { voice: 'saxophone', oct: 4, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2 },
+                  { voice: 'sub', oct: 2, gain: -7 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit3', gain: -7 } ],
+        chord:  [ { voice: 'organ', oct: 3, gain: -8, voicing: 'full' },
+                  { voice: 'harmonium', oct: 3, gain: -15, voicing: 'triad', when: 'accent' } ],
+      },
+      push: {   /* スカのホーンライン。前へ押す場面はここだけ速く聞こえる */
+        melody: [ { voice: 'saxophone', oct: 4, gain: -6 },
+                  { voice: 'trumpet', oct: 4, gain: -13, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -1 },
+                  { voice: 'sub', oct: 2, gain: -7 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -3 } ],
+        chord:  [ { voice: 'guitar-electric', oct: 3, gain: -7, drive: 0.10, voicing: 'triad', strum: 0.004 },
+                  { voice: 'organ', oct: 4, gain: -14, voicing: 'full', when: 'accent' } ],
+      },
+      drive: {  /* オルガンの「バブル」。16分が裏で泡立つ */
+        melody: [ { voice: 'organ', oct: 4, gain: -9 },
+                  { voice: 'xylophone', oct: 5, gain: -17, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2 },
+                  { voice: 'sub', oct: 2, gain: -6 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit8', gain: -5 } ],
+        chord:  [ { voice: 'organ', oct: 3, gain: -10, voicing: 'full' },
+                  { voice: 'guitar-electric', oct: 3, gain: -16, voicing: 'triad', when: 'accent' } ],
+      },
+      color: {  /* ダブの遠い音。フルートとピアノが残響の奥から鳴る */
+        melody: [ { voice: 'flute', oct: 5, gain: -9 },
+                  { voice: 'harmonium', oct: 4, gain: -15, when: 'accent' } ],
+        bass:   [ { voice: 'bass-electric', oct: 2, gain: -2 },
+                  { voice: 'sub', oct: 2, gain: -9 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -6 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -9, voicing: 'rootless' },
+                  { voice: 'guitar-electric', oct: 3, gain: -15, voicing: 'triad', when: 'accent' } ],
+      },
+    },
+  },
+
+  /* ───────────── フラメンコ／スペイン ─────────────
+     編成の根拠：和声は Am – G – F – E、アンダルシア終止。
+     4小節ぜんぶ下がっていって、最後の E で止まる。
+     このEに♭9（ファ）を入れてあるのが「スペインの音」の正体で、
+     旋律の梯子もEのところだけ E F G# A B C D（フリギア・ドミナント）に
+     切り替わる。**同じ札が4小節目だけ違う色になる**のはこのため。
+
+     打楽器はスネアを drumMap で**手拍子（パルマス）に置き換えて**ある。
+     フラメンコに太鼓は無く、拍を刻むのは人の手とカホンだから。
+     土台のビートも 3-3-2 で数える（スペインの数え方）。
+     ガットギターだけの世界にはしていない。「歌」は弦楽、
+     「押し」はスペインの金管、「彩り」はフルートとハープに振ってある。 */
+  flamenco: {
+    label: 'フラメンコ', sub: 'FLAMENCO', key: 'h', move: 3,
+    desc: '濃い・手拍子と緊張',
+    detail: 'イ調フリギア・116BPM・Am–G–F–E(♭9)・手拍子の3-3-2',
+    prog: [
+      { name: 'Am',      root: -3, vc: [-3,  0,  4,  9, 12], lad: [0, 2, 4, 5,  7,  9, 10, 12, 14] },
+      { name: 'G',       root: -5, vc: [-5, -1,  2,  7, 11], lad: [2, 4, 5, 7,  9, 11, 12, 14, 16] },
+      { name: 'F',       root: -7, vc: [-7, -3,  0,  5,  9], lad: [0, 2, 4, 5,  7,  9, 12, 14, 16] },
+      { name: 'E7(♭9)',  root: -8, vc: [-8, -4, -1,  2,  5], lad: [4, 5, 8, 9, 11, 12, 14, 16, 17] },
+    ],
+    bpm: 116, swing: 0, swingSub: '8n', harmony: 2,
+    kit: 'acoustic-kit', groove: 'palmas',
+    drumMap: { s: 'c' },                   // ★ スネア→手拍子（フラメンコに太鼓は無い）
+    voicingMap: {},
+    sendScale: 0.70, delayScale: 0.20, panScale: 0.95,
+    air: 5.0, mud: -2.0, drumGain: 1, energyScale: 1.06,
+    voices: {
+      core: {   /* ガットギター。この世界の顔 */
+        melody: [ { voice: 'guitar-nylon', oct: 4, gain: -4 },
+                  { voice: 'guitar-nylon', oct: 3, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -11 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -4 } ],
+        chord:  [ { voice: 'guitar-nylon', oct: 3, gain: -5, voicing: 'open', strum: 0.014 },
+                  { voice: 'harp', oct: 3, gain: -15, voicing: 'full', when: 'accent' } ],
+      },
+      sing: {   /* 弦楽。カンテ（歌）の代わりにバイオリンが歌う */
+        melody: [ { voice: 'violin', oct: 4, gain: -5 },
+                  { voice: 'cello', oct: 3, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'cello', oct: 3, gain: -6 },
+                  { voice: 'contrabass', oct: 2, gain: -8 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit3', gain: -8 } ],
+        chord:  [ { voice: 'harp', oct: 3, gain: -6, voicing: 'full' },
+                  { voice: 'guitar-nylon', oct: 3, gain: -14, voicing: 'triad', strum: 0.010, when: 'accent' } ],
+      },
+      push: {   /* ラスゲアード（かき鳴らし）とスペインの金管 */
+        melody: [ { voice: 'trumpet', oct: 4, gain: -6 },
+                  { voice: 'trombone', oct: 3, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -3 },
+                  { voice: 'bass-electric', oct: 2, gain: -13 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -3 } ],
+        chord:  [ { voice: 'guitar-nylon', oct: 3, gain: -5, voicing: 'open', strum: 0.005 },
+                  { voice: 'trumpet', oct: 4, gain: -15, voicing: 'triad', when: 'accent' } ],
+      },
+      drive: {  /* ピカード（16分の単音弾き）。ギターの一番速いところ */
+        melody: [ { voice: 'guitar-nylon', oct: 4, gain: -6 },
+                  { voice: 'xylophone', oct: 5, gain: -17, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -4 },
+                  { voice: 'sub', oct: 2, gain: -10 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit8', gain: -5 } ],
+        chord:  [ { voice: 'guitar-nylon', oct: 3, gain: -7, voicing: 'triad', strum: 0.004 },
+                  { voice: 'harp', oct: 3, gain: -16, voicing: 'full', when: 'accent' } ],
+      },
+      color: {  /* 遠くの笛とハープ。緊張のあいまに入る風のような音 */
+        melody: [ { voice: 'flute', oct: 5, gain: -8 },
+                  { voice: 'clarinet', oct: 4, gain: -15, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -4 },
+                  { voice: 'sub', oct: 2, gain: -12 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -6 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -7, voicing: 'open' },
+                  { voice: 'harp', oct: 3, gain: -15, voicing: 'full', when: 'accent' } ],
+      },
+    },
+  },
+
+  /* ───────────── ビッグバンド／スウィング ─────────────
+     編成の根拠：この世界だけ**管楽器が全部いる**
+     （トランペット・トロンボーン・サックス・クラリネット）。
+     ビッグバンドは「管のセクションを塊で鳴らす」音楽なので、
+     和音の役割にもトロンボーンとサックスを当ててある。
+     ピアノはルートを弾かない（rootless）。ルートはウッドベースが
+     4分で歩いて受け持つ、という分業がこの音楽の設計だから。
+     アコギはフレディ・グリーン式の刻み（1小節に4回、短く）。
+
+     テンポ 158・跳ね 0.55 は、この世界を「いちばん速い世界」にする。
+     ただしトロンボーンやウッドベースは 9章の minGap で16分が間引かれるので、
+     速くしても濁らない。**吹けない速さは自動で吹かない。**  */
+  swing: {
+    label: 'ビッグバンド', sub: 'BIG BAND SWING', key: 'j', move: 3,
+    desc: '華やか・管が全部いる',
+    detail: 'B♭調・158BPM・I–VI7–IIm–V7・強い跳ねと4ビート',
+    prog: [
+      { name: 'B♭6/9',   root: -2, vc: [-2,  2,  5,  7, 12], lad: [0, 2, 5,  7, 10, 12, 14, 17, 19] },
+      { name: 'G7(♭9)',  root: -5, vc: [-5, -1,  2,  5,  8], lad: [0, 2, 5,  8, 11, 12, 14, 17, 20] },
+      { name: 'Cm9',     root:  0, vc: [ 0,  3,  7, 10, 14], lad: [0, 3, 5,  7, 10, 12, 15, 17, 19] },
+      { name: 'F9',      root: -7, vc: [-7, -3,  0,  3,  7], lad: [0, 2, 5,  7,  9, 12, 14, 17, 19] },
+    ],
+    bpm: 158, swing: 0.55, swingSub: '8n', harmony: 2,
+    kit: 'acoustic-kit', groove: 'swing4', drumMap: {}, voicingMap: {},
+    sendScale: 0.80, delayScale: 0.18, panScale: 0.90,
+    air: 3.0, mud: -1.5, drumGain: 0, energyScale: 1.06,
+    voices: {
+      core: {   /* トランペットの主題と、フレディ・グリーンの刻み */
+        melody: [ { voice: 'trumpet', oct: 4, gain: -5 },
+                  { voice: 'saxophone', oct: 4, gain: -13, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -13 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -4 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -7, voicing: 'rootless' },
+                  { voice: 'guitar-acoustic', oct: 3, gain: -13, voicing: 'full', strum: 0.010 } ],
+      },
+      sing: {   /* サックスのセクション。いちばん厚い和音 */
+        melody: [ { voice: 'saxophone', oct: 4, gain: -5 },
+                  { voice: 'clarinet', oct: 4, gain: -13, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -4 },
+                  { voice: 'cello', oct: 3, gain: -13 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit3', gain: -8 } ],
+        chord:  [ { voice: 'trombone', oct: 3, gain: -8, voicing: 'triad' },
+                  { voice: 'french-horn', oct: 3, gain: -15, voicing: 'triad', when: 'accent' } ],
+      },
+      push: {   /* シャウト・コーラス。金管が総立ちになる場面 */
+        melody: [ { voice: 'trumpet', oct: 5, gain: -6 },
+                  { voice: 'trombone', oct: 3, gain: -12, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -3 },
+                  { voice: 'bass-electric', oct: 2, gain: -14 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -3 } ],
+        chord:  [ { voice: 'trombone', oct: 3, gain: -7, voicing: 'triad' },
+                  { voice: 'saxophone', oct: 4, gain: -13, voicing: 'triad', when: 'accent' } ],
+      },
+      drive: {  /* クラリネットの速い刻み（ベニー・グッドマンの側） */
+        melody: [ { voice: 'clarinet', oct: 4, gain: -6 },
+                  { voice: 'xylophone', oct: 5, gain: -15, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -4 },
+                  { voice: 'sub', oct: 2, gain: -12 } ],
+        rhythm: [ { voice: 'drums', kit: 'Kit8', gain: -5 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -8, voicing: 'rootless' },
+                  { voice: 'guitar-acoustic', oct: 3, gain: -14, voicing: 'full', strum: 0.008 } ],
+      },
+      color: {  /* トロンボーンの合いの手（プランジャーのうなり） */
+        melody: [ { voice: 'trombone', oct: 3, gain: -7 },
+                  { voice: 'trumpet', oct: 4, gain: -14, when: 'accent' } ],
+        bass:   [ { voice: 'contrabass', oct: 2, gain: -3 },
+                  { voice: 'sub', oct: 2, gain: -14 } ],
+        rhythm: [ { voice: 'drums', kit: 'acoustic-kit', gain: -6 } ],
+        chord:  [ { voice: 'piano', oct: 3, gain: -7, voicing: 'full' },
+                  { voice: 'clarinet', oct: 4, gain: -15, voicing: 'triad', when: 'accent' } ],
+      },
+    },
+  },
 };
-/* スタイルカードとして出せる7枚（base は札を持たない＝初期状態）。
-   並びはキーの並び（6 7 8 9 0 Y U）と同じにしてある */
-const WORLD_ORDER = ['beatles', 'kaze', 'modal', 'hisaishi', 'citypop', 'house', 'lofi'];
+/* スタイルカードとして出せる12枚（base は札を持たない＝初期状態）。
+   並びはキーの並び（6 7 8 9 0 Y U P I O H J）と同じにしてある。
+   前半7枚が v10 まで、後半5枚が v11 で足した「体温の高い側」 */
+const WORLD_ORDER = [
+  'beatles', 'kaze', 'modal', 'hisaishi', 'citypop', 'house', 'lofi',
+  'funk', 'rock', 'reggae', 'flamenco', 'swing',
+];
 
 /* ---------------------------------------------------------------------
    いま有効な世界。key が null なら base（標準）。
@@ -1269,6 +1777,8 @@ const World = {
   harmony() { return this.def.harmony || null; },
   /* 土台のビート（札が0枚のときに鳴っている、その世界のグルーヴ） */
   groove() { return GROOVES[this.def.groove] || GROOVES.eight; },
+  /* 「この役割は裏拍で鳴らす」（8-a章）。いまはレゲエの和音だけが使う */
+  offbeat() { return this.def.offbeat || null; },
   move() { return this.num('move', 2); },
   num(field, dflt) { return this.def[field] == null ? dflt : this.def[field]; },
   sendScale()  { return this.num('sendScale', 1); },

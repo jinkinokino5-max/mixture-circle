@@ -239,6 +239,32 @@ function playTurn(time, lead = 1.0) {
   playImpact(time, 1.15);
 }
 
+/* 3-2b. 単音の合成打楽器を「同じ時刻に2回鳴らさない」ようにする関（v11）
+   ---------------------------------------------------------------------
+   NoiseSynth や MembraneSynth は**単音**なので、同じ時刻に2回叩くと
+   Tone.js が「Start time must be strictly greater than previous start time」
+   という例外を投げる。
+
+   これが厄介なのは、例外そのものより**巻き添え**のほうで、
+   叩いているのは Tone.Sequence のコールバックの中だから、
+   落ちるとその拍に予約してあった他の処理まで一緒に止まる。
+   実際 v11 でフラメンコに「スネア→手拍子」の読み替えを入れたところ、
+   「押し」の札がもともと持っている裏拍のクラップと同じ瞬間に重なり、
+   **世界の切り替えが最後まで終わらなくなる**という形で表に出た
+   （ブラウザで再現・特定した。例外26件、切り替え1回失敗）。
+
+   直し方は「時刻が進んでいなければ鳴らさない」だけ。
+   tail は1発ぶんの長さ（クラップは3回ずらして鳴らすので 0.023秒）。
+   20ms のうちに2回叩ける奏者はいないので、音楽的に失うものは無い。 */
+function monoSafe(fn, tail = 0) {
+  let last = -1;
+  return (t, v) => {
+    if (!(t > last)) return;
+    last = t + tail;
+    try { fn(t, v); } catch (e) { /* 1発落ちても、他の予約は止めない */ }
+  };
+}
+
 /* 3-3. クラップ：手拍子。バックビートに入ると一気に踊れる音になる */
 function makeClap(dest) {
   const out = new Tone.Gain(1).connect(dest);
@@ -249,12 +275,13 @@ function makeClap(dest) {
   }).connect(bp);
   return {
     nodes: [n, bp, out],
-    /* 3回わずかにずらして鳴らすと、1発のノイズが「手拍子」に化ける */
-    hit: (t, v) => {
+    /* 3回わずかにずらして鳴らすと、1発のノイズが「手拍子」に化ける。
+       その3回ぶん（0.023秒）は次の手拍子を受け付けない（monoSafe） */
+    hit: monoSafe((t, v) => {
       n.triggerAttackRelease('32n', t, v * 0.55);
       n.triggerAttackRelease('32n', t + 0.011, v * 0.75);
       n.triggerAttackRelease('16n', t + 0.023, v);
-    },
+    }, 0.023),
   };
 }
 
@@ -299,15 +326,24 @@ function makeSynthKit(dest, level) {
     envelope: { attack: 0.001, decay: 0.42, sustain: 0, release: 0.1 },
   }).connect(out);
   const clap = makeClap(out);
+  /* どれも単音の合成音なので monoSafe を通す。
+     タムは t1/t2/t3 で **1つの MembraneSynth を共有している** ので、
+     関も1つを共有する（別々にすると、違うタムが同時に来たとき落ちる）。 */
+  const tomGate = { last: -1 };
+  const tomSafe = (note, len) => (t, v) => {
+    if (!(t > tomGate.last)) return;
+    tomGate.last = t;
+    try { tom.triggerAttackRelease(note, len, t, v); } catch (e) {}
+  };
   return {
     sampled: false,
     nodes: [kick, snare, hat, tom, snareFilt, hatFilt, out, ...clap.nodes],
-    k:  (t, v) => kick.triggerAttackRelease('C1', '8n', t, v),
-    s:  (t, v) => snare.triggerAttackRelease('16n', t, v),
-    h:  (t, v) => hat.triggerAttackRelease('32n', t, v),
-    t1: (t, v) => tom.triggerAttackRelease('D2', '8n', t, v),
-    t2: (t, v) => tom.triggerAttackRelease('A1', '8n', t, v),
-    t3: (t, v) => tom.triggerAttackRelease('E1', '4n', t, v),
+    k:  monoSafe((t, v) => kick.triggerAttackRelease('C1', '8n', t, v)),
+    s:  monoSafe((t, v) => snare.triggerAttackRelease('16n', t, v)),
+    h:  monoSafe((t, v) => hat.triggerAttackRelease('32n', t, v)),
+    t1: tomSafe('D2', '8n'),
+    t2: tomSafe('A1', '8n'),
+    t3: tomSafe('E1', '4n'),
     c:  clap.hit,
   };
 }
@@ -333,6 +369,13 @@ class Part {
     /* v9：譜面と楽器が別々の場所にある。
        譜面はカード（キャラクター×役割）が持ち、楽器はいまの世界が持つ */
     this.phrase = PHRASES[charKey][roleKey].phrase;
+    /* v11：世界が「この役割は裏拍で鳴らす」と言っていれば、
+       拍の頭にある音符だけを8分ぶん後ろへ送る（music.js の 8-a章）。
+       いまこれを使っているのはレゲエの和音だけ＝スカンク */
+    const offRoles = World.offbeat();
+    if (offRoles && offRoles.indexOf(roleKey) >= 0) {
+      this.phrase = offbeatPhrase(this.phrase, 2);
+    }
     this.specs = World.layersFor(charKey, roleKey);
     this.role = ROLES[roleKey];
     this.layers = [];
@@ -506,7 +549,11 @@ class Part {
       this.layers.forEach(L => {
         if (L.muted) return;                         // その世界に存在しない楽器
         if (L.accentOnly && !isAccent(e)) return;    // 弱いイベントでは重ねない
-        this.playOn(L, e, time, ch, bar);
+        /* v11：1音の失敗を、ここで必ず止める。
+           ここは Tone.Sequence のコールバックの中なので、例外を外に出すと
+           同じ拍に予約してある他の処理（世界の切り替えなど）まで
+           巻き添えで止まってしまう。音は1つ欠けるだけで済ませる */
+        try { this.playOn(L, e, time, ch, bar); } catch (err) {}
       });
       if (this.roleKey !== 'rhythm' || e.p !== 'h') this.flash(time, e.v);
     });
@@ -649,11 +696,12 @@ const BaseBeat = {
     if (old) setTimeout(() => { try { old.nodes.forEach(n => n.dispose()); } catch (e) {} }, 1800);
   },
 
-  /* 打楽器の読み替えを通してから叩く（久石譲ではハイハットが消える） */
+  /* 打楽器の読み替えを通してから叩く（久石譲ではハイハットが消える）。
+     v11：ここも Tone.Sequence の中なので、1発の失敗を外に出さない */
   hit(piece, time, v) {
     const p = World.drum(piece);
     if (!p || !this.kit) return;
-    (this.kit[p] || this.kit.s)(time, v);
+    try { (this.kit[p] || this.kit.s)(time, v); } catch (e) {}
   },
 
   /* v10：叩く中身は music.js の GROOVES（世界ごと）から読む。

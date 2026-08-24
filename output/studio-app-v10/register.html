@@ -13,6 +13,8 @@
     --st-beatles:#8a5a1f;   --st-kaze:#1f6f6a;
     --st-modal:#26407e;     --st-hisaishi:#5d3a7a;
     --st-citypop:#a8386b;   --st-house:#3f7a12;   --st-lofi:#4a4358;
+    --st-funk:#a8611a;      --st-rock:#8c1f2e;    --st-reggae:#2f7a33;
+    --st-flamenco:#9c2a12;  --st-swing:#8a7a1c;
   }
   *{box-sizing:border-box}
   body{
@@ -87,7 +89,7 @@
 
 <h1>カード登録ツール<em>REGISTER</em></h1>
 <p class="lead">
-  実物のNFCカードとゲーム内の「27枚」（重ねる札20枚＋世界を決めるスタイル札7枚）を対応づけるための道具。<br>
+  実物のNFCカードとゲーム内の「32枚」（重ねる札20枚＋世界を決めるスタイル札12枚）を対応づけるための道具。<br>
   下のマスを1つクリック（＝そのマスを「待受」にする）→ カードリーダーにカードをかざす → 自動で登録されて次のマスに進みます。<br>
   リーダーが自動でEnterまで送らない／別の文字を送る場合は、右上の欄に手入力してもOK。
 </p>
@@ -185,7 +187,7 @@ function buildGrid() {
     });
   });
 
-  /* スタイルカード7枚（世界を塗り替える札）は別の段に並べる */
+  /* スタイルカード12枚（世界を塗り替える札）は別の段に並べる */
   const sg = document.getElementById('stylegrid');
   sg.innerHTML = '';
   sg.appendChild(el('div', 'role-label', 'STYLE'));
@@ -321,7 +323,7 @@ function updateOutput() {
     const lines = ROLE_ORDER.map(rk => line(ck + '-' + rk, HOOKS[ck][rk]));
     return `  // ---- ${CHARACTERS[ck].label} ${CHARACTERS[ck].sub} ----\n` + lines.join('\n');
   });
-  groups.push('  // ---- STYLE（世界を決める7枚）----\n'
+  groups.push('  // ---- STYLE（世界を決める12枚）----\n'
     + WORLD_ORDER.map(sk => line('style-' + sk, `${WORLDS[sk].label}：${WORLDS[sk].detail}`)).join('\n'));
   const text =
 `/* =====================================================================

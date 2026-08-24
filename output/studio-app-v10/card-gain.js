@@ -36,5 +36,10 @@ window.CARD_GAIN = {
     citypop:  {},
     house:    {},
     lofi:     {},
+    funk:     {},
+    rock:     {},
+    reggae:   {},
+    flamenco: {},
+    swing:    {},
   },
 };
