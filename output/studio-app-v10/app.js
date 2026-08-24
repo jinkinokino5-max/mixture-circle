@@ -393,6 +393,9 @@ const UI = {
     }
     document.body.classList.toggle('styled', !!World.key);
     UI.markSources();          // 各マスの楽器名を、いまの世界のものに書き換える
+    /* ミキサーを開いたまま世界を変えることがある。
+       調整の対象（世界）と楽器名が変わるので、開いていれば描き直す */
+    if (typeof Mixer !== 'undefined' && Mixer.open) Mixer.refresh();
   },
 
   markSources() {
@@ -472,6 +475,8 @@ const UI = {
     document.querySelector('#progress > div').style.width = Math.min(100, pct) + '%';
   },
   refreshNow() {
+    /* 札の出入りはミキサーの行の見た目（鳴っている／いない）にも出す */
+    if (typeof Mixer !== 'undefined' && Mixer.open) setTimeout(() => Mixer.refresh(), 0);
     const box = document.getElementById('nowlist');
     box.innerHTML = '';
     if (State.order.length === 0) {
@@ -564,7 +569,16 @@ function cancelPendingKey() {
 
 document.addEventListener('keydown', (e) => {
   if (e.repeat) return;
+  /* ミキサー画面の中で操作しているときは、演奏キーとして横取りしない
+     （スライダーを触りながら数字を打っても札が飛び出さないように） */
+  if (e.target && e.target.closest && e.target.closest('#mixer')) {
+    if (e.key === 'Escape') { e.preventDefault(); Mixer.hide(); }
+    return;
+  }
   if (e.key === 'Escape') { endGame(); return; }
+  /* M：ミキサー（札ごとの音量）の開閉。
+     m はカードUIDの16進（0-9 a-f）にも演奏キーにも入っていないので安全 */
+  if (e.key === 'm' || e.key === 'M') { e.preventDefault(); Mixer.toggle(); return; }
   if (e.key === 'Backspace') {
     e.preventDefault();
     const last = State.order[State.order.length - 1];

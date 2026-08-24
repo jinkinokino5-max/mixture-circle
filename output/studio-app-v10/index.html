@@ -286,6 +286,8 @@
   }
   .finish-actions .primary{background:linear-gradient(180deg,#e0517a,#a83164); border:0; color:#fff; font-weight:600}
 </style>
+<!-- ミキサー（札ごとの音量を聴きながら決める画面）の見た目だけ別ファイル -->
+<link rel="stylesheet" href="mixer.css">
 </head>
 <body>
 
@@ -374,6 +376,7 @@
   <div class="stat"><b id="bpmshow">104</b><i>BPM</i></div>
   <div class="spacer"></div>
   <button class="minibtn" id="pausebtn">一時停止</button>
+  <button class="minibtn" id="mixbtn" title="札ごとの音量を決める（M）">ミキサー</button>
   <button class="minibtn" id="stopbtn">終了する</button>
 </header>
 <div id="progress"><div></div></div>
@@ -403,6 +406,9 @@
   </div>
 </main>
 
+<!-- ミキサー（中身は mixer.js が組み立てる） -->
+<div id="mixer"></div>
+
 <div id="toast"></div>
 
 <div id="finish">
@@ -419,10 +425,12 @@
 
 <script src="vendor/Tone.js"></script>
 <script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
+<script src="card-gain.js" onerror="window.CARD_GAIN=null"></script>
 <script src="music.js"></script>
 <script src="samples.js"></script>
 <script src="engine.js"></script>
 <script src="cards.js"></script>
 <script src="app.js"></script>
+<script src="mixer.js"></script>
 </body>
 </html>

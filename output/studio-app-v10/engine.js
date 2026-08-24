@@ -343,8 +343,12 @@ class Part {
 
     /* 出口側から順に組む：
        partGain → panner → lp → hp ← 各レイヤー                        */
-    this.gain = new Tone.Gain(Tone.dbToGain(R.gain)).connect(bus);
-    this.nominal = Tone.dbToGain(R.gain);
+    /* v10：ここに「札ごとの音量オフセット」を足す。
+       中身は card-gain.js（ミキサー画面が書き出す）。触っていなければ 0 で、
+       その場合はこれまでとまったく同じ音量になる                     */
+    this.offset = (typeof Mixer !== 'undefined') ? Mixer.effective(this.id) : 0;
+    this.gain = new Tone.Gain(Tone.dbToGain(R.gain + this.offset)).connect(bus);
+    this.nominal = Tone.dbToGain(R.gain + this.offset);
 
     /* 残響・ディレイ・左右の広がりは世界ごとに伸び縮みする。
        乾いた60年代の録音（ビートルズ）と、広いホール（久石譲）の差はここ */
@@ -568,6 +572,22 @@ class Part {
 
   flash(time, v) { Tone.Draw.schedule(() => UI.flashCell(this.id, v), time); }
 
+  /* v10：ミキサー画面のスライダーから呼ばれる。
+     鳴らしたまま音量だけを動かす。段差で「プツッ」と鳴らないよう、
+     必ず少し時間をかけて（既定 0.08 秒）滑らせる。
+     登場の膨らみ（2小節かけて定位置へ）の途中で動かされることもあるので、
+     予約済みの変化をいったん取り消してから現在値を基準に引き直す。   */
+  setOffset(db, sec = 0.08) {
+    this.offset = db;
+    this.nominal = Tone.dbToGain(this.role.gain + db);
+    try {
+      const g = this.gain.gain, t = Tone.now();
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(this.nominal, t + sec);
+    } catch (e) {}
+  }
+
   fadeOutAndDispose(sec = 1.1) {
     try { this.gain.gain.cancelScheduledValues(Tone.now()); this.gain.gain.rampTo(0, sec); } catch (e) {}
     setTimeout(() => this.dispose(), sec * 1000 + 150);
@@ -597,9 +617,22 @@ const BaseBeat = {
   kit: null, seq: null, gain: null,
 
   start() {
-    this.gain = new Tone.Gain(1).connect(Bus.drums);
+    /* 土台のビートも札と同じようにミキサーで動かせる（id は '_beat'） */
+    const off = (typeof Mixer !== 'undefined') ? Mixer.effective('_beat') : 0;
+    this.gain = new Tone.Gain(Tone.dbToGain(off)).connect(Bus.drums);
     this.kit = this.makeKit();
     this.seq = new Tone.Sequence((time) => this.tick(time), range16(), '16n').start(0);
+  },
+
+  /* ミキサー画面から呼ばれる（Part.setOffset と同じ考え方） */
+  setOffset(db, sec = 0.08) {
+    if (!this.gain) return;
+    try {
+      const g = this.gain.gain, t = Tone.now();
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(Tone.dbToGain(db), t + sec);
+    } catch (e) {}
   },
 
   makeKit() {
