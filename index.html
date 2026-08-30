@@ -21,6 +21,7 @@
     --v8:#2e7d32;  --v8a:#8ee08c;
     --v9:#d4a017;  --v9a:#ffe082;
     --v10:#00b8d4; --v10a:#7de3f7;
+    --v11:#1f7a8c; --v11a:#9ad0ff;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -157,7 +158,7 @@
       <small>3〜6人が円になり、カードを出すたびに楽器が加わって、3分で1曲を共同生成する — 勝敗のない音楽カードゲーム。</small>
     </h1>
     <p class="lede">
-      同じ企画から生まれた <b>11のプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
+      同じ企画から生まれた <b>12のプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
       音楽の知識は要りません。<b>キーを押すか、マスをクリックするだけ</b>です。
     </p>
     <div class="heronote">
@@ -169,7 +170,7 @@
 
 <section>
   <div class="wrap">
-    <h2>プロトタイプ <em>11 BUILDS</em></h2>
+    <h2>プロトタイプ <em>12 BUILDS</em></h2>
     <p class="sublede">
       上から順に作った順です。カードの構造・音の作り方・「出した瞬間の手ごたえ」を、作り直すたびに変えてきました。
       どれも独立して動くので、好きなものから試せます。
@@ -177,12 +178,45 @@
 
     <div class="apps">
 
+      <!-- v11 -->
+      <article class="app featured" style="--c:var(--v11); --ca:var(--v11a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v11</span>
+            <span class="tag hot">いちばん新しい</span>
+            <span class="tag">MYCARD</span>
+            <span class="tag">自動ピッチ補正</span>
+          </div>
+          <h3>ミクスチャー・サークル v11</h3>
+          <p class="tagline">セッションの途中で、自分の声や音をマイクで録ってその場でカードにできる版。</p>
+          <p class="what">
+            画面下の「＋ 録音する」（<kbd>N</kbd>キー）から1／2／4小節を選んで録ると、
+            <b>いまの世界の音階へ自動でピッチを寄せてから</b>他の20枚・12枚と同じように
+            出し入れできるカードになります。歌が音痴でも、楽器が弾けなくても、
+            音楽から浮きません。<br>
+            ピッチ補正は自己相関（YIN法簡易版）でフレームごとに基本周波数を推定し、
+            <b>メロディカードが使う「梯子」（音階）へグレイン単位で寄せる</b>方式。
+            世界（スタイルカード）を切り替えても、自分の録音カードは楽器を持たないので
+            作り直されず鳴り続けます。
+          </p>
+          <div class="spec">
+            <div>最大<b>8枚</b>まで録音可</div>
+            <div>録音の長さ<b>1/2/4小節</b></div>
+            <div>ピッチ補正<b>ON/OFF切替可</b></div>
+            <div>セッション内のみ（再読み込みで消える）</div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v11/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v11/README.md">設計を読む</a>
+        </div>
+      </article>
+
       <!-- v10 -->
-      <article class="app featured" style="--c:var(--v10); --ca:var(--v10a)">
+      <article class="app" style="--c:var(--v10); --ca:var(--v10a)">
         <div class="body">
           <div class="badges">
             <span class="ver">v10</span>
-            <span class="tag hot">いちばん新しい</span>
             <span class="tag">32枚</span>
             <span class="tag">世界13</span>
           </div>
