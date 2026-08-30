@@ -1,0 +1,115 @@
+/* =====================================================================
+   record.css — 自分の録音カードの見た目（record.js が組み立てる）
+   本編の見た目に合わせるため、色は index.html の :root の変数を使う。
+   ===================================================================== */
+
+/* ===== MY CARD の帯（20枚・12枚とは違う水色系にして「別種の札」だと分かるようにする） ===== */
+.usercards-head{
+  max-width:1680px; width:100%; margin:14px auto -8px; display:flex; align-items:baseline; gap:12px;
+  flex-wrap:wrap;
+}
+.usercards-head b{font-size:11px; letter-spacing:.14em; color:var(--fg-dim); font-weight:500}
+.usercards-head small{font-size:11px; color:#5f6a80}
+
+.usercards{
+  display:flex; flex-wrap:wrap; gap:9px;
+  max-width:1680px; width:100%; margin:0 auto;
+}
+
+.user-card{
+  --ga:var(--usr-a);
+  position:relative;
+  width:150px; min-height:96px;
+  background:linear-gradient(160deg,var(--panel2),var(--panel));
+  border:1px solid var(--usr); border-radius:12px;
+  padding:9px 10px 8px;
+  cursor:pointer; transition:transform .12s, border-color .12s;
+}
+.user-card:hover{transform:translateY(-2px); border-color:var(--usr-a)}
+.user-card.pending{border-color:var(--usr-a); animation:pulse .32s ease-in-out infinite alternate}
+.user-card.active{background:linear-gradient(160deg,var(--usr),#0e2f38); border-color:var(--usr-a)}
+.user-card.active .uname,.user-card.active .usub{color:#eafcff}
+
+.user-card.add{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  border-style:dashed; color:var(--fg-dim); gap:4px;
+}
+.user-card.add .ukey{
+  font-size:10px; letter-spacing:.12em; border:1px solid var(--line); border-radius:5px;
+  padding:1px 6px; color:var(--fg-dim);
+}
+.user-card.add .uname{font-size:12.5px; font-weight:700; color:var(--usr-a)}
+.user-card.add .usub{font-size:10px; color:#5f6a80}
+
+.user-card .uname{font-size:12.5px; font-weight:700; padding-right:16px}
+.user-card .usub{font-size:9.5px; color:var(--fg-dim); margin-top:4px}
+.user-card .uwave{display:block; width:100%; height:26px; margin-top:5px}
+
+.user-card .udel{
+  position:absolute; top:6px; right:7px;
+  width:18px; height:18px; border-radius:5px; padding:0;
+  background:none; border:1px solid var(--line); color:var(--fg-dim);
+  cursor:pointer; font-size:12px; line-height:1;
+}
+.user-card .udel:hover{color:#ff8b8b; border-color:#ff8b8b}
+
+#recbtn.on{background:var(--usr); border-color:var(--usr); color:#fff}
+
+/* ===== 録音パネル（中央に出るモーダル。ミキサーの右ドロワーとは形を変える） ===== */
+#recorder{
+  position:fixed; inset:0; z-index:65;
+  background:rgba(4,6,10,.68);
+  display:none; align-items:center; justify-content:center; padding:20px;
+}
+#recorder.show{display:flex}
+
+.rec-box{
+  position:relative;
+  width:min(480px,100%); max-height:90vh; overflow-y:auto;
+  background:var(--panel); border:1px solid var(--usr); border-radius:14px;
+  padding:20px 22px 18px;
+}
+.rec-box h2{margin:0 0 8px; font-size:17px; letter-spacing:.02em}
+.rec-help{margin:0 0 14px; font-size:11.5px; line-height:1.7; color:var(--fg-dim)}
+.rec-close{
+  position:absolute; top:12px; right:14px;
+  background:none; border:1px solid var(--line); color:var(--fg-dim);
+  border-radius:7px; padding:4px 9px; cursor:pointer; font-size:12px;
+}
+.rec-close:hover{color:var(--fg); border-color:#4a5468}
+
+.rec-row{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; font-size:12.5px}
+.rec-row label{display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--fg-dim)}
+.rec-chips{display:flex; gap:6px}
+.rec-chips .chip{
+  background:#1c2230; border:1px solid var(--line); color:var(--fg-dim);
+  border-radius:7px; padding:5px 11px; cursor:pointer; font-size:12px;
+}
+.rec-chips .chip.on{background:var(--usr); border-color:var(--usr); color:#fff}
+
+.rec-go{
+  width:100%; margin-top:6px; padding:12px; border-radius:10px;
+  background:var(--usr); border:1px solid var(--usr); color:#fff;
+  font-size:14px; font-weight:700; cursor:pointer;
+}
+.rec-go:disabled{opacity:.5; cursor:default}
+.rec-go:not(:disabled):hover{filter:brightness(1.12)}
+
+.rec-status{margin-top:8px; font-size:11.5px; color:var(--fg-dim); min-height:1.4em}
+.rec-bar{height:4px; border-radius:3px; background:#1c2230; overflow:hidden; margin-top:4px}
+.rec-bar > div{height:100%; width:0%; background:var(--usr-a); transition:width .06s linear}
+
+.rec-preview{margin-top:14px; border-top:1px solid var(--line); padding-top:12px}
+.rec-preview .uwave.big{width:100%; height:60px; display:block; background:#0b0e14; border-radius:8px}
+.rec-preview-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+.rec-preview-actions button{
+  flex:1 1 auto;
+  background:#232a38; border:1px solid var(--line); color:var(--fg);
+  border-radius:8px; padding:8px 10px; cursor:pointer; font-size:12px;
+}
+.rec-preview-actions button:hover{border-color:#4a5468}
+.rec-preview-actions button.primary{background:var(--usr); border-color:var(--usr); font-weight:700}
+
+@media (max-width:760px){
+  .user-card{width:calc(50% - 5px)}
+}
