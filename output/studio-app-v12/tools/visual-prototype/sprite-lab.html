@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>スプライトラボ — 走るレーン２</title>
+<style>
+  body{margin:0;background:#0b0d13;color:#e8edf5;font:13px system-ui,sans-serif}
+  h2{font-size:14px;margin:18px 12px 6px;color:#8d96ab;font-weight:600}
+  #warn{margin:10px 12px;padding:8px 10px;border-radius:6px;background:#3a1520;color:#ffb4c0;white-space:pre-wrap;font-family:monospace;font-size:12px}
+  #warn.ok{background:#12301c;color:#9fe8b4}
+  canvas{display:block;image-rendering:pixelated}
+  .row{margin:0 12px 10px}
+</style>
+</head>
+<body>
+<div id="warn"></div>
+
+<h2>① 全コマ一覧（縦＝性格 / 横＝走行6コマ）</h2>
+<div class="row"><canvas id="sheet"></canvas></div>
+
+<h2>② アニメーション（実際の見え方・速度ちがい）</h2>
+<div class="row"><canvas id="anim"></canvas></div>
+
+<h2>③ 拡大1体（ドットの粗さ確認）</h2>
+<div class="row"><canvas id="big"></canvas></div>
+
+<script src="../../visual/sprites.js"></script>
+<script>
+const CHARS = ['core','sing','push','drive','color'];
+const LABELS = {core:'軸/岩', sing:'歌/鳥', push:'押し/獣', drive:'刻み/虫', color:'彩り/蝶'};
+
+/* ---- データの行長チェック（ドット絵の描き間違いを機械的に拾う） ---- */
+function validate(){
+  const S = window.RunnerSprites;
+  const msgs = [];
+  // パーツごとに行の長さ・行数を機械的に検査（ドット絵の描き間違い検出）
+  Object.entries(S.PARTS).forEach(([name, part]) => {
+    Object.entries(part.data).forEach(([key, rows]) => {
+      if (rows.length !== part.height) msgs.push(`${name}.${key}: 行数 ${rows.length}（期待 ${part.height}）`);
+      rows.forEach((r, i) => {
+        if (r.length !== part.width) msgs.push(`${name}.${key} 行${i}: 幅 ${r.length}（期待 ${part.width}） "${r}"`);
+      });
+    });
+  });
+  CHARS.forEach(ck => {
+    for (let f=0; f<S.FRAME_COUNT; f++){
+      try { S.buildGrid(ck, f); } catch(e){ msgs.push(ck+' frame'+f+': '+e.message); }
+    }
+  });
+  const w = document.getElementById('warn');
+  if (msgs.length){ w.className=''; w.textContent = '⚠ ' + msgs.join('\n'); }
+  else { w.className='ok'; w.textContent = '✓ ドット絵データ検査OK（' + CHARS.length + '性格 × ' + S.FRAME_COUNT + 'コマ／全パーツの行長そろい）'; }
+}
+
+/* ---- ① 全コマシート ---- */
+function drawSheet(){
+  const S = window.RunnerSprites;
+  const scale = 5, padX = 12, padY = 10, labelW = 70;
+  const cw = S.SPRITE_W*scale + padX, ch = S.SPRITE_H*scale + padY;
+  const cv = document.getElementById('sheet');
+  cv.width = labelW + cw*S.FRAME_COUNT;
+  cv.height = ch*CHARS.length + 18;
+  const c = cv.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.fillStyle = '#141821'; c.fillRect(0,0,cv.width,cv.height);
+
+  c.font = '11px monospace';
+  for (let f=0; f<S.FRAME_COUNT; f++){
+    c.fillStyle = '#6f7a90';
+    c.fillText('f'+f, labelW + f*cw + 4, 12);
+  }
+  CHARS.forEach((ck, i) => {
+    const y = 18 + i*ch;
+    c.fillStyle = '#8d96ab';
+    c.fillText(LABELS[ck], 4, y + ch/2);
+    for (let f=0; f<S.FRAME_COUNT; f++){
+      const x = labelW + f*cw;
+      c.fillStyle = (f%2) ? '#1a1f2b' : '#171b25';
+      c.fillRect(x, y, cw, ch);
+      S.drawRunner(c, x + padX/2, y + padY/2, scale, ck, f, performance.now());
+    }
+  });
+}
+
+/* ---- ② アニメーション ---- */
+const animCv = document.getElementById('anim');
+animCv.width = 980; animCv.height = 150;
+const animCtx = animCv.getContext('2d');
+function drawAnim(now){
+  const S = window.RunnerSprites;
+  animCtx.imageSmoothingEnabled = false;
+  animCtx.fillStyle = '#141821'; animCtx.fillRect(0,0,animCv.width,animCv.height);
+  animCtx.strokeStyle = 'rgba(255,255,255,.10)';
+  animCtx.beginPath(); animCtx.moveTo(0,118); animCtx.lineTo(animCv.width,118); animCtx.stroke();
+
+  // 3種の速度で並べて、コマ送りの速さの当たりをつける
+  const speeds = [6, 9, 13]; // コマ/秒
+  speeds.forEach((fps, si) => {
+    const frame = Math.floor(now/1000*fps) % S.FRAME_COUNT;
+    CHARS.forEach((ck, i) => {
+      const scale = 4;
+      const x = 40 + i*70 + si*0;
+      const y = si*0;
+      // 速度ごとに段を変えるとブレるので、横一列 × 3行に分ける
+    });
+  });
+  const scale = 4;
+  speeds.forEach((fps, si) => {
+    const frame = Math.floor(now/1000*fps) % S.FRAME_COUNT;
+    animCtx.fillStyle = '#6f7a90'; animCtx.font='11px monospace';
+    animCtx.fillText(fps+' コマ/秒', 4, 16 + si*44);
+    CHARS.forEach((ck, i) => {
+      S.drawRunner(animCtx, 80 + i*90, si*44, scale, ck, frame, now);
+    });
+  });
+}
+
+/* ---- ③ 拡大1体 ---- */
+const bigCv = document.getElementById('big');
+bigCv.width = 760; bigCv.height = 300;
+const bigCtx = bigCv.getContext('2d');
+function drawBig(now){
+  const S = window.RunnerSprites;
+  bigCtx.imageSmoothingEnabled = false;
+  bigCtx.fillStyle = '#141821'; bigCtx.fillRect(0,0,bigCv.width,bigCv.height);
+  const scale = 10;
+  const frame = Math.floor(now/1000*9) % S.FRAME_COUNT;
+  S.drawRunner(bigCtx, 30, 20, scale, 'sing', frame, now);
+  S.drawRunner(bigCtx, 260, 20, scale, 'push', frame, now);
+  S.drawRunner(bigCtx, 490, 20, scale, 'core', frame, now);
+}
+
+validate();
+drawSheet();
+function loop(now){ drawAnim(now); drawBig(now); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>走るレーン４ ラボ</title>
+<style>
+  html,body{margin:0;height:100%;background:#05060a;color:#e8edf5;font:13px system-ui,sans-serif;overflow:hidden}
+  #cv{display:block;image-rendering:pixelated}
+  #ui{position:fixed;left:10px;top:10px;z-index:10;display:flex;gap:6px;flex-wrap:wrap;
+      background:#0d0f14cc;border:1px solid #333c4d;border-radius:8px;padding:8px}
+  button,select{background:#1a1f2b;color:#eef2f8;border:1px solid #333c4d;border-radius:6px;
+      padding:5px 9px;font:12px system-ui;cursor:pointer}
+  #stat{position:fixed;right:10px;bottom:10px;z-index:10;color:#8d96ab;font:12px monospace}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="ui">
+  <button id="add">＋音を足す</button>
+  <button id="add3">＋3つ</button>
+  <button id="del">－音を消す</button>
+  <button id="fill">8本ぜんぶ</button>
+  <button id="clr">全部リセット</button>
+  <select id="world"></select>
+  <select id="bpm"></select>
+  <button id="shake">ゆらぎ</button>
+  <button id="roles">4役割を1体ずつ</button>
+  <button id="skip">旅を進める</button>
+</div>
+<div id="stat"></div>
+
+<script>
+/* 本体アプリを立ち上げずにシーンだけ試すための最小スタブ。
+   音源236個の読み込みを待たずに、見た目の反復ができる。 */
+window.Tone = { Transport: { bpm: { value: 104 } } };
+window.World = { key: null };
+</script>
+<script src="../../visual/sprites.js"></script>
+<script src="../../visual/lanes4.js"></script>
+<script>
+const CHARS = ['core','sing','push','drive','color'];
+const ROLES = ['melody','bass','rhythm','chord'];
+const WORLDS = ['base','beatles','kaze','modal','hisaishi','citypop','house','lofi','funk','rock','reggae','flamenco','swing'];
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+/* ドット絵は等倍で描かないとぼやける。
+   devicePixelRatio(この環境では1.5)を掛けた実ピクセル数でバッファを持ち、
+   CSS側は元のサイズに固定して、ブラウザに引き伸ばさせない。 */
+function resize(){
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(window.innerWidth * dpr);
+  cv.height = Math.round(window.innerHeight * dpr);
+  cv.style.width = window.innerWidth + 'px';
+  cv.style.height = window.innerHeight + 'px';
+}
+window.addEventListener('resize', resize); resize();
+
+let live = [];
+function randId(){
+  for (let i=0;i<40;i++){
+    const id = CHARS[Math.floor(Math.random()*CHARS.length)] + '-' + ROLES[Math.floor(Math.random()*ROLES.length)];
+    if (!live.includes(id)) return id;
+  }
+  return null;
+}
+function addOne(){ const id = randId(); if(!id) return; live.push(id); Lanes4.spawn(id); }
+function delOne(){ if(!live.length) return; const id = live.shift(); Lanes4.exit(id); }
+
+document.getElementById('add').onclick = addOne;
+document.getElementById('add3').onclick = () => { addOne(); addOne(); addOne(); };
+document.getElementById('del').onclick = delOne;
+document.getElementById('fill').onclick = () => { while(live.length<8) addOne(); };
+document.getElementById('clr').onclick = () => { live.forEach(id => Lanes4.exit(id)); live = []; };
+document.getElementById('shake').onclick = () => Lanes4.onShake();
+document.getElementById('skip').onclick = () => { step(60*20); };
+document.getElementById('roles').onclick = () => {
+  live.forEach(id => Lanes4.exit(id)); live = [];
+  ['melody','bass','rhythm','chord'].forEach((r,i) => {
+    const id = CHARS[i] + '-' + r; live.push(id); Lanes4.spawn(id);
+  });
+};
+
+const wsel = document.getElementById('world');
+WORLDS.forEach(w => { const o=document.createElement('option'); o.value=w; o.textContent='世界: '+w; wsel.appendChild(o); });
+wsel.onchange = () => { World.key = (wsel.value==='base') ? null : wsel.value; };
+
+const bsel = document.getElementById('bpm');
+[70,88,104,120,138,150].forEach(b => { const o=document.createElement('option'); o.value=b; o.textContent=b+' BPM'; if(b===104)o.selected=true; bsel.appendChild(o); });
+bsel.onchange = () => { Tone.Transport.bpm.value = Number(bsel.value); };
+
+/* 仮想時刻。rAFが止まる環境（バックグラウンドのタブなど）でも
+   window.step() で手動でコマを進めて確認できるようにしてある。 */
+let tNow = 0, fps = 0;
+function drawFrame(dt){
+  tNow += dt;
+  Lanes4.render(ctx, cv.width, cv.height, tNow, dt);
+  document.getElementById('stat').textContent =
+    `走者 ${live.length} / 8　${Math.round(fps)}fps　${cv.width}x${cv.height}`;
+}
+/* n フレームぶん進める。dt=1フレームのミリ秒 */
+window.step = (n = 1, dt = 16.7) => { for (let i = 0; i < n; i++) drawFrame(dt); return tNow; };
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(50, now - last); last = now;
+  fps = fps*0.9 + (1000/Math.max(1,dt))*0.1;
+  drawFrame(dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+// 最初から何体か走らせておく
+addOne(); addOne(); addOne(); addOne();
+window.step(1);
+</script>
+</body>
+</html>

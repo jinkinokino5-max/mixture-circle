@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>石！！石？？石！？（合奏版 v31） — 石を置くと世界がゆらぐ</title>
+<style>
+  :root{
+    --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
+    --fg:#eef2f8; --fg-dim:#8d96ab;
+    /* キャラクター5種（v3のジャンルに代わるもの）。色は「性格」に合わせた */
+    --ch-core:#b53f86;    --ch-core-a:#ffa2dd;    /* 軸：中心 */
+    --ch-sing:#96803f;    --ch-sing-a:#f7e4a8;    /* 歌：あたたかい */
+    --ch-push:#b32633;    --ch-push-a:#ff8073;    /* 押し：熱い */
+    --ch-drive:#0c9a83;   --ch-drive-a:#48f7cd;   /* 刻み：機械的 */
+    --ch-color:#2b62a0;   --ch-color-a:#82c0f7;   /* 彩り：夜 */
+    /* v31（作り直し）：メロディ拡張5枠（ext1〜5）。性格やムードを表すもの
+       ではなく「拡張の置き場所」でしかないので、5枚を1色系統の濃淡だけで
+       区別する（既存5性格のような強い色分けはしない） */
+    --ch-ext1:#5a6a8a;  --ch-ext1-a:#b9c6e6;
+    --ch-ext2:#5a728a;  --ch-ext2-a:#b0d0e6;
+    --ch-ext3:#5a8a82;  --ch-ext3-a:#a8e6da;
+    --ch-ext4:#6a8a5a;  --ch-ext4-a:#c2e6a8;
+    --ch-ext5:#7a6a8a;  --ch-ext5-a:#d0c2e6;
+    /* スタイルカード（世界を塗り替える札）。性格カードとは色の系統を変える */
+    --st-beatles:#8a5a1f;   --st-beatles-a:#ffd08a;
+    --st-kaze:#1f6f6a;      --st-kaze-a:#7ff0e0;
+    --st-modal:#26407e;     --st-modal-a:#94b4ff;
+    --st-hisaishi:#5d3a7a;  --st-hisaishi-a:#d5aaff;
+    --st-citypop:#a8386b;   --st-citypop-a:#ff9ec9;
+    --st-house:#3f7a12;     --st-house-a:#b6f76a;
+    --st-lofi:#4a4358;      --st-lofi-a:#b3a8c9;
+    --st-funk:#a8611a;      --st-funk-a:#ffc061;
+    --st-rock:#8c1f2e;      --st-rock-a:#ff6b7a;
+    --st-reggae:#2f7a33;    --st-reggae-a:#8ef09a;
+    --st-flamenco:#9c2a12;  --st-flamenco-a:#ff9b6b;
+    --st-swing:#8a7a1c;     --st-swing-a:#ffe98a;
+    --st-motown:#b8860b;    --st-motown-a:#ffd966;
+    --st-rocknroll:#c0392b; --st-rocknroll-a:#ff7b6b;
+    --st-synthpop:#8e44ec; --st-synthpop-a:#e0aaff;
+    --st-vintagejazz:#8b6b3d; --st-vintagejazz-a:#e8d3a0;
+    --st-modernpop:#e0457b; --st-modernpop-a:#ffb3d1;
+    --st-sunshinepop:#f0a500; --st-sunshinepop-a:#ffe082;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; min-height:100%; overflow-x:hidden;
+    transition:background .8s;
+  }
+  /* 4枚以上重なると画面が熱を帯びる（盛り上がりを目でも見せる） */
+  body.hot{background:radial-gradient(1400px 900px at 50% 120%, #1a0e1c 0%, #07080c 65%)}
+
+  /* ===== 着弾のフラッシュ ===== */
+  #flash{
+    position:fixed; inset:0; z-index:70; pointer-events:none; opacity:0;
+    background:radial-gradient(900px 600px at 50% 50%, rgba(255,255,255,.30), rgba(255,255,255,0) 70%);
+  }
+  #flash.on{animation:flash .42s ease-out}
+  @keyframes flash{0%{opacity:1}100%{opacity:0}}
+
+  /* ===== 開始オーバーレイ ===== */
+  #setup{
+    position:fixed; inset:0; z-index:50;
+    background:radial-gradient(1200px 700px at 50% 25%, #1d1430 0%, #06070a 70%);
+    display:flex; align-items:center; justify-content:center; padding:24px; overflow-y:auto;
+  }
+  #setup.hidden{display:none}
+  .setup-card{
+    width:min(600px,100%); background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; padding:34px 34px 26px; box-shadow:0 30px 90px rgba(0,0,0,.7); margin:auto;
+  }
+  .setup-card h1{margin:0 0 4px; font-size:25px; letter-spacing:.02em}
+  .setup-card h1 em{
+    font-style:normal; font-size:12px; letter-spacing:.16em; color:#48f7cd;
+    border:1px solid #1d6b5c; border-radius:5px; padding:2px 7px; margin-left:10px; vertical-align:5px;
+  }
+  .setup-card .sub{margin:0 0 20px; color:var(--fg-dim); font-size:13px; line-height:1.8}
+  .setup-card .sub b{color:var(--fg)}
+  .field{margin-bottom:20px}
+  .field > label{display:block; font-size:13px; color:var(--fg-dim); margin-bottom:8px}
+  .row{display:flex; align-items:center; gap:12px}
+  input[type=range]{flex:1; accent-color:#ff8073}
+  .bpmval{font-variant-numeric:tabular-nums; font-size:22px; min-width:92px; text-align:right}
+  .bpmval small{font-size:11px; color:var(--fg-dim); margin-left:3px}
+  .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .chip{
+    padding:7px 14px; border-radius:999px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--fg-dim); font-size:13px; cursor:pointer;
+  }
+  .chip[aria-pressed=true]{background:#4a2140; border-color:#a4478a; color:#ffd6ef}
+  .btn{
+    width:100%; padding:16px; border-radius:13px; border:0; cursor:pointer;
+    background:linear-gradient(180deg,#e0517a,#a83164); color:#fff;
+    font-size:17px; font-weight:700; letter-spacing:.06em;
+    box-shadow:0 8px 30px -8px #a83164;
+  }
+  .btn:hover:not(:disabled){filter:brightness(1.1)}
+  .btn:disabled{opacity:.45; cursor:progress; box-shadow:none}
+  .note{margin-top:14px; font-size:12px; color:var(--fg-dim); line-height:1.8}
+
+  .loadbox{
+    background:var(--panel2); border:1px solid var(--line); border-radius:11px;
+    padding:13px 15px; margin-bottom:20px;
+  }
+  #loadmsg{font-size:12px; color:var(--fg-dim); line-height:1.75}
+  #loadmsg b{color:#48f7cd}
+  #loadbar{height:4px; background:#0d1016; border-radius:99px; overflow:hidden; margin-top:10px}
+  #loadbar > div{height:100%; width:0%; background:linear-gradient(90deg,#e0517a,#48f7cd); transition:width .2s linear}
+
+  /* ===== ヘッダー ===== */
+  header{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:11px 20px; border-bottom:1px solid var(--line); background:rgba(18,21,29,.85);
+    position:sticky; top:0; z-index:20; backdrop-filter:blur(8px);
+  }
+  header .title{font-size:14px; font-weight:700; letter-spacing:.02em}
+  header .title span{color:#48f7cd; font-weight:400; font-size:11px; margin-left:8px; letter-spacing:.14em}
+  .stat{display:flex; align-items:baseline; gap:6px; font-variant-numeric:tabular-nums}
+  .stat b{font-size:20px; font-weight:600}
+  .stat i{font-style:normal; font-size:11px; color:var(--fg-dim)}
+  .spacer{flex:1}
+  .minibtn{
+    padding:7px 13px; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--fg); font-size:12px; cursor:pointer;
+  }
+  .minibtn:hover{background:#2a3141}
+
+  #beats{display:flex; gap:9px; align-items:center}
+  .beat{width:11px; height:11px; border-radius:50%; background:#2b3242; transition:transform .06s}
+  .beat.on{background:var(--fg); transform:scale(1.45)}
+  .beat.on.down{background:#ffd479; transform:scale(1.8)}
+
+  .chordbox{display:flex; align-items:center; gap:10px}
+  #chordnow{font-size:17px; font-weight:700; min-width:76px; color:#ffd479; letter-spacing:.02em}
+  #progdots{display:flex; gap:5px}
+  #progdots i{width:16px; height:3px; border-radius:99px; background:#2b3242; transition:background .1s}
+  #progdots i.on{background:#ffd479}
+
+  /* 重なり具合のメーター */
+  #energy{display:flex; gap:4px}
+  #energy i{
+    width:7px; height:18px; border-radius:2px; background:#232a38; transition:background .25s, box-shadow .25s;
+  }
+  #energy.many{gap:2px}
+  #energy.many i{width:4px; height:16px}
+  #energy i.on{background:linear-gradient(180deg,#ff8073,#e0517a); box-shadow:0 0 10px -1px #e0517a}
+
+  #progress{height:2px; background:#141822}
+  #progress > div{height:100%; width:0%; background:linear-gradient(90deg,#e0517a,#48f7cd); transition:width .3s linear}
+
+  /* ===== グリッド：行＝ROLE／列＝CHARACTER ===== */
+  main{flex:1; padding:18px 20px 22px; display:flex; flex-direction:column; gap:16px}
+  .grid{
+    display:grid; grid-template-columns:104px repeat(5,1fr); gap:6px;
+    max-width:1280px; width:100%; margin:0 auto;
+  }
+  .head-cell{
+    display:flex; flex-direction:column; justify-content:flex-end; gap:2px;
+    padding:0 4px 7px; text-align:center; border-bottom:2px solid var(--g,transparent);
+  }
+  .head-cell b{font-size:13px; font-weight:700}
+  .head-cell em{font-style:normal; font-size:8.5px; letter-spacing:.16em; color:var(--g); opacity:.95}
+  .head-cell small{color:var(--fg-dim); font-size:9px}
+
+  .role-label{
+    display:flex; flex-direction:column; justify-content:center; gap:1px;
+    padding-left:9px; border-left:3px solid #46516a;
+  }
+  .role-label b{font-size:12px; letter-spacing:.14em; color:#d2daea}
+  .role-label span{font-size:13px; font-weight:700}
+  .role-label small{color:var(--fg-dim); font-size:10px; line-height:1.5}
+
+  .cell{
+    position:relative; overflow:hidden; cursor:pointer; user-select:none;
+    border:1px solid var(--line); border-radius:11px; padding:9px 9px 10px;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--g) 24%, var(--panel)) 0%, var(--panel) 100%);
+    transition:transform .09s, box-shadow .18s, border-color .18s;
+    min-height:88px; display:flex; flex-direction:column; justify-content:space-between; gap:3px;
+  }
+  .cell:hover{border-color:var(--ga); transform:translateY(-2px)}
+  .cell:active{transform:translateY(0)}
+  .cell .hook{font-size:11px; font-weight:700; line-height:1.35}
+  .cell .key{
+    align-self:flex-start; font-size:10px; letter-spacing:.1em; color:var(--fg-dim);
+    border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-family:ui-monospace,monospace;
+  }
+  .cell .src{font-size:9px; color:#5f6a80; line-height:1.35}
+  .cell .src.real{color:#48f7cd}
+  .cell.pending{border-color:var(--ga); animation:pulse .32s ease-in-out infinite alternate}
+  @keyframes pulse{from{box-shadow:0 0 0 0 rgba(255,255,255,0)}to{box-shadow:0 0 26px 0 var(--ga)}}
+  .cell.active{
+    border-color:var(--ga);
+    background:linear-gradient(180deg, color-mix(in srgb, var(--g) 70%, var(--panel)) 0%, color-mix(in srgb, var(--g) 34%, var(--panel)) 100%);
+    box-shadow:0 0 30px -6px var(--ga);
+  }
+  .cell.active .key,.cell.active .src{color:#fff}
+  .cell .bar{
+    position:absolute; left:0; bottom:0; height:3px; width:0; background:var(--ga);
+    transition:width .05s linear; opacity:.95;
+  }
+  .cell.reject{animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+  /* ===== v31：メロディ拡張5枚（非対称）。点線の枠で「別枠」と分かるようにする ===== */
+  .ext-head{
+    max-width:1280px; width:100%; margin:0 auto -8px; display:flex; align-items:baseline; gap:12px;
+    flex-wrap:wrap;
+  }
+  .ext-head b{font-size:11px; letter-spacing:.14em; color:var(--fg-dim); font-weight:500}
+  .ext-head small{font-size:11px; color:#5f6a80}
+  .grid-ext{
+    padding:10px; border:1px dashed var(--line); border-radius:14px;
+  }
+  .grid-ext .cell.unavailable{
+    opacity:.38; cursor:default; pointer-events:none;
+  }
+  .grid-ext .cell.unavailable:hover{ transform:none; border-color:var(--line) }
+  .grid-ext .cell .hook{ font-size:10px; font-weight:500; line-height:1.4 }
+
+  /* ===== スタイルカード12枚（世界を塗り替える札） ===== */
+  .styles{
+    display:grid; grid-template-columns:repeat(6,1fr); gap:9px;
+    max-width:1680px; width:100%; margin:0 auto;
+  }
+  @media (max-width:1560px){ .styles{grid-template-columns:repeat(4,1fr)} }
+  @media (max-width:1080px){ .styles{grid-template-columns:repeat(3,1fr)} }
+  @media (max-width:760px){ .styles{grid-template-columns:repeat(2,1fr)} }
+  .styles-head{
+    max-width:1680px; width:100%; margin:0 auto -8px; display:flex; align-items:baseline; gap:12px;
+    flex-wrap:wrap;
+  }
+  .styles-head b{font-size:11px; letter-spacing:.14em; color:var(--fg-dim); font-weight:500}
+  .styles-head small{font-size:11px; color:#5f6a80}
+  .style-card{
+    position:relative; overflow:hidden; cursor:pointer; user-select:none;
+    border:1px solid color-mix(in srgb, var(--ga) 45%, var(--line));
+    border-radius:14px; padding:10px 12px 11px; min-height:92px;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--g) 34%, var(--panel)) 0%, var(--panel) 70%);
+    transition:transform .09s, box-shadow .2s, border-color .2s;
+    display:flex; flex-direction:column; gap:1px;
+  }
+  .style-card:hover{transform:translateY(-2px); border-color:var(--ga)}
+  .style-card .skey{
+    position:absolute; top:9px; right:10px; font-size:10px; letter-spacing:.1em; color:var(--fg-dim);
+    border:1px solid var(--line); border-radius:5px; padding:1px 7px; font-family:ui-monospace,monospace;
+  }
+  .style-card .spick{
+    position:absolute; top:9px; left:10px; z-index:2; cursor:pointer;
+    font-size:9px; letter-spacing:.08em; color:#5f6a80;
+    border:1px solid var(--line); border-radius:5px; padding:1px 6px;
+    background:var(--panel); opacity:.55; transition:opacity .15s, color .15s, border-color .15s;
+  }
+  .style-card .spick:hover{opacity:1}
+  .style-card .spick.picked{color:var(--ga); border-color:var(--ga); opacity:1}
+  .style-card.out-of-pool{opacity:.42}
+  .style-card.out-of-pool:hover{opacity:.7}
+  .style-card .sname{font-size:14px; font-weight:700; letter-spacing:.02em; padding-right:26px; margin-top:14px}
+  .style-card .ssub{font-size:9px; letter-spacing:.18em; color:var(--ga); opacity:.85}
+  .style-card .sdesc{font-size:11px; color:var(--fg-dim); margin-top:5px}
+  .style-card .sdetail{font-size:9.5px; color:#5f6a80; line-height:1.5; margin-top:2px}
+  .style-card .smove{display:flex; align-items:center; gap:3px; margin-top:6px}
+  .style-card .smove b{font-size:8.5px; letter-spacing:.12em; color:#5f6a80; font-weight:500; margin-right:2px}
+  .style-card .smove i{width:5px; height:5px; border-radius:50%; background:var(--line)}
+  .style-card .smove i.on{background:var(--ga)}
+  .style-card.on .smove b{color:#f2e9ff}
+  .style-card.arming{border-color:var(--ga); animation:pulse .32s ease-in-out infinite alternate}
+  .style-card.on{
+    border-color:var(--ga); box-shadow:0 0 34px -8px var(--ga);
+    background:linear-gradient(135deg, color-mix(in srgb, var(--g) 78%, var(--panel)) 0%, color-mix(in srgb, var(--g) 30%, var(--panel)) 100%);
+  }
+  .style-card.on .sdesc,.style-card.on .sdetail,.style-card.on .skey{color:#f2e9ff}
+  .style-card.on::after{
+    content:'いまこの世界'; position:absolute; bottom:9px; right:12px;
+    font-size:9px; letter-spacing:.1em; color:#fff; opacity:.75;
+  }
+  .world{font-size:13px; font-weight:700; color:var(--fg-dim)}
+  .world.on{color:#ffd479}
+
+  /* ===== 石パネル ===== */
+  .stone-card{
+    max-width:1680px; width:100%; margin:0 auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px 18px;
+  }
+  .stone-head{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+  .stone-head h3{margin:0; font-size:13px; letter-spacing:.1em; color:var(--fg-dim); font-weight:600}
+  .stone-status{display:flex; align-items:center; gap:6px; margin-left:auto; font-size:12px; color:var(--fg-dim)}
+  .stone-dot{width:9px; height:9px; border-radius:50%; background:#4a5062}
+  .stone-dot.on{background:#48f7cd; box-shadow:0 0 8px #48f7cd}
+  .stone-dot.off{background:#5b4141}
+  .stone-dot.wait{background:#f7c948; box-shadow:0 0 8px #f7c948}
+
+  .global-ready{
+    position:fixed; top:0; left:0; right:0; z-index:999; pointer-events:none;
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    padding:20px 24px;
+    font-size:clamp(20px, 3vw, 34px); font-weight:800; letter-spacing:.04em;
+    color:#0a0b10;
+    background:#4a5062;
+    box-shadow:0 4px 24px rgba(0,0,0,.35);
+    transition:background .2s;
+  }
+  .global-ready-dot{width:clamp(20px,2.6vw,32px); height:clamp(20px,2.6vw,32px); border-radius:50%; background:#0a0b10; flex:none; opacity:.85}
+  .global-ready.on{background:#48f7cd}
+  .global-ready.wait{background:#f7c948}
+  .global-ready-dot.on{background:#0a0b10}
+  .global-ready-dot.wait{background:#0a0b10}
+  .stone-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+  .stone-row.sim{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 12px}
+  .stone-row.sim label{font-size:11.5px; color:var(--fg-dim)}
+  .stone-row.sim input[type=number]{
+    width:110px; padding:6px 9px; border-radius:7px; border:1px solid var(--line);
+    background:var(--bg); color:var(--fg); font-size:13px;
+  }
+  .stone-log{
+    max-height:150px; overflow-y:auto; border-top:1px solid var(--line); padding-top:8px;
+    font-size:11.5px; color:var(--fg-dim); line-height:1.9; font-variant-numeric:tabular-nums;
+  }
+  .stone-log-row.place{color:#8fe8c9}
+  .stone-log-row.remove{color:#9db3d6}
+  .stone-log-row.unknown{color:#e8c98f}
+  .stone-log-row.err{color:#ff9d9d}
+
+  /* ===== 石の管理モーダル ===== */
+  .modal{position:fixed; inset:0; z-index:80; display:none; background:rgba(6,7,10,.88); align-items:center; justify-content:center; padding:20px}
+  .modal.show{display:flex}
+  .modal-card{width:min(880px,100%); max-height:90vh; overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:24px}
+  .modal-head{display:flex; align-items:center; gap:10px; margin-bottom:16px}
+  .modal-head h2{margin:0; font-size:18px}
+  .modal-body{display:flex; gap:24px; flex-wrap:wrap}
+  .reg-form{flex:0 0 280px; display:flex; flex-direction:column; gap:12px}
+  .reg-form input, .reg-form select{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--fg); font-size:13px;
+  }
+  .reg-conflict{font-size:11.5px; color:#ffcf8f; line-height:1.7; min-height:1em}
+  .reg-list{flex:1; min-width:320px}
+  .reg-list-head{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+  .reg-list-head h3{margin:0; font-size:13px; color:var(--fg-dim); font-weight:600}
+  #regtable{width:100%; border-collapse:collapse; font-size:12.5px}
+  #regtable th, #regtable td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:left}
+  #regtable th{color:var(--fg-dim); font-weight:600; font-size:11px}
+
+  /* ===== 下部 ===== */
+  .bottom{max-width:1680px; width:100%; margin:0 auto; display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start}
+  .now{flex:1; min-width:300px}
+  .now h3{margin:0 0 8px; font-size:11px; color:var(--fg-dim); letter-spacing:.14em; font-weight:500}
+  #nowlist{display:flex; gap:7px; flex-wrap:wrap; min-height:30px}
+  .pill{
+    display:flex; align-items:center; gap:8px; padding:5px 9px 5px 11px; border-radius:999px;
+    font-size:12px; background:color-mix(in srgb, var(--g) 50%, var(--panel2)); border:1px solid var(--ga);
+  }
+  .pill em{font-style:normal; font-size:9px; letter-spacing:.12em; opacity:.8; margin-right:7px}
+  .pill button{border:0; background:transparent; color:inherit; cursor:pointer; font-size:14px; opacity:.6; padding:0 2px}
+  .pill button:hover{opacity:1}
+  .empty{color:#5f6a80; font-size:12px; padding:7px 0}
+  .help{font-size:11px; color:var(--fg-dim); line-height:1.95; min-width:290px}
+  .help kbd{
+    background:var(--panel2); border:1px solid var(--line); border-radius:4px;
+    padding:1px 5px; font-family:ui-monospace,monospace; font-size:10px;
+  }
+
+  #toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+    background:#232a3a; border:1px solid var(--line); color:var(--fg);
+    padding:10px 18px; border-radius:10px; font-size:13px; opacity:0;
+    transition:opacity .2s, transform .2s; pointer-events:none; z-index:60;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  #finish{
+    position:fixed; inset:0; z-index:55; display:none;
+    background:rgba(6,7,10,.94); align-items:center; justify-content:center; padding:24px;
+  }
+  #finish.show{display:flex}
+  .finish-card{
+    width:min(540px,100%); background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; padding:32px; text-align:center;
+  }
+  .finish-card h2{margin:0 0 6px; font-size:23px}
+  .finish-card p{color:var(--fg-dim); font-size:13px; margin:0 0 20px; line-height:1.8}
+  .finish-card audio{width:100%; margin-bottom:16px}
+  .finish-actions{display:flex; gap:10px}
+  .finish-actions a,.finish-actions button{
+    flex:1; padding:13px; border-radius:11px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--fg); font-size:13px; cursor:pointer;
+    text-decoration:none; display:block; text-align:center;
+  }
+  .finish-actions .primary{background:linear-gradient(180deg,#e0517a,#a83164); border:0; color:#fff; font-weight:600}
+
+  /* ---- ランプ画面（v3から流用） ---- */
+  #lampscreen{
+    position:fixed; inset:0; z-index:95; display:none;
+    align-items:center; justify-content:center; flex-direction:column; gap:28px;
+    background:#f7c948; transition:background .25s;
+  }
+  #lampscreen.show{display:flex}
+  #lampscreen.ready{background:#48f7cd}
+  #lamplabel{
+    font-size:clamp(48px, 10vw, 140px); font-weight:800; letter-spacing:.03em;
+    color:#0a0b10; text-align:center; text-shadow:0 2px 0 rgba(255,255,255,.25);
+  }
+  #lampsub{font-size:clamp(16px,2.4vw,26px); color:#0a0b10; opacity:.75}
+  #lampclosebtn{
+    position:absolute; top:24px; right:24px;
+    padding:12px 20px; border-radius:11px; border:1px solid rgba(10,11,16,.25);
+    background:rgba(10,11,16,.12); color:#0a0b10; font-size:14px; font-weight:600; cursor:pointer;
+  }
+  #lampclosebtn:hover{background:rgba(10,11,16,.22)}
+</style>
+<!-- ミキサー（札ごとの音量を聴きながら決める画面）の見た目だけ別ファイル -->
+<link rel="stylesheet" href="mixer.css">
+</head>
+<body>
+
+<!-- どの画面（開始画面・演奏中・石の管理・終了画面）に切り替えても常に最前面に
+     表示される「置いてよいタイミング」ランプ。stone-ui.jsのsetReady()が
+     既存の石パネル内ランプと同時に更新する。pointer-eventsはnoneなので、
+     下の画面のクリック操作を邪魔しない（v3から流用） */
+<div id="globalready" class="global-ready on">
+  <span id="globalreadydot" class="global-ready-dot on"></span>
+  <span id="globalreadylabel">置いてOK</span>
+</div>
+
+<div id="flash"></div>
+
+<!-- ================= 開始画面 ================= -->
+<div id="setup">
+  <div class="setup-card">
+    <h1>石！！石？？石！？<em>合奏版 v5</em></h1>
+    <p class="sub">
+      石1個が <b>役割×性格の札1枚</b>（例：軸のメロディ）。<br>
+      置くと <b>合図が鳴り、次の小節頭で一撃とともに入ってきます</b>。<br>
+      <b>4役割 × 5性格 ＝ 20通り ＋ メロディ拡張5枚（全18世界に固有の新曲）＝ 25通り。</b>重ねるほど大きく、密度が上がっていきます。<br>
+      さらに <b>スタイルの石（12種類）</b>を置くと、いま鳴っている札がまるごと
+      <b>別の楽器編成・進行・テンポ</b>に化けます（もう一度同じスタイル石を置くと標準に戻る）。
+    </p>
+
+    <div class="loadbox">
+      <div id="loadmsg">音源を確認しています…</div>
+      <div id="loadbar"><div></div></div>
+    </div>
+
+    <div class="field">
+      <label for="bpm">テンポ（BPM）</label>
+      <div class="row">
+        <input type="range" id="bpm" min="70" max="150" step="1" value="104">
+        <div class="bpmval"><span id="bpmv">104</span><small>BPM</small></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>制限時間</label>
+      <div class="chips" id="durchips">
+        <button class="chip" data-sec="60">1分</button>
+        <button class="chip" data-sec="120">2分</button>
+        <button class="chip" data-sec="180" aria-pressed="true">3分</button>
+        <button class="chip" data-sec="300">5分</button>
+        <button class="chip" data-sec="0">無制限</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>同時に鳴らせる枚数 — 多いほど厚く、少ないほど1個ずつがはっきり聞こえる。
+        「無制限」なら押し出されず、鳴らせる札すべてを重ねられる</label>
+      <div class="chips" id="maxchips">
+        <button class="chip" data-n="3">3個</button>
+        <button class="chip" data-n="4">4個</button>
+        <button class="chip" data-n="6" aria-pressed="true">6個</button>
+        <button class="chip" data-n="8">8個</button>
+        <button class="chip" data-n="10">10個</button>
+        <button class="chip" data-n="0">無制限</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>音が入るタイミング</label>
+      <div class="chips" id="quantchips">
+        <button class="chip" data-q="bar" aria-pressed="true">次の小節頭（気持ちいい）</button>
+        <button class="chip" data-q="beat">次の拍頭（反応が速い）</button>
+      </div>
+    </div>
+
+    <button class="btn" id="startbtn" disabled>はじめる</button>
+    <p class="note">
+      音が出ます。<b>できればスピーカーかヘッドホンで。</b>低音とステレオが体験の半分です。<br>
+      標準の世界のコード進行は <b>Cm9 → A♭maj9 → E♭6/9 → B♭sus9</b>。<br>
+      石がまだ無い／ハードウェアが未接続でも、下の「石パネル」の手入力でキーボード操作と同じように試せます。
+    </p>
+  </div>
+</div>
+
+<!-- ================= 本編 ================= -->
+<header>
+  <div class="title">石！！石？？石！？<span>合奏版 v5</span></div>
+  <div id="beats"><i class="beat"></i><i class="beat"></i><i class="beat"></i><i class="beat"></i></div>
+  <div class="chordbox">
+    <div id="chordnow">Cm9</div>
+    <div id="progdots"><i class="on"></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="stat"><span class="world" id="worldnow">標準</span><i>の世界</i></div>
+  <div class="stat"><b id="timeleft">3:00</b><i>のこり</i></div>
+  <div class="stat"><div id="energy"></div><i><b id="partcount">0</b> / <span id="maxshow">6</span> 個</i></div>
+  <div class="stat"><b id="bpmshow">104</b><i>BPM</i></div>
+  <div class="spacer"></div>
+  <button class="minibtn" id="pausebtn">一時停止</button>
+  <button class="minibtn" id="mixbtn" title="札ごとの音量を決める（M）">ミキサー</button>
+  <button class="minibtn" id="stopbtn">終了する</button>
+</header>
+<div id="progress"><div></div></div>
+
+<main>
+  <div class="grid" id="grid"></div>
+
+  <div class="ext-head">
+    <b>MELODY EXT — メロディだけの拡張5枚（v31）</b>
+    <small>共通の性格は決めていません。世界ごとに、その世界のためだけに作曲した固有の旋律です（全18世界に実装済み）</small>
+  </div>
+  <div class="grid grid-ext" id="gridExt"></div>
+
+  <div class="styles-head">
+    <b>STYLE — 世界を決める12個（楽器・進行・テンポ・土台のビートの全部を持っている）</b>
+    <small>石を置くと、いま鳴っている音がその音楽の実際の編成で鳴り直します（同じ石をもう一度置くと標準に戻る）。「ノリ ●●●」は体が動きやすさの目安です。左上の「抽選」をクリックすると、かくはんで自動的に出てくる世界の候補からその世界を外せます（演奏中でも切り替え可）</small>
+  </div>
+  <div class="styles" id="styles"></div>
+
+  <!-- ================= 石パネル ================= -->
+  <div class="stone-card">
+    <div class="stone-head">
+      <h3>石パネル</h3>
+      <div class="stone-status">
+        <span id="stoneconn" class="stone-dot off"></span>
+        <span id="stoneconnlabel">未接続</span>
+      </div>
+    </div>
+    <div class="stone-row">
+      <button class="minibtn" id="stoneconnectbtn">ESP32につなぐ（Web Serial）</button>
+      <button class="minibtn" id="stoneretarebtn">いまの重さを基準にする（tare）</button>
+      <button class="minibtn" id="lampscreenbtn">ランプ画面へ</button>
+      <div class="spacer"></div>
+      <div class="stone-status" id="readystatus" style="margin-right:16px">
+        <span id="readydot" class="stone-dot on"></span>
+        <span id="readylabel">置いてOK</span>
+      </div>
+      <div class="stat"><b id="stoneweight">—</b><i>g（いまの総重量）</i></div>
+    </div>
+    <div class="stone-row sim">
+      <label for="stonesim">手入力で重さを試す（検証用・ハードウェア不要。キッチンスケールで量った値をここに打つ）</label>
+      <input type="number" id="stonesim" step="0.1" placeholder="例：82.4">
+      <button class="minibtn" id="stonesimbtn">この重さを反映</button>
+    </div>
+    <div class="stone-log" id="stonelog"></div>
+  </div>
+
+  <div class="bottom">
+    <div class="now">
+      <h3>いま鳴っている音</h3>
+      <div id="nowlist"><div class="empty">まだ土台のビートだけです。石を置いて重ねてください。</div></div>
+    </div>
+    <div class="help">
+      <b>行＝ROLE（役割）／列＝CHARACTER（性格）</b>。石が届くまでは、キーボードの並びがそのままグリッドです。<br>
+      マスの太い文字が<b>その札のはたらき</b>（世界が変わっても変わらない）、
+      小さい文字が<b>いまの世界での楽器</b>（世界が変わると入れ替わる）。<br>
+      <kbd>Backspace</kbd> 最後に入れた音を消す　<kbd>Esc</kbd> 終了　<kbd>M</kbd> ミキサー　クリックでも投入できます。
+    </div>
+  </div>
+</main>
+
+<!-- ================= ランプ画面 ================= -->
+<div id="lampscreen" class="ready">
+  <button id="lampclosebtn">閉じる</button>
+  <div id="lamplabel">置いてOK</div>
+  <div id="lampsub">石を置いても大丈夫です</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ミキサー（中身は mixer.js が組み立てる） -->
+<div id="mixer"></div>
+
+<div id="finish">
+  <div class="finish-card">
+    <h2>できあがりました</h2>
+    <p id="finishmsg">みんなで聴いてみましょう。<br>「ここ良かったね」を言い合うところまでが体験です。</p>
+    <div class="finish-actions">
+      <button class="primary" id="againbtn">もう1回やる</button>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/Tone.js"></script>
+<script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
+<script src="card-gain.js" onerror="window.CARD_GAIN=null"></script>
+<script src="music.js"></script>
+<script src="samples.js"></script>
+<script src="engine.js"></script>
+<script src="cards.js"></script>
+<script src="app.js"></script>
+<script src="mixer.js"></script>
+<script src="stone-matcher.js"></script>
+<script src="stone-serial.js"></script>
+<script src="stone-ui.js"></script>
+
+<!-- ビジュアル（音の重なりを映像で見る）。本体のコードは書き換えず、
+     State.parts を見張って描くだけの独立した層として足してある。 -->
+<script src="visual/sprites.js"></script>
+<script src="visual/lanes3.js"></script>
+<script src="visual/lanes4.js"></script>
+<script src="visual/overlay.js"></script>
+</body>
+</html>

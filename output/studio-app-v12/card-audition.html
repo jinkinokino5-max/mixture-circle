@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音楽カード試聴 — 石！！石？？石！？（stone-app-v5・検証用）</title>
+<style>
+  :root{
+    --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
+    --fg:#eef2f8; --fg-dim:#8d96ab; --accent:#48f7cd; --pink:#e0517a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+    padding:0 0 60px;
+  }
+  header{
+    position:sticky; top:0; z-index:10; background:rgba(18,21,29,.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); padding:14px 20px; display:flex; flex-wrap:wrap;
+    align-items:center; gap:14px;
+  }
+  header h1{font-size:15px; margin:0; letter-spacing:.02em}
+  header h1 span{color:var(--accent); font-size:11px; font-weight:400; letter-spacing:.12em; margin-left:8px}
+  .spacer{flex:1}
+  .minibtn{
+    padding:8px 14px; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--fg); font-size:12.5px; cursor:pointer;
+  }
+  .minibtn:hover{background:#2a3141}
+  .minibtn.primary{background:linear-gradient(180deg,#e0517a,#a83164); border:0; color:#fff; font-weight:600}
+  label.toggle{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--fg-dim); cursor:pointer}
+  .stat{font-size:12.5px; color:var(--fg-dim)}
+  .stat b{color:var(--fg); font-variant-numeric:tabular-nums}
+
+  #loadbox{padding:18px 20px; color:var(--fg-dim); font-size:13px; line-height:1.9}
+  #loadbar{height:4px; background:#0d1016; border-radius:99px; overflow:hidden; margin-top:8px; max-width:420px}
+  #loadbar > div{height:100%; width:0%; background:linear-gradient(90deg,#e0517a,#48f7cd); transition:width .2s linear}
+
+  main{padding:18px 20px}
+  .note{color:var(--fg-dim); font-size:12.5px; line-height:1.9; margin:0 0 16px; max-width:900px}
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:10px;
+  }
+  .card{
+    border:1px solid var(--line); border-radius:13px; padding:12px 13px 11px; background:var(--panel);
+    display:flex; flex-direction:column; gap:7px; transition:border-color .15s, box-shadow .15s;
+  }
+  .card.playing{border-color:var(--accent); box-shadow:0 0 24px -8px var(--accent)}
+  .card.fav{border-color:#ffcf5f}
+  .card .idx{font-size:9.5px; color:#5f6a80; font-family:ui-monospace,monospace}
+  .card .moodname{font-size:14px; font-weight:700}
+  .card .progname{font-size:11.5px; color:var(--fg-dim)}
+  .card .row{display:flex; align-items:center; gap:8px; margin-top:4px}
+  .playbtn{
+    flex:1; padding:9px; border-radius:9px; border:1px solid var(--line); cursor:pointer;
+    background:var(--panel2); color:var(--fg); font-size:13px; font-weight:600;
+  }
+  .playbtn:hover{background:#2a3141}
+  .card.playing .playbtn{background:linear-gradient(180deg,#2fe0c0,#1a9c86); border:0; color:#04211c}
+  .favbtn{
+    width:38px; height:38px; border-radius:9px; border:1px solid var(--line); cursor:pointer;
+    background:var(--panel2); color:var(--fg-dim); font-size:16px; line-height:1;
+  }
+  .favbtn[aria-pressed=true]{background:#4a3a12; border-color:#ffcf5f; color:#ffe08a}
+
+  #toast{
+    position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px);
+    background:#232a3a; border:1px solid var(--line); color:var(--fg);
+    padding:10px 18px; border-radius:10px; font-size:13px; opacity:0;
+    transition:opacity .2s, transform .2s; pointer-events:none; z-index:60;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>音楽カード試聴<span>SOUND SKETCH AUDITION</span></h1>
+  <label class="toggle"><input type="checkbox" id="favonly"> お気に入りのみ表示</label>
+  <div class="stat"><b id="favcount">0</b> / <span id="totalcount">100</span> 件を気に入り</div>
+  <div class="spacer"></div>
+  <button class="minibtn" id="stopbtn">■ 停止</button>
+  <button class="minibtn" id="clearbtn">お気に入りをリセット</button>
+  <button class="minibtn primary" id="exportbtn">お気に入りを書き出す（JSON）</button>
+</header>
+
+<div id="loadbox">
+  <div id="loadmsg">音源を読み込んでいます…（初回は少し時間がかかります）</div>
+  <div id="loadbar"><div></div></div>
+</div>
+
+<main id="main" style="display:none">
+  <p class="note">
+    「コード進行（10種）× 雰囲気の編成（10種）」の組み合わせで、気持ちよさ狙いの短い音のスケッチを100個用意しました。
+    ▶を押すと4小節ループで鳴り続けます（別のカードを押すと自動的に切り替わります）。
+    気に入ったものに★を付けて、最後に「お気に入りを書き出す」でJSONを保存してください。
+    それをもとに、実際のカード（世界／譜面）に仕上げます。
+  </p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div id="toast"></div>
+
+<script src="vendor/Tone.js"></script>
+<script src="samples/manifest.js" onerror="window.SAMPLE_MANIFEST=null"></script>
+<script src="music.js"></script>
+<script src="samples.js"></script>
+<script src="card-audition.js"></script>
+</body>
+</html>

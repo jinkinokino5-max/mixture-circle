@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ミクスチャー・サークル — 11のプロトタイプ</title>
-<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる11のプロトタイプ。">
+<title>ミクスチャー・サークル — 13のプロトタイプ</title>
+<meta name="description" content="カードを出すたびに楽器が加わり、みんなで1曲を作る音楽カードゲーム。ブラウザで遊べる13のプロトタイプ。">
 <style>
   :root{
     --bg:#07080c; --panel:#12151d; --panel2:#1a1f2b; --line:#282f3f;
@@ -22,6 +22,7 @@
     --v9:#d4a017;  --v9a:#ffe082;
     --v10:#00b8d4; --v10a:#7de3f7;
     --v11:#1f7a8c; --v11a:#9ad0ff;
+    --v12:#7b4fd6; --v12a:#c9b3ff;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -158,7 +159,7 @@
       <small>3〜6人が円になり、カードを出すたびに楽器が加わって、3分で1曲を共同生成する — 勝敗のない音楽カードゲーム。</small>
     </h1>
     <p class="lede">
-      同じ企画から生まれた <b>12のプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
+      同じ企画から生まれた <b>13のプロトタイプ</b>を、そのままブラウザで遊べる形で置いています。
       音楽の知識は要りません。<b>キーを押すか、マスをクリックするだけ</b>です。
     </p>
     <div class="heronote">
@@ -170,7 +171,7 @@
 
 <section>
   <div class="wrap">
-    <h2>プロトタイプ <em>12 BUILDS</em></h2>
+    <h2>プロトタイプ <em>13 BUILDS</em></h2>
     <p class="sublede">
       上から順に作った順です。カードの構造・音の作り方・「出した瞬間の手ごたえ」を、作り直すたびに変えてきました。
       どれも独立して動くので、好きなものから試せます。
@@ -178,12 +179,41 @@
 
     <div class="apps">
 
+      <!-- v12 -->
+      <article class="app featured" style="--c:var(--v12); --ca:var(--v12a)">
+        <div class="body">
+          <div class="badges">
+            <span class="ver">v12</span>
+            <span class="tag hot">いちばん新しい</span>
+            <span class="tag">石で遊ぶ</span>
+            <span class="tag">世界18</span>
+          </div>
+          <h3>石！！石？？石！？（合奏版）</h3>
+          <p class="tagline">カードの代わりに<b>石を置くと、世界がゆらぐ</b>版。v11までの流れを受け継ぐ最新の試作です。</p>
+          <p class="what">
+            役割（ベース／リズム／コード／メロディ）ごとにカードを出して合奏する仕組みはそのままに、
+            <b>全18世界</b>それぞれに固有の譜面とメロディを持たせました。
+            メロディ役だけは1世界あたり10枚（定番5＋世界固有の拡張5）になっています。<br>
+            石の識別・ESP32連携のコードも同梱していますが、ブラウザだけでも遊べます。
+            実機での再生確認は未実施の部分があります（詳細は設計メモを参照）。
+          </p>
+          <div class="spec">
+            <div>世界<b>18</b></div>
+            <div>メロディ<b>1世界10枚</b></div>
+            <div>音源<b>実録音（約40MB）</b></div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="play" href="output/studio-app-v12/index.html">▶ 遊ぶ</a>
+          <a class="docs" href="output/studio-app-v12/README.md">設計を読む</a>
+        </div>
+      </article>
+
       <!-- v11 -->
-      <article class="app featured" style="--c:var(--v11); --ca:var(--v11a)">
+      <article class="app" style="--c:var(--v11); --ca:var(--v11a)">
         <div class="body">
           <div class="badges">
             <span class="ver">v11</span>
-            <span class="tag hot">いちばん新しい</span>
             <span class="tag">MYCARD</span>
             <span class="tag">自動ピッチ補正</span>
           </div>
